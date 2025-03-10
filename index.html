@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TopDownSpace</title>
+    <style>
+        body { margin: 0; background: #000; font-family: Arial, sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        canvas { display: none; }
+        #menu { text-align: center; }
+        #menu h1 { font-size: 48px; margin-bottom: 20px; text-shadow: 0 0 10px #0ff; }
+        #menu button { padding: 15px 30px; font-size: 20px; background: #0ff; border: none; color: #000; cursor: pointer; border-radius: 5px; transition: all 0.3s; }
+        #menu button:hover { background: #00ccff; box-shadow: 0 0 15px #0ff; }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <h1>TopDownSpace</h1>
+        <button id="startButton">Start Game</button>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            scene: { preload, create, update },
+            physics: { default: 'arcade', arcade: { debug: false } },
+            parent: 'gameContainer'
+        };
+
+        let game, player, stars, safeZone, players = {}, shots = [], socket;
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('menu').style.display = 'none';
+            game = new Phaser.Game(config);
+            document.querySelector('canvas').style.display = 'block';
+            socket = new WebSocket('wss://topdownspace-server.glitch.me'); // Replace with your Glitch URL if different
+            socket.onmessage = (msg) => {
+                const data = JSON.parse(msg.data);
+                if (data.type === 'init') {
+                    player.id = data.id;
+                } else if (data.type === 'update') {
+                    Object.keys(data.players).forEach(id => {
+                        if (id !== player.id) {
+                            if (!players[id]) {
+                                players[id] = game.scene.scenes[0].physics.add.sprite(data.players[id].x, data.players[id].y, 'ship').setScale(0.5);
+                            } else {
+                                players[id].x = data.players[id].x;
+                                players[id].y = data.players[id].y;
+                                players[id].rotation = data.players[id].rotation;
+                                players[id].tint = data.players[id].inSafeZone ? 0x00ff00 : 0xffffff;
+                            }
+                        }
+                    });
+                } else if (data.type === 'shot') {
+                    const shot = game.scene.scenes[0].physics.add.rectangle(data.x, data.y, 5, 10, 0xff0000);
+                    game.scene.scenes[0].physics.velocityFromRotation(data.rotation, 500, shot.body.velocity);
+                    shots.push({ sprite: shot, shooter: data.shooter });
+                }
+            };
+        });
+
+        function preload() {
+            this.load.image('ship', 'https://labs.phaser.io/assets/sprites/ship.png');
+        }
+
+        function create() {
+            stars = this.add.graphics();
+            generateSpaceBackground(stars);
+            safeZone = this.add.circle(400, 300, 100, 0x00ff00, 0.2).setStrokeStyle(2, 0x00ff00);
+            player = this.physics.add.sprite(400, 300, 'ship').setScale(0.5);
+            player.setCollideWorldBounds(true);
+            player.setMaxVelocity(300);
+            this.cameras.main.setBounds(0, 0, 800, 600).startFollow(player);
+            cursors = this.input.keyboard.createCursorKeys();
+            this.input.keyboard.on('keydown-SPACE', () => {
+                if (!isInSafeZone(player) && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ 
+                        x: player.x, 
+                        y: player.y, 
+                        rotation: player.rotation, 
+                        inSafeZone: false, 
+                        shoot: true 
+                    }));
+                }
+            });
+        }
+
+        function update() {
+            if (!player.id || socket.readyState !== WebSocket.OPEN) return;
+            let moved = false;
+            if (cursors.left.isDown) { player.setAngularVelocity(-200); moved = true; }
+            else if (cursors.right.isDown) { player.setAngularVelocity(200); moved = true; }
+            else { player.setAngularVelocity(0); }
+            if (cursors.up.isDown) { this.physics.velocityFromRotation(player.rotation, 200, player.body.velocity); moved = true; }
+            else { player.setVelocity(0); }
+            if (moved) {
+                socket.send(JSON.stringify({
+                    x: player.x,
+                    y: player.y,
+                    rotation: player.rotation,
+                    inSafeZone: isInSafeZone(player)
+                }));
+            }
+            player.tint = isInSafeZone(player) ? 0x00ff00 : 0xffffff;
+
+            shots.forEach((shot, index) => {
+                if (shot.sprite.x < 0 || shot.sprite.x > 800 || shot.sprite.y < 0 || shot.sprite.y > 600) {
+                    shot.sprite.destroy();
+                    shots.splice(index, 1);
+                } else {
+                    Object.keys(players).forEach(id => {
+                        if (this.physics.overlap(shot.sprite, players[id]) && id !== shot.shooter) {
+                            shot.sprite.destroy();
+                            shots.splice(index, 1);
+                        }
+                    });
+                }
+            });
+        }
+
+        function generateSpaceBackground(graphics) {
+            graphics.clear();
+            for (let x = 0; x < 800; x += 2) {
+                for (let y = 0; y < 600; y += 2) {
+                    let value = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+                    value = value - Math.floor(value);
+                    if (value > 0.3) {
+                        let brightness = Math.abs(value) * 255;
+                        graphics.fillStyle(`rgb(${brightness},${brightness},${brightness})`);
+                        graphics.fillPoint(x, y, 1);
+                    }
+                }
+            }
+        }
+
+        function isInSafeZone(sprite) {
+            const dx = sprite.x - 400, dy = sprite.y - 300;
+            return Math.sqrt(dx * dx + dy * dy) < 100;
+        }
+    </script>
+</body>
+</html>
