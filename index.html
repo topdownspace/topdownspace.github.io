@@ -147,7 +147,7 @@
             ctx.translate(ship.x - camera.x, ship.y - camera.y);
             ctx.scale(camera.zoom, camera.zoom);
             ctx.rotate(ship.angle);
-            const size = Math.max(5, 20 - swarmSize * 0.18); // Tighter scaling
+            const size = Math.max(5, 20 - swarmSize * 0.18);
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -171,7 +171,7 @@
             ctx.restore();
         }
 
-        // Player update with tight swarm
+        // Player update
         function updatePlayer(player) {
             if (!player.alive) return;
             const leadShip = player.ships[0];
@@ -188,7 +188,6 @@
                     ship.dx = Math.cos(ship.angle) * ship.speed;
                     ship.dy = Math.sin(ship.angle) * ship.speed;
                 } else {
-                    // Tight formation behind lead
                     const cols = Math.ceil(Math.sqrt(player.ships.length));
                     const row = Math.floor(i / cols);
                     const col = i % cols;
@@ -198,7 +197,7 @@
                     const targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
                     ship.dx += (targetX - ship.x) * 0.2;
                     ship.dy += (targetY - ship.y) * 0.2;
-                    ship.angle = leadShip.angle; // Exact same direction
+                    ship.angle = leadShip.angle;
                 }
                 ship.dx *= 0.98;
                 ship.dy *= 0.98;
@@ -499,17 +498,16 @@
                         });
                     });
 
-                    // Ship-to-ship collisions (massive damage)
+                    // Ship-to-ship collisions
                     players.forEach(op => {
                         if (op === p) return;
                         op.ships.forEach((os, osi) => {
                             if (Math.hypot(s.x - os.x, s.y - os.y) < 20) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
-                                const damage = Math.floor(speed * 5); // Massive damage multiplier
+                                const damage = Math.floor(speed * 5);
                                 let splitCountP = Math.min(10, Math.floor(damage / 20));
                                 let splitCountOP = Math.min(10, Math.floor(damage / 20));
                                 
-                                // Damage to player p
                                 while (splitCountP > 0 && p.ships.length < 100) {
                                     p.ships.push({
                                         x: s.x,
@@ -526,7 +524,6 @@
                                 p.ships.splice(si, 1);
                                 explosion(s.x, s.y, Math.sqrt(s.mass) * 4, s.color);
 
-                                // Damage to opponent op
                                 while (splitCountOP > 0 && op.ships.length < 100) {
                                     op.ships.push({
                                         x: os.x,
@@ -543,7 +540,7 @@
                                 op.ships.splice(osi, 1);
                                 explosion(os.x, os.y, Math.sqrt(os.mass) * 4, os.color);
 
-                                playSound(100, 0.5, 'sine', 0.3); // Bigger crash sound
+                                playSound(100, 0.5, 'sine', 0.3);
                             }
                         });
                     });
@@ -581,7 +578,7 @@
 
         // Camera
         function updateCamera() {
-            const activePlayers = ElkePlayers.slice(0, playerCount).filter(p => p.alive);
+            const activePlayers = players.slice(0, playerCount).filter(p => p.alive);
             if (activePlayers.length > 0) {
                 const avgX = activePlayers.reduce((sum, p) => sum + p.ships[0].x, 0) / activePlayers.length;
                 const avgY = activePlayers.reduce((sum, p) => sum + p.ships[0].y, 0) / activePlayers.length;
