@@ -62,30 +62,6 @@
             box-shadow: 0 0 15px #0ff;
         }
     </style>
-</head>
-<body>
-    <canvas id="gameCanvas"></canvas>
-    <div id="menu">
-        <h1>SWARM WARS</h1>
-        <p style="font-size: 16px; margin: 20px 0;">Select Players:</p>
-        <button onclick="showBotMenu(1)">1 PLAYER</button><br>
-        <button onclick="showBotMenu(2)">2 PLAYERS</button><br>
-        <button onclick="showBotMenu(3)">3 PLAYERS</button>
-    </div>
-    <div id="botMenu" style="display: none;">
-        <h1>ADD BOTS</h1>
-        <p style="font-size: 16px; margin: 20px 0;">How many bots? (0-30)</p>
-        <button onclick="startGame(0)">0</button>
-        <button onclick="startGame(1)">1</button>
-        <button onclick="startGame(2)">2</button>
-        <button onclick="startGame(3)">3</button>
-        <button onclick="startGame(5)">5</button>
-        <button onclick="startGame(10)">10</button>
-        <button onclick="startGame(15)">15</button>
-        <button onclick="startGame(20)">20</button>
-        <button onclick="startGame(25)">25</button>
-        <button onclick="startGame(30)">30</button>
-    </div>
     <script>
         // Core setup
         const canvas = document.getElementById('gameCanvas');
@@ -277,7 +253,7 @@
                     ship.dy = Math.sin(ship.angle) * ship.speed;
                 } else {
                     if (player.formation === 'line') {
-                        offsetX grève= 0;
+                        offsetX = 0;
                         offsetY = i * 15;
                     } else if (player.formation === 'v') {
                         offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 10;
@@ -776,8 +752,30 @@
             ctx.restore();
             requestAnimationFrame(gameLoop);
         }
-
-        gameLoop();
     </script>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="menu">
+        <h1>SWARM WARS</h1>
+        <p style="font-size: 16px; margin: 20px 0;">Select Players:</p>
+        <button onclick="showBotMenu(1)">1 PLAYER</button><br>
+        <button onclick="showBotMenu(2)">2 PLAYERS</button><br>
+        <button onclick="showBotMenu(3)">3 PLAYERS</button>
+    </div>
+    <div id="botMenu" style="display: none;">
+        <h1>ADD BOTS</h1>
+        <p style="font-size: 16px; margin: 20px 0;">How many bots? (0-30)</p>
+        <button onclick="startGame(0)">0</button>
+        <button onclick="startGame(1)">1</button>
+        <button onclick="startGame(2)">2</button>
+        <button onclick="startGame(3)">3</button>
+        <button onclick="startGame(5)">5</button>
+        <button onclick="startGame(10)">10</button>
+        <button onclick="startGame(15)">15</button>
+        <button onclick="startGame(20)">20</button>
+        <button onclick="startGame(25)">25</button>
+        <button onclick="startGame(30)">30</button>
+    </div>
 </body>
 </html>
