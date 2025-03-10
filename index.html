@@ -31,25 +31,28 @@
             z-index: 1;
         }
         #menu, #botMenu, #difficultyMenu, #howToPlayModal {
-            position: fixed;
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 80%;
-            max-width: 600px;
+            max-width: 500px; /* Adjusted for better fit */
             text-align: center;
             background: linear-gradient(45deg, #1a1a1a, #000);
-            padding: 50px 30px;
+            padding: 20px;
             border: 5px solid #fff;
             box-shadow: 0 0 30px #0ff, 0 0 50px #00f;
             animation: pulse 4s infinite alternate, nebula 10s infinite;
             z-index: 20;
             overflow: hidden;
+            display: none; /* Hidden by default, shown via JS */
+        }
+        #menu {
+            display: block; /* Only main menu visible initially */
         }
         #botMenu, #difficultyMenu, #howToPlayModal {
-            display: none;
             background: linear-gradient(to bottom, #1a1a1a, #000);
-            padding: 40px 20px;
+            padding: 20px;
             border: 4px solid #fff;
             box-shadow: 0 0 20px #fff;
             animation: glow 1.5s infinite alternate;
@@ -78,8 +81,8 @@
             100% { transform: rotate(360deg); }
         }
         #menu h1, #botMenu h1, #difficultyMenu h1, #howToPlayModal h1 {
-            font-size: 80px;
-            margin: 0 0 50px 0;
+            font-size: 40px; /* Reduced for better fit */
+            margin: 0 0 20px 0;
             text-shadow: 0 0 20px #0ff, 0 0 30px #00f;
             animation: flicker 0.2s infinite alternate;
             color: #0ff;
@@ -90,9 +93,9 @@
         }
         #menu button, #botMenu button, #difficultyMenu button, #howToPlayModal button {
             font-family: 'Press Start 2P', monospace;
-            font-size: 24px;
-            padding: 20px 40px;
-            margin: 20px 15px;
+            font-size: 16px; /* Reduced size */
+            padding: 10px 20px;
+            margin: 10px 5px;
             background: #333;
             color: #fff;
             border: 4px solid #0ff;
@@ -100,7 +103,7 @@
             transition: all 0.4s;
             border-radius: 10px;
             display: inline-block;
-            width: 45%;
+            width: 40%;
         }
         #menu button:hover, #botMenu button:hover, #difficultyMenu button:hover, #howToPlayModal button:hover {
             background: #555;
@@ -170,16 +173,16 @@
     </div>
     <div id="menu">
         <h1>SWARM WARS</h1>
-        <p style="font-size: 24px; margin: 30px 0; color: #0ff;">Command Your Fleet to Victory!</p>
+        <p style="font-size: 16px; margin: 20px 0; color: #0ff;">Command Your Fleet to Victory!</p>
         <button onclick="showBotMenu(1)">1 Player</button>
         <button onclick="showBotMenu(2)">2 Players</button>
         <button onclick="showBotMenu(3)">3 Players</button>
         <button onclick="showHowToPlay()">How to Play</button>
-        <button onclick="location.reload()" style="margin-top: 50px;">Back</button>
+        <button onclick="location.reload()" style="margin-top: 20px;">Back</button>
     </div>
     <div id="botMenu">
         <h1>CONFIGURE BOTS</h1>
-        <p style="font-size: 20px; margin: 20px 0;">Select Number of Bots (0-20)</p>
+        <p style="font-size: 14px; margin: 20px 0;">Select Number of Bots (0-20)</p>
         <button onclick="showDifficultyMenu(0)">0 Bots</button>
         <button onclick="showDifficultyMenu(1)">1 Bot</button>
         <button onclick="showDifficultyMenu(2)">2 Bots</button>
@@ -192,7 +195,7 @@
     </div>
     <div id="difficultyMenu">
         <h1>SELECT BOT DIFFICULTY</h1>
-        <p style="font-size: 20px; margin: 20px 0;">Choose Difficulty Level</p>
+        <p style="font-size: 14px; margin: 20px 0;">Choose Difficulty Level</p>
         <button onclick="startGame(botCount, 'fortnite')">Fortnite Bot (Easy)</button>
         <button onclick="startGame(botCount, 'average')">Average Gamer (Medium)</button>
         <button onclick="startGame(botCount, 'fncs')">FNCS Champion (Hard)</button>
@@ -200,7 +203,7 @@
     </div>
     <div id="howToPlayModal">
         <h1>HOW TO PLAY</h1>
-        <p style="font-size: 18px; margin: 20px 0; line-height: 1.5; background: rgba(255, 255, 255, 0.1); padding: 20px;">
+        <p style="font-size: 12px; margin: 20px 0; line-height: 1.5; background: rgba(255, 255, 255, 0.1); padding: 10px;">
             - <strong>Move:</strong> Use WASD (Player 1), Arrow Keys (Player 2), or IJKL (Player 3).<br>
             - <strong>Formation:</strong> Press E, Shift, or O to cycle formations.<br>
             - <strong>Dash:</strong> Press Q, /, or U (2s cooldown).<br>
@@ -289,22 +292,39 @@
             menu.style.display = 'none';
             botMenu.style.display = 'block';
             difficultyMenu.style.display = 'none';
+            restrictToCanvas(botMenu);
         }
 
         function showDifficultyMenu(bots) {
             botCount = bots;
             botMenu.style.display = 'none';
             difficultyMenu.style.display = 'block';
+            restrictToCanvas(difficultyMenu);
         }
 
         function goBack() {
             if (difficultyMenu.style.display !== 'none') {
                 difficultyMenu.style.display = 'none';
                 botMenu.style.display = 'block';
+                restrictToCanvas(botMenu);
             } else if (botMenu.style.display !== 'none') {
                 botMenu.style.display = 'none';
                 menu.style.display = 'block';
+                restrictToCanvas(menu);
             }
+        }
+
+        function restrictToCanvas(element) {
+            const canvasRect = canvas.getBoundingClientRect();
+            const elementRect = element.getBoundingClientRect();
+            let left = parseInt(element.style.left || '50%') - elementRect.width / 2;
+            let top = parseInt(element.style.top || '50%') - elementRect.height / 2;
+
+            left = Math.max(canvasRect.left, Math.min(canvasRect.right - elementRect.width, left));
+            top = Math.max(canvasRect.top, Math.min(canvasRect.bottom - elementRect.height, top));
+
+            element.style.left = `${left + elementRect.width / 2}px`;
+            element.style.top = `${top + elementRect.height / 2}px`;
         }
 
         function startGame(bots, difficulty) {
@@ -481,7 +501,6 @@
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                // Smarter AI
                 if (Date.now() - player.lastTargetUpdate > 1000 || !player.currentTarget || !player.currentTarget.alive) {
                     let closestTarget = null;
                     let minDist = Infinity;
@@ -534,7 +553,7 @@
                     }
                     leadShip.angle += Math.sin(angleToTarget - leadShip.angle) * angleAdjustment;
 
-                    // Enhanced obstacle avoidance
+                    // Enhanced obstacle and corner avoidance
                     let avoidanceAngle = 0;
                     for (let a of asteroids) {
                         const dist = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
@@ -548,16 +567,20 @@
                             avoidanceAngle += Math.atan2((o.y + o.h / 2) - leadShip.y, (o.x + o.w / 2) - leadShip.x) * -0.4;
                         }
                     }
+                    // Corner avoidance
+                    if (leadShip.x < 50) avoidanceAngle += 0.2;
+                    if (leadShip.x > canvas.width - 50) avoidanceAngle -= 0.2;
+                    if (leadShip.y < 50) avoidanceAngle += 0.2;
+                    if (leadShip.y > canvas.height - 50) avoidanceAngle -= 0.2;
                     leadShip.angle += avoidanceAngle;
 
-                    // Smarter movement
                     const optimalDistance = player.difficulty === 'fncs' ? 80 : 100;
                     if (targetDistance > optimalDistance + 20) leadShip.speed = Math.min(leadShip.speed + 0.2, 3.5);
                     else if (targetDistance < optimalDistance - 20) leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
                     else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
 
-                    // Tactical formation switching
-                    if (Date.now() - player.lastFormationChange > 5000) {
+                    // Slower formation switching
+                    if (Date.now() - player.lastFormationChange > 10000) { // 10 seconds cooldown
                         if (player.ships.length > 15 && player.formation !== 'swarm') {
                             player.formation = 'swarm';
                             showFormation(leadShip.x, leadShip.y, 'swarm', '#fff');
@@ -574,13 +597,12 @@
                         player.lastFormationChange = Date.now();
                     }
 
-                    // Smarter shooting and dashing
                     if (target !== nearestPowerUp && targetDistance < 120 && Date.now() - player.lastShot > (player.difficulty === 'fncs' ? 100 : 150)) {
                         player.ships.forEach(ship => {
                             if (player.bullets.length < MAX_BULLETS_PER_PLAYER) {
                                 let shootAngle = Math.atan2(target.y - ship.y, target.x - ship.x);
                                 if (player.difficulty === 'fncs') {
-                                    shootAngle += (Math.random() - 0.5) * 0.05; // Slight spread for realism
+                                    shootAngle += (Math.random() - 0.5) * 0.05;
                                 }
                                 player.bullets.push({
                                     x: ship.x + Math.cos(shootAngle) * 4,
@@ -643,15 +665,19 @@
                     formations[player.formation]();
                     targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
                     targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
-                    ship.dx = (targetX - ship.x) * 0.2 * 1.5;
-                    ship.dy = (targetY - ship.y) * 0.2 * 1.5;
-                    ship.angle = leadShip.angle;
-
-                    if (isForming) {
-                        ship.speed = player.formationChangeSpeed;
+                    // Move at actual speed, not accelerated
+                    const dx = targetX - ship.x;
+                    const dy = targetY - ship.y;
+                    const distance = Math.hypot(dx, dy);
+                    if (distance > 1) {
+                        ship.dx = (dx / distance) * Math.min(ship.speed, distance);
+                        ship.dy = (dy / distance) * Math.min(ship.speed, distance);
                     } else {
-                        ship.speed = leadShip.speed;
+                        ship.dx = 0;
+                        ship.dy = 0;
                     }
+                    ship.angle = leadShip.angle;
+                    ship.speed = leadShip.speed;
                 }
                 ship.dx *= 0.98;
                 ship.dy *= 0.98;
@@ -848,17 +874,27 @@
                 ctx.shadowBlur = 5;
                 ctx.fillText(pu.type, pu.x, pu.y + 5);
                 ctx.shadowBlur = 0;
+
                 players.forEach(p => {
                     p.ships.forEach(s => {
                         if (Math.hypot(s.x - pu.x, s.y - pu.y) < pulseSize && p.ships.length < MAX_SHIPS_PER_PLAYER) {
-                            const count = Math.min(parseInt(pu.type.slice(1)), MAX_SHIPS_PER_PLAYER - p.ships.length);
-                            for (let j = 0; j < count; j++) {
-                                p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 100, color: s.color, dx: 0, dy: 0 });
-                                playSound(800, 0.2, 'triangle', 0.1);
+                            const count = parseInt(pu.type.slice(1));
+                            for (let j = 0; j < count && p.ships.length < MAX_SHIPS_PER_PLAYER; j++) {
+                                p.ships.push({
+                                    x: s.x,
+                                    y: s.y,
+                                    angle: s.angle,
+                                    speed: 0,
+                                    hp: 100,
+                                    color: s.color,
+                                    dx: 0,
+                                    dy: 0
+                                });
                             }
                             showPowerUp(pu.x, pu.y, count, '#0f0');
                             powerUps.splice(i, 1);
                             playSound(600, 0.3, 'sine', 0.2);
+                            return; // Exit loop after collecting
                         }
                     });
                 });
@@ -968,14 +1004,23 @@
                                     playSound(300, 0.3, 'sine', 0.2);
                                 }
                             }
-                        } else if (entity.w && entity.h) { // Obstacle
+                        } else if (entity.w && entity.h) { // Obstacle with collision
                             const o = entity;
-                            if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
-                                s.hp -= 15;
-                                showDamage(s.x, s.y, 15, s.color);
+                            const shipSize = 15;
+                            if (s.x + shipSize > o.x && s.x - shipSize < o.x + o.w && s.y + shipSize > o.y && s.y - shipSize < o.y + o.h) {
+                                s.hp -= 5; // Reduced damage
+                                showDamage(s.x, s.y, 5, s.color);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
+                                }
+                                // Push ship away
+                                const dx = s.x - (o.x + o.w / 2);
+                                const dy = s.y - (o.y + o.h / 2);
+                                const dist = Math.hypot(dx, dy);
+                                if (dist > 0) {
+                                    s.dx += (dx / dist) * 0.5;
+                                    s.dy += (dy / dist) * 0.5;
                                 }
                                 o.hp -= 20;
                                 showDamage(o.x + o.w / 2, o.y, 20, '#555');
@@ -1193,7 +1238,7 @@
 
         window.addEventListener('keydown', (e) => {
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && gameState === 'playing') {
-                e.preventDefault(); // Prevent arrow keys from scrolling the page
+                e.preventDefault();
             }
             keys[e.key] = true;
         });
@@ -1203,12 +1248,15 @@
 
         function showHowToPlay() {
             howToPlayModal.style.display = 'block';
+            restrictToCanvas(howToPlayModal);
         }
 
         function hideHowToPlay() {
             howToPlayModal.style.display = 'none';
         }
 
+        // Initial restriction for main menu
+        restrictToCanvas(menu);
         gameLoop();
     </script>
 </body>
