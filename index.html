@@ -2,142 +2,195 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TopDownSpace</title>
     <style>
-        body { margin: 0; background: #000; font-family: Arial, sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        canvas { display: none; }
-        #menu { text-align: center; }
-        #menu h1 { font-size: 48px; margin-bottom: 20px; text-shadow: 0 0 10px #0ff; }
-        #menu button { padding: 15px 30px; font-size: 20px; background: #0ff; border: none; color: #000; cursor: pointer; border-radius: 5px; transition: all 0.3s; }
-        #menu button:hover { background: #00ccff; box-shadow: 0 0 15px #0ff; }
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #000;
+            overflow: hidden;
+        }
+        canvas {
+            border: 1px solid #fff;
+        }
     </style>
 </head>
 <body>
-    <div id="menu">
-        <h1>TopDownSpace</h1>
-        <button id="startButton">Start Game</button>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
     <script>
-        const config = {
-            type: Phaser.AUTO,
-            width: 800,
-            height: 600,
-            scene: { preload, create, update },
-            physics: { default: 'arcade', arcade: { debug: false } },
-            parent: 'gameContainer'
-        };
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-        let game, player, stars, safeZone, players = {}, shots = [], socket;
+        // Player properties
+        const players = [
+            { x: 100, y: 300, angle: 0, speed: 0, color: '#f00', keys: { up: 'w', down: 's', left: 'a', right: 'd' }, bullets: [] }, // WASD
+            { x: 300, y: 300, angle: 0, speed: 0, color: '#0f0', keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' }, bullets: [] }, // Arrows
+            { x: 500, y: 300, angle: 0, speed: 0, color: '#00f', keys: { up: 'i', down: 'k', left: 'j', right: 'l' }, bullets: [] } // IJKL
+        ];
 
-        document.getElementById('startButton').addEventListener('click', () => {
-            document.getElementById('menu').style.display = 'none';
-            game = new Phaser.Game(config);
-            document.querySelector('canvas').style.display = 'block';
-            socket = new WebSocket('wss://topdownspace-server.glitch.me'); // Replace with your Glitch URL if different
-            socket.onmessage = (msg) => {
-                const data = JSON.parse(msg.data);
-                if (data.type === 'init') {
-                    player.id = data.id;
-                } else if (data.type === 'update') {
-                    Object.keys(data.players).forEach(id => {
-                        if (id !== player.id) {
-                            if (!players[id]) {
-                                players[id] = game.scene.scenes[0].physics.add.sprite(data.players[id].x, data.players[id].y, 'ship').setScale(0.5);
-                            } else {
-                                players[id].x = data.players[id].x;
-                                players[id].y = data.players[id].y;
-                                players[id].rotation = data.players[id].rotation;
-                                players[id].tint = data.players[id].inSafeZone ? 0x00ff00 : 0xffffff;
-                            }
-                        }
-                    });
-                } else if (data.type === 'shot') {
-                    const shot = game.scene.scenes[0].physics.add.rectangle(data.x, data.y, 5, 10, 0xff0000);
-                    game.scene.scenes[0].physics.velocityFromRotation(data.rotation, 500, shot.body.velocity);
-                    shots.push({ sprite: shot, shooter: data.shooter });
-                }
-            };
-        });
+        // Asteroids and particles
+        const asteroids = [];
+        const particles = [];
+        const asteroidCount = 5;
 
-        function preload() {
-            this.load.image('ship', 'https://labs.phaser.io/assets/sprites/ship.png');
-        }
+        // Keyboard state
+        const keys = {};
 
-        function create() {
-            stars = this.add.graphics();
-            generateSpaceBackground(stars);
-            safeZone = this.add.circle(400, 300, 100, 0x00ff00, 0.2).setStrokeStyle(2, 0x00ff00);
-            player = this.physics.add.sprite(400, 300, 'ship').setScale(0.5);
-            player.setCollideWorldBounds(true);
-            player.setMaxVelocity(300);
-            this.cameras.main.setBounds(0, 0, 800, 600).startFollow(player);
-            cursors = this.input.keyboard.createCursorKeys();
-            this.input.keyboard.on('keydown-SPACE', () => {
-                if (!isInSafeZone(player) && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ 
-                        x: player.x, 
-                        y: player.y, 
-                        rotation: player.rotation, 
-                        inSafeZone: false, 
-                        shoot: true 
-                    }));
-                }
-            });
-        }
+        // Event listeners for keyboard
+        window.addEventListener('keydown', (e) => keys[e.key] = true);
+        window.addEventListener('keyup', (e) => keys[e.key] = false);
 
-        function update() {
-            if (!player.id || socket.readyState !== WebSocket.OPEN) return;
-            let moved = false;
-            if (cursors.left.isDown) { player.setAngularVelocity(-200); moved = true; }
-            else if (cursors.right.isDown) { player.setAngularVelocity(200); moved = true; }
-            else { player.setAngularVelocity(0); }
-            if (cursors.up.isDown) { this.physics.velocityFromRotation(player.rotation, 200, player.body.velocity); moved = true; }
-            else { player.setVelocity(0); }
-            if (moved) {
-                socket.send(JSON.stringify({
-                    x: player.x,
-                    y: player.y,
-                    rotation: player.rotation,
-                    inSafeZone: isInSafeZone(player)
-                }));
+        // Spawn asteroids
+        function spawnAsteroids() {
+            while (asteroids.length < asteroidCount) {
+                asteroids.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: 20 + Math.random() * 20,
+                    dx: (Math.random() - 0.5) * 2,
+                    dy: (Math.random() - 0.5) * 2
+                });
             }
-            player.tint = isInSafeZone(player) ? 0x00ff00 : 0xffffff;
+        }
 
-            shots.forEach((shot, index) => {
-                if (shot.sprite.x < 0 || shot.sprite.x > 800 || shot.sprite.y < 0 || shot.sprite.y > 600) {
-                    shot.sprite.destroy();
-                    shots.splice(index, 1);
-                } else {
-                    Object.keys(players).forEach(id => {
-                        if (this.physics.overlap(shot.sprite, players[id]) && id !== shot.shooter) {
-                            shot.sprite.destroy();
-                            shots.splice(index, 1);
-                        }
-                    });
+        // Draw triangle (player ship)
+        function drawShip(player) {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle);
+            ctx.beginPath();
+            ctx.moveTo(15, 0);
+            ctx.lineTo(-10, 10);
+            ctx.lineTo(-10, -10);
+            ctx.closePath();
+            ctx.fillStyle = player.color;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Update player position and shoot
+        function updatePlayer(player) {
+            const { up, down, left, right } = player.keys;
+            if (keys[up]) player.speed = 3;
+            else if (keys[down]) player.speed = -2;
+            else player.speed *= 0.9; // Friction
+
+            if (keys[left]) player.angle -= 0.1;
+            if (keys[right]) player.angle += 0.1;
+
+            player.x += Math.cos(player.angle) * player.speed;
+            player.y += Math.sin(player.angle) * player.speed;
+
+            // Keep player in bounds
+            player.x = Math.max(15, Math.min(canvas.width - 15, player.x));
+            player.y = Math.max(15, Math.min(canvas.height - 15, player.y));
+
+            // Auto-shoot every 20 frames
+            if (Math.random() < 0.05) {
+                player.bullets.push({
+                    x: player.x + Math.cos(player.angle) * 15,
+                    y: player.y + Math.sin(player.angle) * 15,
+                    dx: Math.cos(player.angle) * 5,
+                    dy: Math.sin(player.angle) * 5
+                });
+            }
+
+            // Update bullets
+            player.bullets = player.bullets.filter(b => {
+                b.x += b.dx;
+                b.y += b.dy;
+                return b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height;
+            });
+        }
+
+        // Draw and update bullets
+        function drawBullets(player) {
+            ctx.fillStyle = player.color;
+            player.bullets.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // Update and draw asteroids
+        function updateAsteroids() {
+            asteroids.forEach(a => {
+                a.x += a.dx;
+                a.y += a.dy;
+
+                // Bounce off walls
+                if (a.x - a.radius < 0 || a.x + a.radius > canvas.width) a.dx *= -1;
+                if (a.y - a.radius < 0 || a.y + a.radius > canvas.height) a.dy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#888';
+                ctx.fill();
+            });
+        }
+
+        // Particle effects (for coolness)
+        function updateParticles() {
+            if (Math.random() < 0.3) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: 1 + Math.random() * 2,
+                    life: 30
+                });
+            }
+            particles.forEach((p, i) => {
+                p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+                else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${p.life / 30})`;
+                    ctx.fill();
                 }
             });
         }
 
-        function generateSpaceBackground(graphics) {
-            graphics.clear();
-            for (let x = 0; x < 800; x += 2) {
-                for (let y = 0; y < 600; y += 2) {
-                    let value = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-                    value = value - Math.floor(value);
-                    if (value > 0.3) {
-                        let brightness = Math.abs(value) * 255;
-                        graphics.fillStyle(`rgb(${brightness},${brightness},${brightness})`);
-                        graphics.fillPoint(x, y, 1);
+        // Collision detection
+        function checkCollisions() {
+            players.forEach(p => {
+                asteroids.forEach(a => {
+                    const dx = p.x - a.x;
+                    const dy = p.y - a.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < a.radius + 15) {
+                        p.x = 100 + Math.random() * 400; // Respawn
+                        p.y = 300;
                     }
-                }
-            }
+                });
+            });
         }
 
-        function isInSafeZone(sprite) {
-            const dx = sprite.x - 400, dy = sprite.y - 300;
-            return Math.sqrt(dx * dx + dy * dy) < 100;
+        // Game loop
+        function gameLoop() {
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            spawnAsteroids();
+            players.forEach(p => {
+                updatePlayer(p);
+                drawShip(p);
+                drawBullets(p);
+            });
+            updateAsteroids();
+            updateParticles();
+            checkCollisions();
+
+            requestAnimationFrame(gameLoop);
         }
+
+        // Start the game
+        gameLoop();
     </script>
 </body>
 </html>
