@@ -92,7 +92,7 @@
         let botCount = 0;
         let gameState = 'menu';
         let eliminations = [];
-        let frameCount = 0; // To delay collision checks
+        let frameCount = 0;
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -144,9 +144,9 @@
 
             // Human players with safer spawn positions
             const humanConfigs = [
-                { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00', x: canvas.width * 0.2, y: canvas.height * 0.5 },
-                { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0', x: canvas.width * 0.5, y: canvas.height * 0.5 },
-                { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#00f', x: canvas.width * 0.8, y: canvas.height * 0.5 }
+                { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00', x: canvas.width * 0.2, y: canvas.height * 0.4 },
+                { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0', x: canvas.width * 0.5, y: canvas.height * 0.6 },
+                { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#00f', x: canvas.width * 0.8, y: canvas.height * 0.4 }
             ];
             for (let i = 0; i < playerCount; i++) {
                 players.push({
@@ -166,9 +166,11 @@
                 let botX, botY;
                 let validPosition = false;
                 while (!validPosition) {
-                    botX = Math.random() * (canvas.width - 100) + 50;
-                    botY = Math.random() * (canvas.height - 100) + 50;
-                    validPosition = players.every(p => p.ships.every(s => Math.hypot(s.x - botX, s.y - botY) > 100));
+                    botX = Math.random() * (canvas.width - 200) + 100;
+                    botY = Math.random() * (canvas.height - 200) + 100;
+                    validPosition = players.every(p => p.ships.every(s => Math.hypot(s.x - botX, s.y - botY) > 150)) &&
+                                   obstacles.every(o => Math.hypot(botX - (o.x + o.w / 2), botY - (o.y + o.h / 2)) > 100) &&
+                                   asteroids.every(a => Math.hypot(botX - a.x, botY - a.y) > a.size + 50);
                 }
                 players.push({
                     ships: [{ x: botX, y: botY, angle: 0, speed: 0, hp: 200, color: '#888', dx: 0, dy: 0 }],
@@ -188,8 +190,8 @@
             spawnStars();
             spawnNebula();
             spawnAsteroids();
-            frameCount = 0; // Reset frame counter
-            console.log('Players initialized:', players.map(p => ({ alive: p.alive, ships: p.ships.length })));
+            frameCount = 0;
+            console.log('Players initialized:', players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0].hp })));
             gameLoop();
         }
 
@@ -198,7 +200,7 @@
             ctx.save();
             ctx.translate(ship.x, ship.y);
             ctx.rotate(ship.angle);
-            const size = Math.max(5, 50 - totalEntities * 0.045); // Dynamic ship size
+            const size = Math.max(5, 50 - totalEntities * 0.045);
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -523,7 +525,7 @@
 
         // Collision logic
         function checkCollisions() {
-            if (frameCount < 2) return; // Delay collision checks for 2 frames to allow initial positioning
+            if (frameCount < 5) return; // Delay collision checks for 5 frames
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
                 if (!p.alive) continue;
@@ -607,7 +609,7 @@
                         for (let osi = op.ships.length - 1; osi >= 0; osi--) {
                             const os = op.ships[osi];
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            if (dist < 20 && s !== os) { // Avoid self-collision
+                            if (dist < 20 && s !== os && op !== p) { // Prevent self-collision and same-player collision
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 2);
                                 s.hp -= damage;
@@ -681,6 +683,7 @@
                     }
                 }
             }
+            console.log('Post-collision state:', players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0]?.hp || 0 })));
         }
 
         // UI
@@ -689,7 +692,7 @@
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             const totalEntities = players.reduce((sum, p) => sum + p.ships.length, 0);
             players.forEach((p, i) => {
-                const totalHP = p.ships.reduce((sum, ship) => sum + ship.hp, 0);
+                const totalHP = p.ships.reduce((sum, ship) => sum + (ship.hp || 0), 0);
                 ctx.fillStyle = p.color;
                 ctx.fillRect(10, 10 + i * 40, Math.min(200, totalHP / 10), 20);
                 ctx.strokeStyle = '#fff';
