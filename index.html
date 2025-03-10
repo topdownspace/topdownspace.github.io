@@ -262,7 +262,7 @@
             ctx.restore();
         }
 
-        // Damage display (fixed)
+        // Damage display
         function showDamage(x, y, damage, color) {
             damageDisplays.push({ x, y, damage, color, time: Date.now() });
         }
@@ -275,11 +275,11 @@
                 }
                 ctx.fillStyle = d.color;
                 ctx.font = '8px "Press Start 2P"';
-                ctx.fillText(`- ${d.damage}`, d.x, d.y - 4); // Fixed: Use d.damage instead of damage
+                ctx.fillText(`- ${d.damage}`, d.x, d.y - 4);
             });
         }
 
-        // Player update with crash fix and speed boost
+        // Player update with bot power-up pursuit
         function updatePlayer(player, index) {
             if (!player.alive || !player.ships[0]) return;
             const leadShip = player.ships[0];
@@ -301,25 +301,51 @@
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                let target = null;
-                let minDistance = Infinity;
+                // Bot AI: Prioritize power-ups if visible, otherwise target enemies
+                let targetPlayer = null;
+                let nearestPowerUp = null;
+                let minDistanceToPlayer = Infinity;
+                let minDistanceToPowerUp = Infinity;
+
+                // Find nearest enemy player
                 players.forEach(p => {
                     if (p.alive && p !== player && p.ships.length > 0) {
                         const dist = Math.hypot(p.ships[0].x - leadShip.x, p.ships[0].y - leadShip.y);
-                        if (dist < minDistance) {
-                            minDistance = dist;
-                            target = p;
+                        if (dist < minDistanceToPlayer) {
+                            minDistanceToPlayer = dist;
+                            targetPlayer = p;
                         }
                     }
                 });
+
+                // Find nearest power-up within "visibility" range (300px)
+                powerUps.forEach(pu => {
+                    const dist = Math.hypot(pu.x - leadShip.x, pu.y - leadShip.y);
+                    if (dist < 300 && dist < minDistanceToPowerUp) {
+                        minDistanceToPowerUp = dist;
+                        nearestPowerUp = pu;
+                    }
+                });
+
+                // Decide target: power-up if closer, otherwise enemy
+                let target = null;
+                let targetDistance = Infinity;
+                if (nearestPowerUp && minDistanceToPowerUp < minDistanceToPlayer * 0.5) { // Prioritize power-up if significantly closer
+                    target = nearestPowerUp;
+                    targetDistance = minDistanceToPowerUp;
+                } else if (targetPlayer) {
+                    target = targetPlayer.ships[0];
+                    targetDistance = minDistanceToPlayer;
+                }
+
                 if (target) {
-                    const angleToTarget = Math.atan2(target.ships[0].y - leadShip.y, target.ships[0].x - leadShip.x);
+                    const angleToTarget = Math.atan2(target.y - leadShip.y, target.x - leadShip.x);
                     leadShip.angle += (angleToTarget - leadShip.angle) * 0.1;
-                    const distance = Math.hypot(target.ships[0].x - leadShip.x, target.ships[0].y - leadShip.y);
-                    if (distance > 100) leadShip.speed = Math.min(leadShip.speed + 0.4, 6);
-                    else if (distance < 50) leadShip.speed = Math.max(leadShip.speed - 0.4, -3);
+                    if (targetDistance > 100) leadShip.speed = Math.min(leadShip.speed + 0.4, 6);
+                    else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.4, -3);
                     else leadShip.speed *= 0.95;
 
+                    // Evasion from asteroids and obstacles
                     for (let a of asteroids) {
                         const distToAsteroid = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
                         if (distToAsteroid < a.size + 20) {
@@ -334,7 +360,7 @@
                         }
                     }
 
-                    if (distance < 100 && Date.now() - player.lastShot > 100) {
+                    if (target !== nearestPowerUp && targetDistance < 100 && Date.now() - player.lastShot > 100) {
                         player.ships.forEach(ship => {
                             player.bullets.push({
                                 x: ship.x + Math.cos(ship.angle) * 4,
@@ -374,7 +400,7 @@
                     } else if (player.formation === 'wedge') {
                         offsetX = (i - 1) * 5;
                         offsetY = Math.abs(i - 1) * 5;
-                    } else { // cluster
+                    } else {
                         const angle = (i / player.ships.length) * Math.PI * 2;
                         offsetX = Math.cos(angle) * 7;
                         offsetY = Math.sin(angle) * 7;
@@ -780,7 +806,7 @@
                     const totalHP = p.ships.reduce((sum, ship) => sum + (ship.hp || 0), 0);
                     const div = document.createElement('div');
                     div.innerHTML = `
-                        <p>Player ${i + 1}</p>
+                        <p>${p.isBot ? 'Bot' : 'Player'} ${i + 1}</p>
                         <p>HP: ${totalHP}</p>
                         <p>Ships: ${p.ships.length}</p>
                         <div style="width: 100%; background: #333; border: 1px solid #fff;">
@@ -809,7 +835,9 @@
                 ctx.font = '20px "Press Start 2P"';
                 ctx.fillText('#1 VICTORY ROYALE', canvas.width / 2 - 110, canvas.height / 2 - 20);
                 ctx.font = '12px "Press Start 2P"';
-                ctx.fillText(`PLAYER ${players.indexOf(alivePlayers[0]) + 1} WINS`, canvas.width / 2 - 90, canvas.height / 2);
+                const winner = alivePlayers[0];
+                const winnerIndex = players.indexOf(winner) + 1;
+                ctx.fillText(`${winner.isBot ? 'BOT' : 'PLAYER'} ${winnerIndex} WINS`, canvas.width / 2 - 90, canvas.height / 2);
                 ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 70, canvas.height / 2 + 20);
                 eliminations.forEach((text, i) => {
                     ctx.fillText(text, canvas.width / 2 - 70, canvas.height / 2 - 40 + i * 15);
