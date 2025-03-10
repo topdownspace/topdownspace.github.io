@@ -25,6 +25,7 @@
             left: 0;
             z-index: 1;
         }
+        /* Enhanced main menu styling */
         #menu {
             position: absolute;
             top: 50%;
@@ -116,26 +117,20 @@
             position: fixed;
             top: 0;
             right: 0;
-            width: 250px;
+            width: 200px;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 10px;
-            border-left: 3px solid #0ff;
-            box-shadow: -5px 0 15px rgba(0, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px;
+            border-left: 2px solid #fff;
+            box-shadow: 0 0 10px #fff;
             z-index: 10;
             overflow-y: auto;
-            font-size: 12px;
         }
         #uiPanel div {
-            margin-bottom: 10px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #0ff;
-            border-radius: 5px;
-            color: #fff;
-        }
-        #uiPanel p {
-            margin: 2px 0;
+            margin-bottom: 5px;
+            padding: 3px;
+            border-bottom: 1px solid #fff;
+            font-size: 10px;
         }
         #howToPlayModal {
             display: none;
@@ -148,6 +143,7 @@
         #howToPlayModal.show {
             display: block;
         }
+        /* New sections beneath the game */
         #aboutSection, #howToPlaySection {
             position: absolute;
             bottom: 0;
@@ -161,11 +157,12 @@
             font-size: 12px;
             line-height: 1.5;
             z-index: 2;
-            display: none;
+            display: none; /* Hidden by default, show when game starts */
         }
         #aboutSection.show, #howToPlaySection.show {
             display: block;
         }
+        /* Starfield animation */
         body::before {
             content: '';
             position: fixed;
@@ -248,6 +245,7 @@
         </p>
     </div>
     <script>
+        // Core setup
         let playerCount = 0;
         let botCount = 0;
         let gameState = 'menu';
@@ -256,7 +254,6 @@
         const MAX_BULLETS_PER_PLAYER = 50;
         const MAX_PARTICLES = 600;
         const MAX_SHIPS_PER_PLAYER = 100;
-        const FORMATION_TRANSITION_TIME = 1000; // 1 second transition
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -268,11 +265,13 @@
         const aboutSection = document.getElementById('aboutSection');
         const howToPlaySection = document.getElementById('howToPlaySection');
 
-        const squareSize = Math.min(window.innerWidth - 250, window.innerHeight);
+        // Set canvas to square
+        const squareSize = Math.min(window.innerWidth - 200, window.innerHeight);
         canvas.width = squareSize;
         canvas.height = squareSize;
         canvas.style.left = `${(window.innerWidth - squareSize) / 2}px`;
 
+        // Audio setup
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(frequency, duration, type = 'square', volume = 0.1) {
             const osc = audioCtx.createOscillator();
@@ -287,6 +286,7 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
+        // Game objects with spatial grid
         const players = [];
         const asteroids = [];
         const obstacles = [];
@@ -305,6 +305,7 @@
             return `${Math.floor(x / GRID_SIZE)},${Math.floor(y / GRID_SIZE)}`;
         }
 
+        // Menu navigation
         function showBotMenu(players) {
             playerCount = players;
             menu.style.display = 'none';
@@ -331,6 +332,7 @@
             }
         }
 
+        // Start game with difficulty
         function startGame(bots, difficulty) {
             botCount = bots;
             players.length = 0;
@@ -355,12 +357,11 @@
                     bullets: [],
                     alive: true,
                     formation: 'line-h',
-                    targetFormation: 'line-h',
-                    formationTransitionStart: 0,
                     lastShot: 0,
                     lastDash: 0,
                     dashEnd: 0,
                     dashSpeed: 0,
+                    formationChangeSpeed: 0,
                     isBot: false,
                     difficulty: 'player',
                     lastTargetUpdate: 0
@@ -380,12 +381,11 @@
                     bullets: [],
                     alive: true,
                     formation: 'line-h',
-                    targetFormation: 'line-h',
-                    formationTransitionStart: 0,
                     lastShot: 0,
                     lastDash: 0,
                     dashEnd: 0,
                     dashSpeed: 0,
+                    formationChangeSpeed: 0,
                     isBot: true,
                     difficulty: difficulty || 'average',
                     lastTargetUpdate: 0,
@@ -404,8 +404,15 @@
             spawnNebula();
             spawnAsteroids();
             frameCount = 0;
+
+            console.log('Game Started - Initial State:', {
+                gameState,
+                players: players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0].hp, isBot: p.isBot })),
+                totalPlayers: players.length
+            });
         }
 
+        // Ship drawing
         function drawShip(ship, totalEntities, isLead, isPlayer) {
             ctx.save();
             ctx.translate(ship.x, ship.y);
@@ -432,6 +439,7 @@
             ctx.restore();
         }
 
+        // Damage, formation, and power-up display
         function showDamage(x, y, damage, color) {
             const offsetX = (Math.random() - 0.5) * 20;
             const offsetY = (Math.random() - 0.5) * 20;
@@ -479,6 +487,7 @@
             });
         }
 
+        // Player update with smarter AI
         function updatePlayer(player, index) {
             if (!player.alive || !player.ships[0]) return;
             const leadShip = player.ships[0];
@@ -491,11 +500,11 @@
                 else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
                 if (keys[left]) leadShip.angle -= 0.1;
                 if (keys[right]) leadShip.angle += 0.1;
-                if (keys[form] && Date.now() - player.formationTransitionStart > FORMATION_TRANSITION_TIME) {
+                if (keys[form]) {
                     keys[form] = false;
-                    player.targetFormation = getNextFormation(player.formation);
-                    player.formationTransitionStart = Date.now();
-                    showFormation(leadShip.x, leadShip.y, player.targetFormation, '#fff');
+                    player.formationChangeSpeed = leadShip.speed;
+                    player.formation = getNextFormation(player.formation);
+                    showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
                     isForming = true;
                 }
                 if (keys[dash] && Date.now() - player.lastDash > 2000) {
@@ -505,7 +514,7 @@
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                // Bot logic (unchanged for brevity)
+                // Smarter target selection
                 if (Date.now() - player.lastTargetUpdate > 2000 || (player.currentTarget && !player.currentTarget.alive)) {
                     let bestTarget = null;
                     let maxShips = -1;
@@ -546,23 +555,107 @@
                 }
 
                 if (target) {
-                    const angleAdjustment = { 'fortnite': 0.05, 'average': 0.1, 'fncs': 0.4 }[player.difficulty];
+                    const angleAdjustment = {
+                        'fortnite': 0.05,
+                        'average': 0.1,
+                        'fncs': 0.4
+                    }[player.difficulty];
                     let angleToTarget = Math.atan2(target.y - leadShip.y, target.x - leadShip.x);
+                    if (player.difficulty === 'fncs') {
+                        const leadFactor = 0.1;
+                        const targetDx = target.dx || 0;
+                        const targetDy = target.dy || 0;
+                        const predictedX = target.x + targetDx * leadFactor * targetDistance;
+                        const predictedY = target.y + targetDy * leadFactor * targetDistance;
+                        angleToTarget = Math.atan2(predictedY - leadShip.y, predictedX - leadShip.x);
+                    }
                     leadShip.angle += (angleToTarget - leadShip.angle) * angleAdjustment;
+
+                    // Advanced obstacle avoidance
+                    for (let a of asteroids) {
+                        const distToAsteroid = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
+                        if (distToAsteroid < a.size + 40) {
+                            const relativeX = a.x - leadShip.x + a.dx * 10;
+                            const relativeY = a.y - leadShip.y + a.dy * 10;
+                            const avoidanceAngle = Math.atan2(relativeY, relativeX) + (Math.PI / 2) * (leadShip.x < a.x ? 1 : -1);
+                            leadShip.angle += avoidanceAngle * 0.3 * (player.difficulty === 'fncs' ? 2 : 1);
+                            break;
+                        }
+                    }
+                    for (let o of obstacles) {
+                        const distToObstacle = Math.hypot((o.x + o.w / 2) - leadShip.x, (o.y + o.h / 2) - leadShip.y);
+                        if (distToObstacle < 70) {
+                            const relativeX = (o.x + o.w / 2) - leadShip.x;
+                            const relativeY = (o.y + o.h / 2) - leadShip.y;
+                            const avoidanceAngle = Math.atan2(relativeY, relativeX) + (Math.PI / 2) * (leadShip.x < o.x + o.w / 2 ? 1 : -1);
+                            leadShip.angle += avoidanceAngle * 0.4 * (player.difficulty === 'fncs' ? 1.5 : 1);
+                        }
+                        if (leadShip.x > o.x && leadShip.x < o.x + o.w && leadShip.y > o.y && leadShip.y < o.y + o.h) {
+                            leadShip.angle += (leadShip.x < o.x + o.w / 2 ? 0.3 : -0.3);
+                            break;
+                        }
+                    }
 
                     if (targetDistance > 100) leadShip.speed = Math.min(leadShip.speed + 0.15, 3);
                     else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
                     else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
 
-                    if (Math.random() < 0.02 && Date.now() - player.formationTransitionStart > FORMATION_TRANSITION_TIME) {
-                        player.targetFormation = getNextFormation(player.formation);
-                        player.formationTransitionStart = Date.now();
-                        showFormation(leadShip.x, leadShip.y, player.targetFormation, '#fff');
+                    // Tactical formation switching
+                    if (player.ships.length > 10 && player.formation !== 'swarm') {
+                        player.formation = 'swarm';
+                        showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
+                    } else if (player.ships.length < 5 && player.formation !== 'diamond') {
+                        player.formation = 'diamond';
+                        showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
+                    }
+
+                    if (target !== nearestPowerUp && targetDistance < 100 && Date.now() - player.lastShot > 150) {
+                        player.ships.forEach(ship => {
+                            if (player.bullets.length < MAX_BULLETS_PER_PLAYER) {
+                                let shootAngle = ship.angle;
+                                if (player.difficulty === 'fncs') {
+                                    const leadFactor = 0.1;
+                                    const targetDx = target.dx || 0;
+                                    const targetDy = target.dy || 0;
+                                    const dist = Math.hypot(target.x - ship.x, target.y - ship.y);
+                                    const predictedX = target.x + targetDx * leadFactor * dist;
+                                    const predictedY = target.y + targetDy * leadFactor * dist;
+                                    shootAngle = Math.atan2(predictedY - ship.y, predictedX - ship.x) + (Math.random() - 0.5) * 0.1; // Slight spread
+                                }
+                                player.bullets.push({
+                                    x: ship.x + Math.cos(shootAngle) * 4,
+                                    y: ship.y + Math.sin(shootAngle) * 4,
+                                    dx: Math.cos(shootAngle) * 4,
+                                    dy: Math.sin(shootAngle) * 4,
+                                    color: ship.color,
+                                    time: Date.now()
+                                });
+                            }
+                        });
+                        player.lastShot = Date.now();
+                        playSound(500, 0.1, 'square', 0.15);
+                    }
+                    const dashChance = { 'fortnite': 0, 'average': 0.01, 'fncs': 0.15 }[player.difficulty];
+                    if ((Math.random() < dashChance || (targetDistance < 50 && player.difficulty === 'fncs')) && Date.now() - player.lastDash > 2000) {
+                        player.dashSpeed = leadShip.speed + 15;
+                        player.dashEnd = Date.now() + 250;
+                        player.lastDash = Date.now();
+                        playSound(1000, 0.2, 'triangle', 0.2);
+                    }
+                    const formChance = { 'fortnite': 0, 'average': 0.02, 'fncs': 0.1 }[player.difficulty];
+                    if (Math.random() < formChance) {
+                        player.formationChangeSpeed = leadShip.speed;
+                        player.formation = getNextFormation(player.formation);
+                        showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
                         isForming = true;
                     }
+                } else {
+                    if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
+                    if (Math.random() < 0.1) leadShip.angle += (Math.random() - 0.5) * 0.2;
                 }
             }
 
+            // Handle dash speed and particles
             if (Date.now() <= player.dashEnd) {
                 leadShip.speed = player.dashSpeed;
                 particles.push({
@@ -580,14 +673,11 @@
                 if (player.dashSpeed < 0.1) player.dashSpeed = 0;
             }
 
-            const transitionProgress = Math.min(1, (Date.now() - player.formationTransitionStart) / FORMATION_TRANSITION_TIME);
-            if (transitionProgress >= 1) player.formation = player.targetFormation;
-
             player.ships.forEach((ship, i) => {
                 let targetX, targetY, offsetX, offsetY;
                 if (i === 0) {
-                    ship.dx = Math.cos(ship.angle) * ship.speed;
-                    ship.dy = Math.sin(ship.angle) * ship.speed;
+                    ship.dx = Math.cos(ship.angle) * ship.speed * 1.5;
+                    ship.dy = Math.sin(ship.angle) * ship.speed * 1.5;
                 } else {
                     const formations = {
                         'diamond': () => { offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 5; offsetY = i * 5; },
@@ -597,21 +687,21 @@
                         'line-v': () => { offsetX = 0; offsetY = i * 10; },
                         'circle': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 10; offsetY = Math.sin(angle) * 10; }
                     };
-
-                    const currentOffsets = {}, targetOffsets = {};
-                    formations[player.formation](currentOffsets);
-                    formations[player.targetFormation](targetOffsets);
-                    offsetX = currentOffsets.offsetX * (1 - transitionProgress) + targetOffsets.offsetX * transitionProgress;
-                    offsetY = currentOffsets.offsetY * (1 - transitionProgress) + targetOffsets.offsetY * transitionProgress;
-
+                    formations[player.formation]();
                     targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
                     targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
-
-                    const speedFactor = 0.1; // Natural movement speed
-                    ship.dx = (targetX - ship.x) * speedFactor;
-                    ship.dy = (targetY - ship.y) * speedFactor;
+                    ship.dx = (targetX - ship.x) * 0.2 * 1.5;
+                    ship.dy = (targetY - ship.y) * 0.2 * 1.5;
                     ship.angle = leadShip.angle;
+
+                    if (isForming) {
+                        ship.speed = player.formationChangeSpeed;
+                    } else {
+                        ship.speed = leadShip.speed;
+                    }
                 }
+                ship.dx *= 0.98;
+                ship.dy *= 0.98;
                 ship.x += ship.dx;
                 ship.y += ship.dy;
                 ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x));
@@ -634,8 +724,7 @@
                             dx: Math.cos(ship.angle) * 4,
                             dy: Math.sin(ship.angle) * 4,
                             color: ship.color,
-                            time: Date.now(),
-                            owner: player
+                            time: Date.now()
                         });
                     }
                 });
@@ -644,8 +733,8 @@
             }
 
             player.bullets = player.bullets.filter(b => {
-                b.x += b.dx;
-                b.y += b.dy;
+                b.x += b.dx * 1.5;
+                b.y += b.dy * 1.5;
                 if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) return false;
                 particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 0.3, life: 5, color: b.color });
                 return Date.now() - b.time < 1000;
@@ -658,6 +747,7 @@
             return formations[(index + 1) % formations.length];
         }
 
+        // Bullet drawing
         function drawBullets(player) {
             player.bullets.forEach(b => {
                 ctx.fillStyle = b.color;
@@ -665,6 +755,7 @@
             });
         }
 
+        // Asteroid spawning
         function spawnAsteroids() {
             while (asteroids.length < MAX_ASTEROIDS) {
                 asteroids.push({
@@ -680,6 +771,7 @@
             }
         }
 
+        // Asteroid update
         function updateAsteroids() {
             asteroids.forEach(a => {
                 a.x += a.dx;
@@ -701,6 +793,7 @@
             });
         }
 
+        // Obstacle spawning
         function spawnObstacles() {
             for (let i = 0; i < 2; i++) {
                 let x, y;
@@ -724,6 +817,7 @@
             });
         }
 
+        // Stars
         function spawnStars() {
             for (let i = 0; i < 300; i++) {
                 stars.push({
@@ -741,6 +835,7 @@
             });
         }
 
+        // Nebula
         const nebula = [];
         function spawnNebula() {
             for (let i = 0; i < 20; i++) {
@@ -760,6 +855,7 @@
             });
         }
 
+        // Particles
         function updateParticles() {
             if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
             particles.forEach((p, i) => {
@@ -776,6 +872,7 @@
             });
         }
 
+        // Power-ups
         function spawnPowerUps() {
             if (Math.random() < 0.005) {
                 const roll = Math.random();
@@ -815,6 +912,7 @@
             });
         }
 
+        // Enhanced explosion with varied colors and dynamics
         function explosion(x, y, count, baseColor = '#ff0', size = 2, isFinal = false) {
             const colors = ['#ff0', '#f00', '#fff', '#ff0', '#f00'];
             for (let i = 0; i < Math.min(count, MAX_PARTICLES - particles.length); i++) {
@@ -845,6 +943,7 @@
             playSound(80, 0.5, 'sine', 0.2);
         }
 
+        // Collision logic with improved consistency and higher damage
         function checkCollisions() {
             Object.keys(grid).forEach(key => delete grid[key]);
             players.forEach(p => p.ships.forEach(s => {
@@ -862,11 +961,6 @@
                 grid[cell] = grid[cell] || [];
                 grid[cell].push(o);
             });
-            players.forEach(p => p.bullets.forEach(b => {
-                const cell = getGridCell(b.x, b.y);
-                grid[cell] = grid[cell] || [];
-                grid[cell].push(b);
-            }));
 
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
@@ -890,6 +984,7 @@
                             if (dist < a.size + 3) {
                                 s.hp -= 5;
                                 showDamage(s.x, s.y, 5, s.color);
+                                console.log(`Ship ${pi}:${si} hit asteroid at (${a.x}, ${a.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -917,12 +1012,14 @@
                                     explosion(a.x, a.y, 30);
                                     playSound(300, 0.3, 'sine', 0.2);
                                 }
+                                return;
                             }
                         } else if (entity.w && entity.h) { // Obstacle
                             const o = entity;
                             if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
                                 s.hp -= 15;
                                 showDamage(s.x, s.y, 15, s.color);
+                                console.log(`Ship ${pi}:${si} hit obstacle at (${o.x}, ${o.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -933,33 +1030,46 @@
                                     const index = obstacles.indexOf(o);
                                     if (index > -1) obstacles.splice(index, 1);
                                 }
+                                return;
                             }
-                        } else if (entity.owner !== p && entity.dx && entity.dy) { // Bullet from other player
+                        } else if (entity.dx && entity.dy && entity.color === s.color) { // Bullet from same player
+                            return;
+                        } else if (entity.dx && entity.dy) { // Bullet from other player
                             const b = entity;
-                            if (Math.hypot(s.x - b.x, s.y - b.y) < 5) {
+                            if (Math.hypot(s.x - b.x, s.y - b.y) < 8) {
                                 s.hp -= 30;
+                                s.dx -= b.dx * 0.1;
+                                s.dy -= b.dy * 0.1;
                                 showDamage(s.x, s.y, 30, s.color);
+                                console.log(`Ship ${pi}:${si} hit by bullet at (${b.x}, ${b.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
                                 }
-                                const bulletOwner = players.find(p => p === b.owner);
-                                if (bulletOwner) {
-                                    bulletOwner.bullets = bulletOwner.bullets.filter(bullet => bullet !== b);
-                                }
+                                const playerIndex = players.findIndex(p => p.bullets.includes(b));
+                                if (playerIndex > -1) players[playerIndex].bullets = players[playerIndex].bullets.filter(bullet => bullet !== b);
+                                return;
                             }
-                        } else if (entity.hp && entity.angle && entity !== s) { // Other ship
+                        } else if (entity.hp && entity.angle) { // Other ship
                             const os = entity;
                             const op = players.find(p => p.ships.includes(os));
                             if (!op || op === p || !op.alive) return;
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            if (dist < 15) {
+                            const shipSize = 15;
+                            const collided = dist < 15 || (
+                                s.x + shipSize > os.x - shipSize &&
+                                s.x - shipSize < os.x + shipSize &&
+                                s.y + shipSize > os.y - shipSize &&
+                                s.y - shipSize < os.y + shipSize
+                            );
+                            if (collided && s !== os) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 4);
                                 s.hp -= damage;
                                 os.hp -= damage;
                                 showDamage(s.x, s.y, damage, s.color);
                                 showDamage(os.x, os.y, damage, os.color);
+                                console.log(`Ship ${pi}:${si} collided with ship ${players.indexOf(op)}:${op.ships.indexOf(os)}, damage: ${damage}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -970,6 +1080,7 @@
                                     explosion(os.x, os.y, 20, os.color);
                                 }
                                 playSound(100, 0.5, 'sine', 0.3);
+                                return;
                             }
                         }
                     });
@@ -977,9 +1088,9 @@
                     if (p.ships.length === 0) {
                         p.alive = false;
                         eliminations.push({ text: `${p.isBot ? 'BOT' : 'PLAYER'} ${pi + 1} ELIMINATED`, time: Date.now(), opacity: 1 });
-                        const deathX = s.x || canvas.width / 2;
-                        const deathY = s.y || canvas.height / 2;
-                        const deathColor = s.color || '#fff';
+                        const deathX = p.ships[0]?.x || canvas.width / 2;
+                        const deathY = p.ships[0]?.y || canvas.height / 2;
+                        const deathColor = p.ships[0]?.color || '#fff';
                         const aliveCount = players.filter(p => p.alive).length;
                         if (aliveCount === 1) {
                             explosion(deathX, deathY, 600, deathColor, 4, true);
@@ -990,10 +1101,76 @@
                     }
                 }
             }
+
+            for (let pi = 0; pi < players.length; pi++) {
+                const p = players[pi];
+                for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
+                    const b = p.bullets[bi];
+                    const cell = getGridCell(b.x, b.y);
+                    const nearby = grid[cell] || [];
+                    const adjacentCells = [
+                        cell, getGridCell(b.x + GRID_SIZE, b.y), getGridCell(b.x - GRID_SIZE, b.y),
+                        getGridCell(b.x, b.y + GRID_SIZE), getGridCell(b.x, b.y - GRID_SIZE)
+                    ].filter(c => grid[c]);
+
+                    [...new Set([].concat(...adjacentCells.map(c => grid[c])))].forEach(entity => {
+                        if (entity.hp && entity.size) { // Asteroid
+                            const a = entity;
+                            if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
+                                a.hp -= 20;
+                                showDamage(a.x, a.y, 20, '#888');
+                                console.log(`Bullet hit asteroid at (${a.x}, ${a.y}), new HP: ${a.hp}`);
+                                if (a.hp <= 0) {
+                                    if (a.size > 10) {
+                                        const splitCount = Math.min(3, Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 1);
+                                        for (let i = 0; i < splitCount; i++) {
+                                            asteroids.push({
+                                                x: a.x,
+                                                y: a.y,
+                                                size: Math.max(10, a.size / splitCount),
+                                                dx: a.dx + (Math.random() - 0.5) * 1,
+                                                dy: a.dy + (Math.random() - 0.5) * 1,
+                                                angle: 0,
+                                                spin: (Math.random() - 0.5) * 0.02,
+                                                hp: 500
+                                            });
+                                        }
+                                    }
+                                    const index = asteroids.indexOf(a);
+                                    if (index > -1) asteroids.splice(index, 1);
+                                    explosion(a.x, a.y, 30);
+                                    playSound(300, 0.3, 'sine', 0.2);
+                                }
+                                p.bullets.splice(bi, 1);
+                                return;
+                            }
+                        } else if (entity.w && entity.h) { // Obstacle
+                            const o = entity;
+                            if (b.x > o.x && b.x < o.x + o.w && b.y > o.y && b.y < o.y + o.h) {
+                                o.hp -= 20;
+                                showDamage(o.x + o.w / 2, o.y, 20, '#555');
+                                console.log(`Bullet hit obstacle at (${o.x}, ${o.y}), new HP: ${o.hp}`);
+                                if (o.hp <= 0) {
+                                    const index = obstacles.indexOf(o);
+                                    if (index > -1) obstacles.splice(index, 1);
+                                }
+                                p.bullets.splice(bi, 1);
+                                return;
+                            }
+                        }
+                    });
+                }
+            }
+            console.log('Post-collision state:', players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0]?.hp || 0 })));
         }
 
+        // UI with fading elimination messages
         function drawUI() {
             uiPanel.innerHTML = '';
+            const baseFontSize = 10;
+            const fontSize = Math.max(6, baseFontSize - Math.max(0, players.length - 10) * 0.5);
+            uiPanel.querySelectorAll('div').forEach(div => div.style.fontSize = `${fontSize}px`);
+
             players.forEach((p, i) => {
                 const totalHP = p.ships.reduce((sum, ship) => sum + (ship.hp || 0), 0);
                 const div = document.createElement('div');
@@ -1001,10 +1178,11 @@
                     <p>${p.isBot ? 'Bot' : 'Player'} ${i + 1}</p>
                     <p>HP: ${totalHP}</p>
                     <p>Ships: ${p.ships.length}</p>
-                    <div style="width: 100%; background: #333; border: 1px solid #0ff;">
-                        <div style="width: ${Math.min(100, totalHP / (p.ships.length * 200) * 100)}%; height: 8px; background: ${p.color};"></div>
+                    <div style="width: 100%; background: #333; border: 1px solid #fff;">
+                        <div style="width: ${Math.min(100, totalHP / 2)}%; height: 8px; background: ${p.color};"></div>
                     </div>
                 `;
+                div.style.fontSize = `${fontSize}px`;
                 uiPanel.appendChild(div);
             });
 
@@ -1040,10 +1218,17 @@
                 howToPlaySection.classList.remove('show');
                 eliminations = [];
                 players.length = 0;
+                asteroids.length = 0;
+                obstacles.length = 0;
+                particles.length = 0;
+                powerUps.length = 0;
+                frameCount = 0;
             }
         }
 
+        // Game loop
         function gameLoop() {
+            ctx.save();
             ctx.fillStyle = '#111';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             drawNebula();
@@ -1071,14 +1256,23 @@
             if (gameState === 'victory' && keys['r']) {
                 location.reload();
             }
+            ctx.restore();
             requestAnimationFrame(gameLoop);
         }
 
-        window.addEventListener('keydown', (e) => { keys[e.key] = true; });
+        // Event listeners
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
         window.addEventListener('keyup', (e) => keys[e.key] = false);
 
-        function showHowToPlay() { howToPlayModal.classList.add('show'); }
-        function hideHowToPlay() { howToPlayModal.classList.remove('show'); }
+        function showHowToPlay() {
+            howToPlayModal.classList.add('show');
+        }
+
+        function hideHowToPlay() {
+            howToPlayModal.classList.remove('show');
+        }
 
         gameLoop();
     </script>
