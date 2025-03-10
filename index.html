@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TopDownSpace: Swarm Wars</title>
-    <!-- Add a minimal favicon to suppress 404 error -->
     <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMjHx3gu4AAAAIElEQVR4Xu3NAQ0AAAgDoL9/aNuB+7oIAABgS2TDDgAAAPAFx2zG8nZ0qAAAAABJRU5ErkJggg==">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -90,7 +89,7 @@
             margin-bottom: 5px;
             padding: 3px;
             border-bottom: 1px solid #fff;
-            font-size: 10px; /* Adjusted dynamically */
+            font-size: 10px;
         }
         #howToPlayModal {
             display: none;
@@ -141,7 +140,7 @@
         <p style="font-size: 18px; margin: 20px 0; line-height: 1.5; background: rgba(255, 255, 255, 0.1); padding: 20px;">
             - <strong>Move:</strong> Use WASD (Player 1), Arrow Keys (Player 2), or IJKL (Player 3).<br>
             - <strong>Formation:</strong> Press E, Shift, or O to cycle formations.<br>
-            - <strong>Dash:</strong> Press Q, /, or U (3s cooldown).<br>
+            - <strong>Dash:</strong> Press Q, /, or U (2s cooldown).<br>
             - <strong>Shooting:</strong> Automatic based on ship count.<br>
             - <strong>Power-Ups:</strong> Collect +2 to +20 ships to grow your fleet.<br>
             - <strong>Avoid:</strong> Steer clear of asteroids and obstacles.<br>
@@ -199,7 +198,7 @@
         const stars = [];
         const keys = {};
         const damageDisplays = [];
-        let formationDisplays = []; // Changed from const to let
+        let formationDisplays = [];
         const powerUpDisplays = [];
         const MAX_ASTEROIDS = 10;
         const GRID_SIZE = 100;
@@ -334,11 +333,14 @@
 
         // Damage, formation, and power-up display
         function showDamage(x, y, damage, color) {
-            damageDisplays.push({ x, y, damage, color, time: Date.now() });
+            // Randomize position to avoid overlap
+            const offsetX = (Math.random() - 0.5) * 20; // ±10 pixels
+            const offsetY = (Math.random() - 0.5) * 20;
+            damageDisplays.push({ x: x + offsetX, y: y + offsetY - 4, damage, color, time: Date.now() });
         }
 
         function showFormation(x, y, formation, color) {
-            formationDisplays = [{ x, y, formation, color, time: Date.now() }]; // Now works with let
+            formationDisplays = [{ x, y, formation, color, time: Date.now() }];
         }
 
         function showPowerUp(x, y, count, color) {
@@ -354,7 +356,7 @@
                 ctx.fillStyle = d.color;
                 ctx.font = '8px "Press Start 2P"';
                 ctx.textAlign = 'center';
-                ctx.fillText(`- ${d.damage}`, d.x, d.y - 4);
+                ctx.fillText(`- ${d.damage}`, d.x, d.y);
             });
             formationDisplays.forEach((f, i) => {
                 if (Date.now() - f.time > 2000) {
@@ -378,15 +380,15 @@
             });
         }
 
-        // Player update with slower speed and sensitivity
+        // Player update with enhanced dash, FNCS difficulty, and speed
         function updatePlayer(player, index) {
             if (!player.alive || !player.ships[0]) return;
             const leadShip = player.ships[0];
             const { up, down, left, right, form, dash } = player.keys;
 
             if (!player.isBot) {
-                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.1, 2);
-                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.1, -1);
+                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.15, 3);
+                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
                 else leadShip.speed *= 0.95;
                 if (keys[left]) leadShip.angle -= 0.1;
                 if (keys[right]) leadShip.angle += 0.1;
@@ -395,8 +397,8 @@
                     player.formation = getNextFormation(player.formation);
                     showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
                 }
-                if (keys[dash] && Date.now() - player.lastDash > 3000) {
-                    leadShip.speed += 5;
+                if (keys[dash] && Date.now() - player.lastDash > 2000) {
+                    leadShip.speed += 15; // Significant dash boost
                     player.lastDash = Date.now();
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
@@ -438,24 +440,37 @@
                     const angleAdjustment = {
                         'fortnite': 0.05,
                         'average': 0.1,
-                        'fncs': 0.2
+                        'fncs': 0.4 // Insanely fast tracking
                     }[player.difficulty];
-                    const angleToTarget = Math.atan2(target.y - leadShip.y, target.x - leadShip.x);
+                    let angleToTarget = Math.atan2(target.y - leadShip.y, target.x - leadShip.x);
+                    if (player.difficulty === 'fncs') {
+                        // Predictive aiming for FNCS Champion
+                        const leadFactor = 0.1;
+                        const targetDx = target.dx || 0;
+                        const targetDy = target.dy || 0;
+                        const predictedX = target.x + targetDx * leadFactor * targetDistance;
+                        const predictedY = target.y + targetDy * leadFactor * targetDistance;
+                        angleToTarget = Math.atan2(predictedY - leadShip.y, predictedX - leadShip.x);
+                    }
                     leadShip.angle += (angleToTarget - leadShip.angle) * angleAdjustment;
-                    if (targetDistance > 100) leadShip.speed = Math.min(leadShip.speed + 0.1, 2);
-                    else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.1, -1);
+                    if (targetDistance > 100) leadShip.speed = Math.min(leadShip.speed + 0.15, 3);
+                    else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
                     else leadShip.speed *= 0.95;
 
                     for (let a of asteroids) {
                         const distToAsteroid = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
                         if (distToAsteroid < a.size + 20) {
-                            leadShip.angle += (leadShip.x < a.x ? 0.2 * (player.difficulty === 'fncs' ? 1.5 : 1) : -0.2 * (player.difficulty === 'fncs' ? 1.5 : 1));
+                            leadShip.angle += (leadShip.x < a.x ? 0.2 * (player.difficulty === 'fncs' ? 2 : 1) : -0.2 * (player.difficulty === 'fncs' ? 2 : 1));
                             break;
                         }
                     }
                     for (let o of obstacles) {
+                        const distToObstacle = Math.hypot((o.x + o.w / 2) - leadShip.x, (o.y + o.h / 2) - leadShip.y);
+                        if (distToObstacle < 50) {
+                            leadShip.angle += (leadShip.x < o.x + o.w / 2 ? 0.3 * (player.difficulty === 'fncs' ? 1.5 : 1) : -0.3 * (player.difficulty === 'fncs' ? 1.5 : 1));
+                        }
                         if (leadShip.x > o.x && leadShip.x < o.x + o.w && leadShip.y > o.y && leadShip.y < o.y + o.h) {
-                            leadShip.angle += (leadShip.x < o.x + o.w / 2 ? 0.2 : -0.2);
+                            leadShip.angle += (leadShip.x < o.x + o.w / 2 ? 0.3 : -0.3);
                             break;
                         }
                     }
@@ -463,11 +478,21 @@
                     if (target !== nearestPowerUp && targetDistance < 100 && Date.now() - player.lastShot > 150) {
                         player.ships.forEach(ship => {
                             if (player.bullets.length < MAX_BULLETS_PER_PLAYER) {
+                                let shootAngle = ship.angle;
+                                if (player.difficulty === 'fncs') {
+                                    const leadFactor = 0.1;
+                                    const targetDx = target.dx || 0;
+                                    const targetDy = target.dy || 0;
+                                    const dist = Math.hypot(target.x - ship.x, target.y - ship.y);
+                                    const predictedX = target.x + targetDx * leadFactor * dist;
+                                    const predictedY = target.y + targetDy * leadFactor * dist;
+                                    shootAngle = Math.atan2(predictedY - ship.y, predictedX - ship.x);
+                                }
                                 player.bullets.push({
-                                    x: ship.x + Math.cos(ship.angle) * 4,
-                                    y: ship.y + Math.sin(ship.angle) * 4,
-                                    dx: Math.cos(ship.angle) * 4,
-                                    dy: Math.sin(ship.angle) * 4,
+                                    x: ship.x + Math.cos(shootAngle) * 4,
+                                    y: ship.y + Math.sin(shootAngle) * 4,
+                                    dx: Math.cos(shootAngle) * 4,
+                                    dy: Math.sin(shootAngle) * 4,
                                     color: ship.color,
                                     time: Date.now()
                                 });
@@ -476,13 +501,13 @@
                         player.lastShot = Date.now();
                         playSound(500, 0.1, 'square', 0.15);
                     }
-                    const dashChance = { 'fortnite': 0, 'average': 0.01, 'fncs': 0.05 }[player.difficulty];
-                    if (Math.random() < dashChance && Date.now() - player.lastDash > 3000) {
-                        leadShip.speed += 5;
+                    const dashChance = { 'fortnite': 0, 'average': 0.01, 'fncs': 0.1 }[player.difficulty];
+                    if (Math.random() < dashChance && Date.now() - player.lastDash > 2000) {
+                        leadShip.speed += 15;
                         player.lastDash = Date.now();
                         playSound(1000, 0.2, 'triangle', 0.2);
                     }
-                    const formChance = { 'fortnite': 0, 'average': 0.02, 'fncs': 0.05 }[player.difficulty];
+                    const formChance = { 'fortnite': 0, 'average': 0.02, 'fncs': 0.1 }[player.difficulty];
                     if (Math.random() < formChance) {
                         player.formation = getNextFormation(player.formation);
                         showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
@@ -741,7 +766,7 @@
             playSound(80, 0.5, 'sine', 0.2);
         }
 
-        // Collision logic with controlled asteroid fragments
+        // Collision logic with improved consistency
         function checkCollisions() {
             Object.keys(grid).forEach(key => delete grid[key]);
             players.forEach(p => p.ships.forEach(s => {
@@ -782,8 +807,9 @@
                             const a = entity;
                             const dist = Math.hypot(s.x - a.x, s.y - a.y);
                             if (dist < a.size + 3) {
-                                s.hp -= 10;
-                                showDamage(s.x, s.y, 10, s.color);
+                                s.hp -= 5; // Reduced asteroid damage
+                                showDamage(s.x, s.y, 5, s.color);
+                                console.log(`Ship ${pi}:${si} hit asteroid at (${a.x}, ${a.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -818,6 +844,7 @@
                             if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
                                 s.hp -= 15;
                                 showDamage(s.x, s.y, 15, s.color);
+                                console.log(`Ship ${pi}:${si} hit obstacle at (${o.x}, ${o.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -834,11 +861,12 @@
                             return;
                         } else if (entity.dx && entity.dy) { // Bullet from other player
                             const b = entity;
-                            if (Math.hypot(s.x - b.x, s.y - b.y) < 3) {
-                                s.hp -= 10;
+                            if (Math.hypot(s.x - b.x, s.y - b.y) < 5) { // Increased collision radius
+                                s.hp -= 15; // Increased bullet damage
                                 s.dx -= b.dx * 0.1;
                                 s.dy -= b.dy * 0.1;
-                                showDamage(s.x, s.y, 10, s.color);
+                                showDamage(s.x, s.y, 15, s.color);
+                                console.log(`Ship ${pi}:${si} hit by bullet at (${b.x}, ${b.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -852,13 +880,21 @@
                             const op = players.find(p => p.ships.includes(os));
                             if (!op || op === p || !op.alive) return;
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            if (dist < 5 && s !== os) {
+                            const shipSize = 10; // Approximate ship size for bounding box
+                            const collided = dist < 10 || (
+                                s.x + shipSize > os.x - shipSize &&
+                                s.x - shipSize < os.x + shipSize &&
+                                s.y + shipSize > os.y - shipSize &&
+                                s.y - shipSize < os.y + shipSize
+                            );
+                            if (collided && s !== os) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 2);
                                 s.hp -= damage;
                                 os.hp -= damage;
                                 showDamage(s.x, s.y, damage, s.color);
                                 showDamage(os.x, os.y, damage, os.color);
+                                console.log(`Ship ${pi}:${si} collided with ship ${players.indexOf(op)}:${op.ships.indexOf(os)}, damage: ${damage}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 40, s.color);
@@ -900,6 +936,7 @@
                             if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
                                 a.hp -= 20;
                                 showDamage(a.x, a.y, 20, '#888');
+                                console.log(`Bullet hit asteroid at (${a.x}, ${a.y}), new HP: ${a.hp}`);
                                 if (a.hp <= 0) {
                                     if (a.size > 10) {
                                         const splitCount = Math.min(3, Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 1);
@@ -929,6 +966,7 @@
                             if (b.x > o.x && b.x < o.x + o.w && b.y > o.y && b.y < o.y + o.h) {
                                 o.hp -= 20;
                                 showDamage(o.x + o.w / 2, o.y, 20, '#555');
+                                console.log(`Bullet hit obstacle at (${o.x}, ${o.y}), new HP: ${o.hp}`);
                                 if (o.hp <= 0) {
                                     const index = obstacles.indexOf(o);
                                     if (index > -1) obstacles.splice(index, 1);
