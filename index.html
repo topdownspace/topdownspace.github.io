@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TopDownSpace: Swarm Wars</title>
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAJBJREFUWEft1kEOwCAIQ1H7/89s4iYkQkhkRERk8YQJYwAJJTiT3W2A3g5o7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDv4G6H0D5l4KpgAAAABJRU5ErkJggg==">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAJBJREFUWEft1kEOwCAIQ1H7/89s4iYkQkhkRERk8YQJYwAJJTiT3W2A3g5o7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDv4G6H0D5l4KpgAAAABJRU5ErkJggg==">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         html, body {
@@ -92,6 +92,7 @@
         let botCount = 0;
         let gameState = 'menu';
         let eliminations = [];
+        let frameCount = 0; // To delay collision checks
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -141,15 +142,15 @@
             const totalPlayers = playerCount + botCount;
             players.length = 0; // Reset players array
 
-            // Human players
+            // Human players with safer spawn positions
             const humanConfigs = [
-                { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00', x: canvas.width * 0.2 },
-                { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0', x: canvas.width * 0.5 },
-                { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#00f', x: canvas.width * 0.8 }
+                { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00', x: canvas.width * 0.2, y: canvas.height * 0.5 },
+                { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0', x: canvas.width * 0.5, y: canvas.height * 0.5 },
+                { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#00f', x: canvas.width * 0.8, y: canvas.height * 0.5 }
             ];
             for (let i = 0; i < playerCount; i++) {
                 players.push({
-                    ships: [{ x: humanConfigs[i].x, y: canvas.height * 0.5, angle: 0, speed: 0, hp: 200, color: humanConfigs[i].color, dx: 0, dy: 0 }],
+                    ships: [{ x: humanConfigs[i].x, y: humanConfigs[i].y, angle: 0, speed: 0, hp: 200, color: humanConfigs[i].color, dx: 0, dy: 0 }],
                     keys: humanConfigs[i].keys,
                     bullets: [],
                     alive: true,
@@ -160,11 +161,18 @@
                 });
             }
 
-            // Bots
+            // Bots with safer random spawn
             for (let i = 0; i < botCount; i++) {
+                let botX, botY;
+                let validPosition = false;
+                while (!validPosition) {
+                    botX = Math.random() * (canvas.width - 100) + 50;
+                    botY = Math.random() * (canvas.height - 100) + 50;
+                    validPosition = players.every(p => p.ships.every(s => Math.hypot(s.x - botX, s.y - botY) > 100));
+                }
                 players.push({
-                    ships: [{ x: Math.random() * canvas.width, y: Math.random() * canvas.height, angle: 0, speed: 0, hp: 200, color: '#888', dx: 0, dy: 0 }],
-                    keys: { up: '', down: '', left: '', right: '', form: '', dash: '' }, // Dummy keys for bots
+                    ships: [{ x: botX, y: botY, angle: 0, speed: 0, hp: 200, color: '#888', dx: 0, dy: 0 }],
+                    keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
                     bullets: [],
                     alive: true,
                     formation: 'line',
@@ -180,6 +188,8 @@
             spawnStars();
             spawnNebula();
             spawnAsteroids();
+            frameCount = 0; // Reset frame counter
+            console.log('Players initialized:', players.map(p => ({ alive: p.alive, ships: p.ships.length })));
             gameLoop();
         }
 
@@ -188,7 +198,7 @@
             ctx.save();
             ctx.translate(ship.x, ship.y);
             ctx.rotate(ship.angle);
-            const size = Math.max(5, 50 - totalEntities * 0.045); // Dynamic ship size based on total entities
+            const size = Math.max(5, 50 - totalEntities * 0.045); // Dynamic ship size
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -234,7 +244,6 @@
             const { up, down, left, right, form, dash } = player.keys;
 
             if (!player.isBot) {
-                // Human controls
                 if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.2, 4);
                 else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
                 else leadShip.speed *= 0.95;
@@ -250,56 +259,24 @@
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                // Redesigned Bot AI
                 const target = players.find(p => p.alive && p !== player && p.ships.length > 0);
                 if (target) {
                     const angleToTarget = Math.atan2(target.ships[0].y - leadShip.y, target.ships[0].x - leadShip.x);
                     leadShip.angle += (angleToTarget - leadShip.angle) * 0.05;
-
-                    // Random movement
-                    if (Math.random() < 0.8) {
-                        leadShip.speed = Math.min(leadShip.speed + 0.2, 4); // 80% chance to accelerate
-                    } else {
-                        leadShip.speed = Math.max(leadShip.speed - 0.2, -2); // 20% chance to decelerate
-                    }
-
-                    // Formation change
-                    if (Math.random() < 0.05) {
-                        player.formation = ['line', 'v', 'wedge', 'cluster'][Math.floor(Math.random() * 4)];
-                    }
-
-                    // Dash
+                    if (Math.random() < 0.8) leadShip.speed = Math.min(leadShip.speed + 0.2, 4);
+                    else leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
+                    if (Math.random() < 0.05) player.formation = ['line', 'v', 'wedge', 'cluster'][Math.floor(Math.random() * 4)];
                     if (Math.random() < 0.02 && Date.now() - player.lastDash > 5000) {
                         leadShip.speed += 5;
                         player.lastDash = Date.now();
                         playSound(1000, 0.2, 'triangle', 0.2);
                     }
-
-                    // Shooting
-                    if (Math.random() < 0.1 || Date.now() - player.lastShot > 200) {
-                        player.ships.forEach(ship => {
-                            player.bullets.push({
-                                x: ship.x + Math.cos(ship.angle) * 10,
-                                y: ship.y + Math.sin(ship.angle) * 10,
-                                dx: Math.cos(ship.angle) * 6,
-                                dy: Math.sin(ship.angle) * 6,
-                                color: ship.color,
-                                time: Date.now()
-                            });
-                        });
-                        player.lastShot = Date.now();
-                        playSound(500, 0.1, 'square', 0.15);
-                    }
                 } else {
-                    // Wander when no target
                     leadShip.speed *= 0.95;
-                    if (Math.random() < 0.1) {
-                        leadShip.angle += (Math.random() - 0.5) * 0.2;
-                    }
+                    if (Math.random() < 0.1) leadShip.angle += (Math.random() - 0.5) * 0.2;
                 }
             }
 
-            // Move and align ships
             player.ships.forEach((ship, i) => {
                 let targetX, targetY, offsetX, offsetY;
                 if (i === 0) {
@@ -322,30 +299,12 @@
                     }
                     targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
                     targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
-
-                    obstacles.forEach(o => {
-                        const dist = Math.hypot(ship.x - (o.x + o.w / 2), ship.y - (o.y + o.h / 2));
-                        if (dist < 50) {
-                            const angle = Math.atan2(ship.y - (o.y + o.h / 2), ship.x - (o.x + o.w / 2));
-                            targetX += Math.cos(angle) * 20;
-                            targetY += Math.sin(angle) * 20;
-                        }
-                    });
-
                     ship.dx = (targetX - ship.x) * 0.3;
                     ship.dy = (targetY - ship.y) * 0.3;
                     ship.angle = leadShip.angle;
                 }
                 ship.dx *= 0.98;
                 ship.dy *= 0.98;
-                obstacles.forEach(o => {
-                    const dist = Math.hypot(ship.x - (o.x + o.w / 2), ship.y - (o.y + o.h / 2));
-                    if (dist < 50) {
-                        const angle = Math.atan2(ship.y - (o.y + o.h / 2), ship.x - (o.x + o.w / 2));
-                        ship.dx += Math.cos(angle) * 0.5;
-                        ship.dy += Math.sin(angle) * 0.5;
-                    }
-                });
                 ship.x += ship.dx;
                 ship.y += ship.dy;
                 ship.x = Math.max(10, Math.min(canvas.width - 10, ship.x));
@@ -358,6 +317,22 @@
                     color: ship.color
                 });
             });
+
+            const shootDelay = 200 + player.ships.length * 5;
+            if (Date.now() - player.lastShot > shootDelay || (player.isBot && Math.random() < 0.1)) {
+                player.ships.forEach(ship => {
+                    player.bullets.push({
+                        x: ship.x + Math.cos(ship.angle) * 10,
+                        y: ship.y + Math.sin(ship.angle) * 10,
+                        dx: Math.cos(ship.angle) * 6,
+                        dy: Math.sin(ship.angle) * 6,
+                        color: ship.color,
+                        time: Date.now()
+                    });
+                });
+                player.lastShot = Date.now();
+                playSound(500, 0.1, 'square', 0.15);
+            }
 
             player.bullets = player.bullets.filter(b => {
                 b.x += b.dx;
@@ -548,6 +523,7 @@
 
         // Collision logic
         function checkCollisions() {
+            if (frameCount < 2) return; // Delay collision checks for 2 frames to allow initial positioning
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
                 if (!p.alive) continue;
@@ -557,7 +533,7 @@
                         const a = asteroids[ai];
                         const dist = Math.hypot(s.x - a.x, s.y - a.y);
                         if (dist < a.size + 10) {
-                            s.hp -= 10; // Reduced damage
+                            s.hp -= 10;
                             showDamage(s.x, s.y, 10, s.color);
                             if (s.hp <= 0) {
                                 p.ships.splice(si, 1);
@@ -592,7 +568,7 @@
                     for (let oi = obstacles.length - 1; oi >= 0; oi--) {
                         const o = obstacles[oi];
                         if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
-                            s.hp -= 15; // Reduced damage
+                            s.hp -= 15;
                             showDamage(s.x, s.y, 15, s.color);
                             if (s.hp <= 0) {
                                 p.ships.splice(si, 1);
@@ -611,7 +587,7 @@
                         for (let bi = op.bullets.length - 1; bi >= 0; bi--) {
                             const b = op.bullets[bi];
                             if (Math.hypot(s.x - b.x, s.y - b.y) < 10) {
-                                s.hp -= 10; // Reduced bullet damage
+                                s.hp -= 10;
                                 s.dx -= b.dx * 0.1;
                                 s.dy -= b.dy * 0.1;
                                 showDamage(s.x, s.y, 10, s.color);
@@ -631,9 +607,9 @@
                         for (let osi = op.ships.length - 1; osi >= 0; osi--) {
                             const os = op.ships[osi];
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            if (dist < 20) {
+                            if (dist < 20 && s !== os) { // Avoid self-collision
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
-                                const damage = Math.floor(speed * 2); // Reduced collision damage
+                                const damage = Math.floor(speed * 2);
                                 s.hp -= damage;
                                 os.hp -= damage;
                                 showDamage(s.x, s.y, damage, s.color);
@@ -782,6 +758,7 @@
                 checkCollisions();
             }
             drawUI();
+            frameCount++;
 
             if ((gameState === 'gameover' || gameState === 'victory') && keys['r']) {
                 location.reload();
