@@ -30,13 +30,12 @@
             image-rendering: pixelated;
             z-index: 1;
         }
-        #menu, #botMenu, #difficultyMenu, #howToPlayModal {
+        #menu {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 500px; /* Adjusted for better fit */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             text-align: center;
             background: linear-gradient(45deg, #1a1a1a, #000);
             padding: 20px;
@@ -45,17 +44,24 @@
             animation: pulse 4s infinite alternate, nebula 10s infinite;
             z-index: 20;
             overflow: hidden;
-            display: none; /* Hidden by default, shown via JS */
-        }
-        #menu {
-            display: block; /* Only main menu visible initially */
+            display: block;
         }
         #botMenu, #difficultyMenu, #howToPlayModal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
             background: linear-gradient(to bottom, #1a1a1a, #000);
             padding: 20px;
             border: 4px solid #fff;
             box-shadow: 0 0 20px #fff;
             animation: glow 1.5s infinite alternate;
+            z-index: 20;
+            overflow: hidden;
+            display: none;
         }
         @keyframes pulse {
             0% { box-shadow: 0 0 30px #0ff, 0 0 50px #00f; }
@@ -81,8 +87,8 @@
             100% { transform: rotate(360deg); }
         }
         #menu h1, #botMenu h1, #difficultyMenu h1, #howToPlayModal h1 {
-            font-size: 40px; /* Reduced for better fit */
-            margin: 0 0 20px 0;
+            font-size: 60px;
+            margin: 0 0 40px 0;
             text-shadow: 0 0 20px #0ff, 0 0 30px #00f;
             animation: flicker 0.2s infinite alternate;
             color: #0ff;
@@ -93,9 +99,9 @@
         }
         #menu button, #botMenu button, #difficultyMenu button, #howToPlayModal button {
             font-family: 'Press Start 2P', monospace;
-            font-size: 16px; /* Reduced size */
-            padding: 10px 20px;
-            margin: 10px 5px;
+            font-size: 20px;
+            padding: 15px 30px;
+            margin: 15px 10px;
             background: #333;
             color: #fff;
             border: 4px solid #0ff;
@@ -173,12 +179,12 @@
     </div>
     <div id="menu">
         <h1>SWARM WARS</h1>
-        <p style="font-size: 16px; margin: 20px 0; color: #0ff;">Command Your Fleet to Victory!</p>
+        <p style="font-size: 24px; margin: 30px 0; color: #0ff;">Command Your Fleet to Victory!</p>
         <button onclick="showBotMenu(1)">1 Player</button>
         <button onclick="showBotMenu(2)">2 Players</button>
         <button onclick="showBotMenu(3)">3 Players</button>
         <button onclick="showHowToPlay()">How to Play</button>
-        <button onclick="location.reload()" style="margin-top: 20px;">Back</button>
+        <button onclick="location.reload()" style="margin-top: 30px;">Back</button>
     </div>
     <div id="botMenu">
         <h1>CONFIGURE BOTS</h1>
@@ -292,39 +298,22 @@
             menu.style.display = 'none';
             botMenu.style.display = 'block';
             difficultyMenu.style.display = 'none';
-            restrictToCanvas(botMenu);
         }
 
         function showDifficultyMenu(bots) {
             botCount = bots;
             botMenu.style.display = 'none';
             difficultyMenu.style.display = 'block';
-            restrictToCanvas(difficultyMenu);
         }
 
         function goBack() {
             if (difficultyMenu.style.display !== 'none') {
                 difficultyMenu.style.display = 'none';
                 botMenu.style.display = 'block';
-                restrictToCanvas(botMenu);
             } else if (botMenu.style.display !== 'none') {
                 botMenu.style.display = 'none';
                 menu.style.display = 'block';
-                restrictToCanvas(menu);
             }
-        }
-
-        function restrictToCanvas(element) {
-            const canvasRect = canvas.getBoundingClientRect();
-            const elementRect = element.getBoundingClientRect();
-            let left = parseInt(element.style.left || '50%') - elementRect.width / 2;
-            let top = parseInt(element.style.top || '50%') - elementRect.height / 2;
-
-            left = Math.max(canvasRect.left, Math.min(canvasRect.right - elementRect.width, left));
-            top = Math.max(canvasRect.top, Math.min(canvasRect.bottom - elementRect.height, top));
-
-            element.style.left = `${left + elementRect.width / 2}px`;
-            element.style.top = `${top + elementRect.height / 2}px`;
         }
 
         function startGame(bots, difficulty) {
@@ -339,6 +328,7 @@
             powerUpDisplays.length = 0;
             Object.keys(grid).forEach(key => delete grid[key]);
 
+            const totalPlayers = playerCount + botCount;
             const humanConfigs = [
                 { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00', x: canvas.width * 0.2, y: canvas.height * 0.4 },
                 { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0', x: canvas.width * 0.5, y: canvas.height * 0.6 },
@@ -553,7 +543,6 @@
                     }
                     leadShip.angle += Math.sin(angleToTarget - leadShip.angle) * angleAdjustment;
 
-                    // Enhanced obstacle and corner avoidance
                     let avoidanceAngle = 0;
                     for (let a of asteroids) {
                         const dist = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
@@ -567,7 +556,6 @@
                             avoidanceAngle += Math.atan2((o.y + o.h / 2) - leadShip.y, (o.x + o.w / 2) - leadShip.x) * -0.4;
                         }
                     }
-                    // Corner avoidance
                     if (leadShip.x < 50) avoidanceAngle += 0.2;
                     if (leadShip.x > canvas.width - 50) avoidanceAngle -= 0.2;
                     if (leadShip.y < 50) avoidanceAngle += 0.2;
@@ -579,8 +567,7 @@
                     else if (targetDistance < optimalDistance - 20) leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
                     else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
 
-                    // Slower formation switching
-                    if (Date.now() - player.lastFormationChange > 10000) { // 10 seconds cooldown
+                    if (Date.now() - player.lastFormationChange > 10000) {
                         if (player.ships.length > 15 && player.formation !== 'swarm') {
                             player.formation = 'swarm';
                             showFormation(leadShip.x, leadShip.y, 'swarm', '#fff');
@@ -665,7 +652,6 @@
                     formations[player.formation]();
                     targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
                     targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
-                    // Move at actual speed, not accelerated
                     const dx = targetX - ship.x;
                     const dy = targetY - ship.y;
                     const distance = Math.hypot(dx, dy);
@@ -685,13 +671,15 @@
                 ship.y += ship.dy;
                 ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x));
                 ship.y = Math.max(2, Math.min(canvas.height - 2, ship.y));
-                particles.push({
-                    x: ship.x - Math.cos(ship.angle) * 2,
-                    y: ship.y - Math.sin(ship.angle) * 2,
-                    size: 0.3,
-                    life: 8,
-                    color: ship.color
-                });
+                if (frameCount % 2 === 0) { // Reduce particle generation
+                    particles.push({
+                        x: ship.x - Math.cos(ship.angle) * 2,
+                        y: ship.y - Math.sin(ship.angle) * 2,
+                        size: 0.3,
+                        life: 8,
+                        color: ship.color
+                    });
+                }
             });
 
             if (Date.now() - player.lastShot > 150 + player.ships.length * 3) {
@@ -716,7 +704,9 @@
                 b.x += b.dx * 1.5;
                 b.y += b.dy * 1.5;
                 if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) return false;
-                particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 0.3, life: 5, color: b.color });
+                if (frameCount % 2 === 0) { // Reduce particle generation
+                    particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 0.3, life: 5, color: b.color });
+                }
                 return Date.now() - b.time < 1000;
             });
         }
@@ -735,7 +725,7 @@
         }
 
         function spawnAsteroids() {
-            while (asteroids.length < MAX_ASTEROIDS) {
+            if (asteroids.length < MAX_ASTEROIDS && frameCount % 60 === 0) { // Slower spawn rate
                 asteroids.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
@@ -846,7 +836,7 @@
         }
 
         function spawnPowerUps() {
-            if (Math.random() < 0.005) {
+            if (Math.random() < 0.005 && frameCount % 60 === 0) { // Slower spawn rate
                 const roll = Math.random();
                 const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
                 powerUps.push({
@@ -875,11 +865,14 @@
                 ctx.fillText(pu.type, pu.x, pu.y + 5);
                 ctx.shadowBlur = 0;
 
-                players.forEach(p => {
-                    p.ships.forEach(s => {
+                let collected = false;
+                for (let pi = 0; pi < players.length && !collected; pi++) {
+                    const p = players[pi];
+                    for (let si = 0; si < p.ships.length && !collected; si++) {
+                        const s = p.ships[si];
                         if (Math.hypot(s.x - pu.x, s.y - pu.y) < pulseSize && p.ships.length < MAX_SHIPS_PER_PLAYER) {
-                            const count = parseInt(pu.type.slice(1));
-                            for (let j = 0; j < count && p.ships.length < MAX_SHIPS_PER_PLAYER; j++) {
+                            const count = Math.min(parseInt(pu.type.slice(1)), MAX_SHIPS_PER_PLAYER - p.ships.length);
+                            for (let j = 0; j < count; j++) {
                                 p.ships.push({
                                     x: s.x,
                                     y: s.y,
@@ -894,10 +887,11 @@
                             showPowerUp(pu.x, pu.y, count, '#0f0');
                             powerUps.splice(i, 1);
                             playSound(600, 0.3, 'sine', 0.2);
-                            return; // Exit loop after collecting
+                            collected = true;
+                            break;
                         }
-                    });
-                });
+                    }
+                }
             });
         }
 
@@ -933,11 +927,20 @@
 
         function checkCollisions() {
             Object.keys(grid).forEach(key => delete grid[key]);
-            players.forEach(p => p.ships.forEach(s => {
-                const cell = getGridCell(s.x, s.y);
-                grid[cell] = grid[cell] || [];
-                grid[cell].push(s);
-            }));
+            players.forEach(p => {
+                if (p.alive) {
+                    p.ships.forEach(s => {
+                        const cell = getGridCell(s.x, s.y);
+                        grid[cell] = grid[cell] || [];
+                        grid[cell].push(s);
+                    });
+                    p.bullets.forEach(b => {
+                        const cell = getGridCell(b.x, b.y);
+                        grid[cell] = grid[cell] || [];
+                        grid[cell].push(b);
+                    });
+                }
+            });
             asteroids.forEach(a => {
                 const cell = getGridCell(a.x, a.y);
                 grid[cell] = grid[cell] || [];
@@ -948,15 +951,10 @@
                 grid[cell] = grid[cell] || [];
                 grid[cell].push(o);
             });
-            players.forEach(p => p.bullets.forEach(b => {
-                const cell = getGridCell(b.x, b.y);
-                grid[cell] = grid[cell] || [];
-                grid[cell].push(b);
-            }));
 
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
-                if (!p.ships[0]) continue;
+                if (!p.alive || !p.ships[0]) continue;
 
                 for (let si = p.ships.length - 1; si >= 0; si--) {
                     const s = p.ships[si];
@@ -1004,17 +1002,16 @@
                                     playSound(300, 0.3, 'sine', 0.2);
                                 }
                             }
-                        } else if (entity.w && entity.h) { // Obstacle with collision
+                        } else if (entity.w && entity.h) { // Obstacle
                             const o = entity;
                             const shipSize = 15;
                             if (s.x + shipSize > o.x && s.x - shipSize < o.x + o.w && s.y + shipSize > o.y && s.y - shipSize < o.y + o.h) {
-                                s.hp -= 5; // Reduced damage
+                                s.hp -= 5;
                                 showDamage(s.x, s.y, 5, s.color);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
                                 }
-                                // Push ship away
                                 const dx = s.x - (o.x + o.w / 2);
                                 const dy = s.y - (o.y + o.h / 2);
                                 const dist = Math.hypot(dx, dy);
@@ -1098,6 +1095,7 @@
 
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
+                if (!p.alive) continue;
                 for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
                     const b = p.bullets[bi];
                     const cell = getGridCell(b.x, b.y);
@@ -1163,6 +1161,7 @@
             uiPanel.querySelectorAll('div').forEach(div => div.style.fontSize = `${fontSize}px`);
 
             players.forEach((p, i) => {
+                if (!p.alive) return; // Skip dead players
                 const totalHP = p.ships.reduce((sum, ship) => sum + (ship.hp || 0), 0);
                 const div = document.createElement('div');
                 div.innerHTML = `
@@ -1213,12 +1212,14 @@
             if (gameState === 'playing' || gameState === 'victory') {
                 spawnAsteroids();
                 spawnPowerUps();
-                const totalEntities = players.reduce((sum, p) => sum + p.ships.length, 0);
+                const totalEntities = players.reduce((sum, p) => sum + (p.alive ? p.ships.length : 0), 0);
                 players.forEach((p, i) => {
-                    p.index = i;
-                    updatePlayer(p, i);
-                    p.ships.forEach((s, j) => drawShip(s, totalEntities, j === 0, !p.isBot));
-                    drawBullets(p);
+                    if (p.alive) {
+                        p.index = i;
+                        updatePlayer(p, i);
+                        p.ships.forEach((s, j) => drawShip(s, totalEntities, j === 0, !p.isBot));
+                        drawBullets(p);
+                    }
                 });
                 updateAsteroids();
                 drawObstacles();
@@ -1248,15 +1249,12 @@
 
         function showHowToPlay() {
             howToPlayModal.style.display = 'block';
-            restrictToCanvas(howToPlayModal);
         }
 
         function hideHowToPlay() {
             howToPlayModal.style.display = 'none';
         }
 
-        // Initial restriction for main menu
-        restrictToCanvas(menu);
         gameLoop();
     </script>
 </body>
