@@ -10,24 +10,27 @@
         html, body {
             margin: 0;
             padding: 0;
-            height: 100%;
             width: 100%;
-            overflow: hidden;
             background: #000;
             font-family: 'Press Start 2P', monospace;
             color: #fff;
+            overflow-x: hidden;
+        }
+        #gameContainer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            padding: 20px 0;
+            min-height: 100vh; /* Ensures container takes full viewport height */
         }
         canvas {
             border: 1px solid #fff;
             image-rendering: pixelated;
-            position: absolute;
-            top: 0;
-            left: 0;
             z-index: 1;
         }
-        /* Enhanced main menu styling */
         #menu {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -96,7 +99,7 @@
             color: #0ff;
         }
         #botMenu, #difficultyMenu {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -114,9 +117,6 @@
             100% { box-shadow: 0 0 30px #fff; }
         }
         #uiPanel {
-            position: fixed;
-            top: 0;
-            right: 0;
             width: 200px;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
@@ -125,6 +125,7 @@
             box-shadow: 0 0 10px #fff;
             z-index: 10;
             overflow-y: auto;
+            margin-left: 10px;
         }
         #uiPanel div {
             margin-bottom: 5px;
@@ -134,6 +135,10 @@
         }
         #howToPlayModal {
             display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.9);
             padding: 40px;
             max-height: 80%;
@@ -143,26 +148,22 @@
         #howToPlayModal.show {
             display: block;
         }
-        /* New sections beneath the game */
-        #aboutSection, #howToPlaySection {
-            position: absolute;
-            bottom: 0;
-            left: 0;
+        #contentBelow {
             width: 100%;
+            max-width: 960px; /* Matches game width + sidebar */
+            margin: 20px auto;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            border-top: 2px solid #fff;
             text-align: center;
             color: #ccc;
             font-size: 12px;
             line-height: 1.5;
-            z-index: 2;
-            display: none; /* Hidden by default, show when game starts */
         }
-        #aboutSection.show, #howToPlaySection.show {
-            display: block;
+        #aboutSection, #howToPlaySection {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #fff;
+            padding: 20px;
+            margin-bottom: 20px;
         }
-        /* Starfield animation */
         body::before {
             content: '';
             position: fixed;
@@ -182,7 +183,10 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="uiPanel"></div>
+    </div>
     <div id="menu">
         <h1>SWARM WARS</h1>
         <p style="font-size: 24px; margin: 30px 0; color: #0ff;">Command Your Fleet to Victory!</p>
@@ -226,26 +230,26 @@
             <button onclick="hideHowToPlay()">Close</button>
         </p>
     </div>
-    <div id="uiPanel"></div>
-    <div id="aboutSection">
-        <h2>About Swarm Wars</h2>
-        <p>Swarm Wars is a thrilling top-down space combat game where you command a fleet of ships against AI or other players. Battle through asteroid fields, collect power-ups, and outlast your opponents to claim victory! Developed by the xAI team, inspired by classic arcade shooters.</p>
-        <p>Version: 1.0 | Created by: xAI Dev Team</p>
-    </div>
-    <div id="howToPlaySection">
-        <h2>How to Play</h2>
-        <p>
-            - <strong>Move:</strong> Use WASD (Player 1), Arrow Keys (Player 2), or IJKL (Player 3).<br>
-            - <strong>Formation:</strong> Press E, Shift, or O to cycle formations.<br>
-            - <strong>Dash:</strong> Press Q, /, or U (2s cooldown).<br>
-            - <strong>Shooting:</strong> Automatic based on ship count.<br>
-            - <strong>Power-Ups:</strong> Collect +2 to +20 ships to grow your fleet.<br>
-            - <strong>Avoid:</strong> Steer clear of asteroids and obstacles.<br>
-            - <strong>Win:</strong> Be the last survivor!
-        </p>
+    <div id="contentBelow">
+        <div id="aboutSection">
+            <h2>About Swarm Wars</h2>
+            <p>Swarm Wars is a thrilling top-down space combat game where you command a fleet of ships against AI or other players. Battle through asteroid fields, collect power-ups, and outlast your opponents to claim victory! Developed by the xAI team, inspired by classic arcade shooters.</p>
+            <p>Version: 1.0 | Created by: xAI Dev Team</p>
+        </div>
+        <div id="howToPlaySection">
+            <h2>How to Play</h2>
+            <p>
+                - <strong>Move:</strong> Use WASD (Player 1), Arrow Keys (Player 2), or IJKL (Player 3).<br>
+                - <strong>Formation:</strong> Press E, Shift, or O to cycle formations.<br>
+                - <strong>Dash:</strong> Press Q, /, or U (2s cooldown).<br>
+                - <strong>Shooting:</strong> Automatic based on ship count.<br>
+                - <strong>Power-Ups:</strong> Collect +2 to +20 ships to grow your fleet.<br>
+                - <strong>Avoid:</strong> Steer clear of asteroids and obstacles.<br>
+                - <strong>Win:</strong> Be the last survivor!
+            </p>
+        </div>
     </div>
     <script>
-        // Core setup
         let playerCount = 0;
         let botCount = 0;
         let gameState = 'menu';
@@ -262,16 +266,11 @@
         const difficultyMenu = document.getElementById('difficultyMenu');
         const howToPlayModal = document.getElementById('howToPlayModal');
         const uiPanel = document.getElementById('uiPanel');
-        const aboutSection = document.getElementById('aboutSection');
-        const howToPlaySection = document.getElementById('howToPlaySection');
 
-        // Set canvas to square
-        const squareSize = Math.min(window.innerWidth - 200, window.innerHeight);
+        const squareSize = Math.min(window.innerWidth - 220, window.innerHeight - 40); // Adjusted for padding
         canvas.width = squareSize;
         canvas.height = squareSize;
-        canvas.style.left = `${(window.innerWidth - squareSize) / 2}px`;
 
-        // Audio setup
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(frequency, duration, type = 'square', volume = 0.1) {
             const osc = audioCtx.createOscillator();
@@ -286,7 +285,6 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
-        // Game objects with spatial grid
         const players = [];
         const asteroids = [];
         const obstacles = [];
@@ -305,11 +303,11 @@
             return `${Math.floor(x / GRID_SIZE)},${Math.floor(y / GRID_SIZE)}`;
         }
 
-        // Menu navigation
         function showBotMenu(players) {
             playerCount = players;
-            menu.style.display = 'none';
+            menu.style.display = 'block';
             botMenu.style.display = 'block';
+            difficultyMenu.style.display = 'none';
         }
 
         function showDifficultyMenu(bots) {
@@ -332,7 +330,6 @@
             }
         }
 
-        // Start game with difficulty
         function startGame(bots, difficulty) {
             botCount = bots;
             players.length = 0;
@@ -397,22 +394,13 @@
             menu.style.display = 'none';
             botMenu.style.display = 'none';
             difficultyMenu.style.display = 'none';
-            aboutSection.classList.add('show');
-            howToPlaySection.classList.add('show');
             spawnObstacles();
             spawnStars();
             spawnNebula();
             spawnAsteroids();
             frameCount = 0;
-
-            console.log('Game Started - Initial State:', {
-                gameState,
-                players: players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0].hp, isBot: p.isBot })),
-                totalPlayers: players.length
-            });
         }
 
-        // Ship drawing
         function drawShip(ship, totalEntities, isLead, isPlayer) {
             ctx.save();
             ctx.translate(ship.x, ship.y);
@@ -439,7 +427,6 @@
             ctx.restore();
         }
 
-        // Damage, formation, and power-up display
         function showDamage(x, y, damage, color) {
             const offsetX = (Math.random() - 0.5) * 20;
             const offsetY = (Math.random() - 0.5) * 20;
@@ -487,7 +474,6 @@
             });
         }
 
-        // Player update with smarter AI
         function updatePlayer(player, index) {
             if (!player.alive || !player.ships[0]) return;
             const leadShip = player.ships[0];
@@ -514,7 +500,6 @@
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                // Smarter target selection
                 if (Date.now() - player.lastTargetUpdate > 2000 || (player.currentTarget && !player.currentTarget.alive)) {
                     let bestTarget = null;
                     let maxShips = -1;
@@ -571,7 +556,6 @@
                     }
                     leadShip.angle += (angleToTarget - leadShip.angle) * angleAdjustment;
 
-                    // Advanced obstacle avoidance
                     for (let a of asteroids) {
                         const distToAsteroid = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
                         if (distToAsteroid < a.size + 40) {
@@ -600,7 +584,6 @@
                     else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
                     else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
 
-                    // Tactical formation switching
                     if (player.ships.length > 10 && player.formation !== 'swarm') {
                         player.formation = 'swarm';
                         showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
@@ -620,7 +603,7 @@
                                     const dist = Math.hypot(target.x - ship.x, target.y - ship.y);
                                     const predictedX = target.x + targetDx * leadFactor * dist;
                                     const predictedY = target.y + targetDy * leadFactor * dist;
-                                    shootAngle = Math.atan2(predictedY - ship.y, predictedX - ship.x) + (Math.random() - 0.5) * 0.1; // Slight spread
+                                    shootAngle = Math.atan2(predictedY - ship.y, predictedX - ship.x) + (Math.random() - 0.5) * 0.1;
                                 }
                                 player.bullets.push({
                                     x: ship.x + Math.cos(shootAngle) * 4,
@@ -655,7 +638,6 @@
                 }
             }
 
-            // Handle dash speed and particles
             if (Date.now() <= player.dashEnd) {
                 leadShip.speed = player.dashSpeed;
                 particles.push({
@@ -747,7 +729,6 @@
             return formations[(index + 1) % formations.length];
         }
 
-        // Bullet drawing
         function drawBullets(player) {
             player.bullets.forEach(b => {
                 ctx.fillStyle = b.color;
@@ -755,7 +736,6 @@
             });
         }
 
-        // Asteroid spawning
         function spawnAsteroids() {
             while (asteroids.length < MAX_ASTEROIDS) {
                 asteroids.push({
@@ -771,7 +751,6 @@
             }
         }
 
-        // Asteroid update
         function updateAsteroids() {
             asteroids.forEach(a => {
                 a.x += a.dx;
@@ -793,7 +772,6 @@
             });
         }
 
-        // Obstacle spawning
         function spawnObstacles() {
             for (let i = 0; i < 2; i++) {
                 let x, y;
@@ -817,7 +795,6 @@
             });
         }
 
-        // Stars
         function spawnStars() {
             for (let i = 0; i < 300; i++) {
                 stars.push({
@@ -835,7 +812,6 @@
             });
         }
 
-        // Nebula
         const nebula = [];
         function spawnNebula() {
             for (let i = 0; i < 20; i++) {
@@ -855,7 +831,6 @@
             });
         }
 
-        // Particles
         function updateParticles() {
             if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
             particles.forEach((p, i) => {
@@ -872,7 +847,6 @@
             });
         }
 
-        // Power-ups
         function spawnPowerUps() {
             if (Math.random() < 0.005) {
                 const roll = Math.random();
@@ -912,7 +886,6 @@
             });
         }
 
-        // Enhanced explosion with varied colors and dynamics
         function explosion(x, y, count, baseColor = '#ff0', size = 2, isFinal = false) {
             const colors = ['#ff0', '#f00', '#fff', '#ff0', '#f00'];
             for (let i = 0; i < Math.min(count, MAX_PARTICLES - particles.length); i++) {
@@ -943,7 +916,6 @@
             playSound(80, 0.5, 'sine', 0.2);
         }
 
-        // Collision logic with improved consistency and higher damage
         function checkCollisions() {
             Object.keys(grid).forEach(key => delete grid[key]);
             players.forEach(p => p.ships.forEach(s => {
@@ -984,7 +956,6 @@
                             if (dist < a.size + 3) {
                                 s.hp -= 5;
                                 showDamage(s.x, s.y, 5, s.color);
-                                console.log(`Ship ${pi}:${si} hit asteroid at (${a.x}, ${a.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -1019,7 +990,6 @@
                             if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
                                 s.hp -= 15;
                                 showDamage(s.x, s.y, 15, s.color);
-                                console.log(`Ship ${pi}:${si} hit obstacle at (${o.x}, ${o.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -1041,7 +1011,6 @@
                                 s.dx -= b.dx * 0.1;
                                 s.dy -= b.dy * 0.1;
                                 showDamage(s.x, s.y, 30, s.color);
-                                console.log(`Ship ${pi}:${si} hit by bullet at (${b.x}, ${b.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -1069,7 +1038,6 @@
                                 os.hp -= damage;
                                 showDamage(s.x, s.y, damage, s.color);
                                 showDamage(os.x, os.y, damage, os.color);
-                                console.log(`Ship ${pi}:${si} collided with ship ${players.indexOf(op)}:${op.ships.indexOf(os)}, damage: ${damage}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -1119,7 +1087,6 @@
                             if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
                                 a.hp -= 20;
                                 showDamage(a.x, a.y, 20, '#888');
-                                console.log(`Bullet hit asteroid at (${a.x}, ${a.y}), new HP: ${a.hp}`);
                                 if (a.hp <= 0) {
                                     if (a.size > 10) {
                                         const splitCount = Math.min(3, Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 1);
@@ -1149,7 +1116,6 @@
                             if (b.x > o.x && b.x < o.x + o.w && b.y > o.y && b.y < o.y + o.h) {
                                 o.hp -= 20;
                                 showDamage(o.x + o.w / 2, o.y, 20, '#555');
-                                console.log(`Bullet hit obstacle at (${o.x}, ${o.y}), new HP: ${o.hp}`);
                                 if (o.hp <= 0) {
                                     const index = obstacles.indexOf(o);
                                     if (index > -1) obstacles.splice(index, 1);
@@ -1161,10 +1127,8 @@
                     });
                 }
             }
-            console.log('Post-collision state:', players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0]?.hp || 0 })));
         }
 
-        // UI with fading elimination messages
         function drawUI() {
             uiPanel.innerHTML = '';
             const baseFontSize = 10;
@@ -1214,8 +1178,6 @@
             if (gameState === 'victory' && alivePlayers.length === 0) {
                 gameState = 'menu';
                 menu.style.display = 'block';
-                aboutSection.classList.remove('show');
-                howToPlaySection.classList.remove('show');
                 eliminations = [];
                 players.length = 0;
                 asteroids.length = 0;
@@ -1226,7 +1188,6 @@
             }
         }
 
-        // Game loop
         function gameLoop() {
             ctx.save();
             ctx.fillStyle = '#111';
@@ -1260,7 +1221,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Event listeners
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
         });
