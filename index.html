@@ -22,7 +22,7 @@
             align-items: flex-start;
             width: 100%;
             padding: 20px 0;
-            min-height: 100vh; /* Ensures container takes full viewport height */
+            min-height: 100vh;
         }
         canvas {
             border: 1px solid #fff;
@@ -150,7 +150,7 @@
         }
         #contentBelow {
             width: 100%;
-            max-width: 960px; /* Matches game width + sidebar */
+            max-width: 960px;
             margin: 20px auto;
             padding: 20px;
             text-align: center;
@@ -267,7 +267,7 @@
         const howToPlayModal = document.getElementById('howToPlayModal');
         const uiPanel = document.getElementById('uiPanel');
 
-        const squareSize = Math.min(window.innerWidth - 220, window.innerHeight - 40); // Adjusted for padding
+        const squareSize = Math.min(window.innerWidth - 220, window.innerHeight - 40);
         canvas.width = squareSize;
         canvas.height = squareSize;
 
@@ -611,7 +611,8 @@
                                     dx: Math.cos(shootAngle) * 4,
                                     dy: Math.sin(shootAngle) * 4,
                                     color: ship.color,
-                                    time: Date.now()
+                                    time: Date.now(),
+                                    owner: player // Track the bullet's owner
                                 });
                             }
                         });
@@ -706,7 +707,8 @@
                             dx: Math.cos(ship.angle) * 4,
                             dy: Math.sin(ship.angle) * 4,
                             color: ship.color,
-                            time: Date.now()
+                            time: Date.now(),
+                            owner: player
                         });
                     }
                 });
@@ -933,6 +935,11 @@
                 grid[cell] = grid[cell] || [];
                 grid[cell].push(o);
             });
+            players.forEach(p => p.bullets.forEach(b => {
+                const cell = getGridCell(b.x, b.y);
+                grid[cell] = grid[cell] || [];
+                grid[cell].push(b);
+            }));
 
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
@@ -983,7 +990,6 @@
                                     explosion(a.x, a.y, 30);
                                     playSound(300, 0.3, 'sine', 0.2);
                                 }
-                                return;
                             }
                         } else if (entity.w && entity.h) { // Obstacle
                             const o = entity;
@@ -1000,26 +1006,25 @@
                                     const index = obstacles.indexOf(o);
                                     if (index > -1) obstacles.splice(index, 1);
                                 }
-                                return;
                             }
-                        } else if (entity.dx && entity.dy && entity.color === s.color) { // Bullet from same player
-                            return;
-                        } else if (entity.dx && entity.dy) { // Bullet from other player
+                        } else if (entity.dx && entity.dy && entity.owner !== p) { // Bullet from another player
                             const b = entity;
-                            if (Math.hypot(s.x - b.x, s.y - b.y) < 8) {
-                                s.hp -= 30;
-                                s.dx -= b.dx * 0.1;
+                            const dist = Math.hypot(s.x - b.x, s.y - b.y);
+                            if (dist < 8) {
+                                s.hp -= 30; // Bullet damage to ships
+                                s.dx -= b.dx * 0.1; // Apply knockback
                                 s.dy -= b.dy * 0.1;
                                 showDamage(s.x, s.y, 30, s.color);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
                                 }
-                                const playerIndex = players.findIndex(p => p.bullets.includes(b));
-                                if (playerIndex > -1) players[playerIndex].bullets = players[playerIndex].bullets.filter(bullet => bullet !== b);
-                                return;
+                                const bulletOwner = b.owner;
+                                if (bulletOwner) {
+                                    bulletOwner.bullets = bulletOwner.bullets.filter(bullet => bullet !== b);
+                                }
                             }
-                        } else if (entity.hp && entity.angle) { // Other ship
+                        } else if (entity.hp && entity.angle && entity !== s) { // Other ship
                             const os = entity;
                             const op = players.find(p => p.ships.includes(os));
                             if (!op || op === p || !op.alive) return;
@@ -1031,7 +1036,7 @@
                                 s.y + shipSize > os.y - shipSize &&
                                 s.y - shipSize < os.y + shipSize
                             );
-                            if (collided && s !== os) {
+                            if (collided) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 4);
                                 s.hp -= damage;
@@ -1048,7 +1053,6 @@
                                     explosion(os.x, os.y, 20, os.color);
                                 }
                                 playSound(100, 0.5, 'sine', 0.3);
-                                return;
                             }
                         }
                     });
@@ -1056,9 +1060,9 @@
                     if (p.ships.length === 0) {
                         p.alive = false;
                         eliminations.push({ text: `${p.isBot ? 'BOT' : 'PLAYER'} ${pi + 1} ELIMINATED`, time: Date.now(), opacity: 1 });
-                        const deathX = p.ships[0]?.x || canvas.width / 2;
-                        const deathY = p.ships[0]?.y || canvas.height / 2;
-                        const deathColor = p.ships[0]?.color || '#fff';
+                        const deathX = s.x || canvas.width / 2;
+                        const deathY = s.y || canvas.height / 2;
+                        const deathColor = s.color || '#fff';
                         const aliveCount = players.filter(p => p.alive).length;
                         if (aliveCount === 1) {
                             explosion(deathX, deathY, 600, deathColor, 4, true);
@@ -1070,6 +1074,7 @@
                 }
             }
 
+            // Handle bullet collisions with asteroids and obstacles
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
                 for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
@@ -1082,9 +1087,12 @@
                     ].filter(c => grid[c]);
 
                     [...new Set([].concat(...adjacentCells.map(c => grid[c])))].forEach(entity => {
+                        if (entity === b || (entity.hp && entity.angle && players.find(p => p.ships.includes(entity)) === p)) return;
+
                         if (entity.hp && entity.size) { // Asteroid
                             const a = entity;
-                            if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
+                            const dist = Math.hypot(b.x - a.x, b.y - a.y);
+                            if (dist < a.size) {
                                 a.hp -= 20;
                                 showDamage(a.x, a.y, 20, '#888');
                                 if (a.hp <= 0) {
@@ -1109,7 +1117,6 @@
                                     playSound(300, 0.3, 'sine', 0.2);
                                 }
                                 p.bullets.splice(bi, 1);
-                                return;
                             }
                         } else if (entity.w && entity.h) { // Obstacle
                             const o = entity;
@@ -1121,7 +1128,6 @@
                                     if (index > -1) obstacles.splice(index, 1);
                                 }
                                 p.bullets.splice(bi, 1);
-                                return;
                             }
                         }
                     });
