@@ -74,7 +74,7 @@
             border: 2px solid #fff;
             box-shadow: 0 0 10px #fff;
             z-index: 10;
-            display: none; /* Hidden by default, toggle with 'T' */
+            display: none;
         }
         #uiPanel div {
             margin-bottom: 5px;
@@ -240,7 +240,7 @@
             ctx.save();
             ctx.translate(ship.x, ship.y);
             ctx.rotate(ship.angle);
-            const size = Math.max(2, 20 - totalEntities * 0.02); // Smaller base (20px), min 2px
+            const size = Math.max(2, 20 - totalEntities * 0.02);
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -262,7 +262,7 @@
             ctx.restore();
         }
 
-        // Damage display
+        // Damage display (fixed)
         function showDamage(x, y, damage, color) {
             damageDisplays.push({ x, y, damage, color, time: Date.now() });
         }
@@ -274,14 +274,14 @@
                     return;
                 }
                 ctx.fillStyle = d.color;
-                ctx.font = '8px "Press Start 2P"'; // Smaller font
-                ctx.fillText(`- ${damage}`, x, y - 4);
+                ctx.font = '8px "Press Start 2P"';
+                ctx.fillText(`- ${d.damage}`, d.x, d.y - 4); // Fixed: Use d.damage instead of damage
             });
         }
 
         // Player update with crash fix and speed boost
         function updatePlayer(player, index) {
-            if (!player.alive || !player.ships[0]) return; // Crash fix
+            if (!player.alive || !player.ships[0]) return;
             const leadShip = player.ships[0];
             const { up, down, left, right, form, dash } = player.keys;
 
@@ -301,7 +301,6 @@
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                // Smarter AI
                 let target = null;
                 let minDistance = Infinity;
                 players.forEach(p => {
@@ -315,17 +314,16 @@
                 });
                 if (target) {
                     const angleToTarget = Math.atan2(target.ships[0].y - leadShip.y, target.ships[0].x - leadShip.x);
-                    leadShip.angle += (angleToTarget - leadShip.angle) * 0.1; // Faster targeting
+                    leadShip.angle += (angleToTarget - leadShip.angle) * 0.1;
                     const distance = Math.hypot(target.ships[0].x - leadShip.x, target.ships[0].y - leadShip.y);
-                    if (distance > 100) leadShip.speed = Math.min(leadShip.speed + 0.4, 6); // Approach faster if far
-                    else if (distance < 50) leadShip.speed = Math.max(leadShip.speed - 0.4, -3); // Retreat if too close
+                    if (distance > 100) leadShip.speed = Math.min(leadShip.speed + 0.4, 6);
+                    else if (distance < 50) leadShip.speed = Math.max(leadShip.speed - 0.4, -3);
                     else leadShip.speed *= 0.95;
 
-                    // Evasion from asteroids and obstacles
                     for (let a of asteroids) {
                         const distToAsteroid = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
                         if (distToAsteroid < a.size + 20) {
-                            leadShip.angle += (leadShip.x < a.x ? 0.2 : -0.2); // Turn away
+                            leadShip.angle += (leadShip.x < a.x ? 0.2 : -0.2);
                             break;
                         }
                     }
@@ -336,11 +334,11 @@
                         }
                     }
 
-                    if (distance < 100 && Date.now() - player.lastShot > 100) { // Shoot every 100ms if close
+                    if (distance < 100 && Date.now() - player.lastShot > 100) {
                         player.ships.forEach(ship => {
                             player.bullets.push({
-                                x: ship.x + Math.cos(ship.angle) * 6,
-                                y: ship.y + Math.sin(ship.angle) * 6,
+                                x: ship.x + Math.cos(ship.angle) * 4,
+                                y: ship.y + Math.sin(ship.angle) * 4,
                                 dx: Math.cos(ship.angle) * 4,
                                 dy: Math.sin(ship.angle) * 4,
                                 color: ship.color,
@@ -391,7 +389,7 @@
                 ship.dy *= 0.98;
                 ship.x += ship.dx;
                 ship.y += ship.dy;
-                ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x)); // Smaller boundaries
+                ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x));
                 ship.y = Math.max(2, Math.min(canvas.height - 2, ship.y));
                 particles.push({
                     x: ship.x - Math.cos(ship.angle) * 2,
@@ -431,7 +429,7 @@
         function drawBullets(player) {
             player.bullets.forEach(b => {
                 ctx.fillStyle = b.color;
-                ctx.fillRect(b.x - 0.5, b.y - 0.5, 0.5, 0.5); // Smaller bullets
+                ctx.fillRect(b.x - 0.5, b.y - 0.5, 0.5, 0.5);
             });
         }
 
@@ -441,7 +439,7 @@
                 asteroids.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: 10 + Math.random() * 20, // Smaller range (10-30px)
+                    size: 10 + Math.random() * 20,
                     dx: (Math.random() - 0.5) * 2,
                     dy: (Math.random() - 0.5) * 2,
                     angle: 0,
@@ -483,7 +481,7 @@
                 } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 50)));
                 obstacles.push({
                     x, y,
-                    w: 20 + Math.random() * 20, // Smaller range (20-40px)
+                    w: 20 + Math.random() * 20,
                     h: 20 + Math.random() * 20,
                     hp: 1000
                 });
@@ -503,7 +501,7 @@
                 stars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: Math.random() * 0.5 // Smaller stars
+                    size: Math.random() * 0.5
                 });
             }
         }
@@ -522,7 +520,7 @@
                 nebula.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: 25 + Math.random() * 50, // Smaller range (25-75px)
+                    size: 25 + Math.random() * 50,
                     color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.1)`
                 });
             }
@@ -568,7 +566,7 @@
             powerUps.forEach((pu, i) => {
                 ctx.fillStyle = '#ff0';
                 ctx.beginPath();
-                ctx.arc(pu.x, pu.y, 5, 0, Math.PI * 2); // Smaller power-up
+                ctx.arc(pu.x, pu.y, 5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.fillStyle = '#000';
                 ctx.font = '8px "Press Start 2P"';
@@ -798,7 +796,7 @@
             if (alivePlayers.length === 0) {
                 gameState = 'gameover';
                 ctx.fillStyle = '#fff';
-                ctx.font = '20px "Press Start 2P"'; // Smaller text
+                ctx.font = '20px "Press Start 2P"';
                 ctx.fillText('GAME OVER', canvas.width / 2 - 70, canvas.height / 2 - 20);
                 ctx.font = '12px "Press Start 2P"';
                 ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 70, canvas.height / 2 + 10);
