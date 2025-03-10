@@ -25,6 +25,9 @@
         }
         #menu, #botMenu {
             position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
             background: rgba(0, 0, 0, 0.9);
             padding: 40px;
@@ -139,8 +142,7 @@
         // Start game
         function startGame(bots) {
             botCount = bots;
-            const totalPlayers = playerCount + botCount;
-            players.length = 0; // Reset players array
+            players.length = 0;
 
             // Human players with safer spawn positions
             const humanConfigs = [
@@ -150,7 +152,7 @@
             ];
             for (let i = 0; i < playerCount; i++) {
                 players.push({
-                    ships: [{ x: humanConfigs[i].x, y: humanConfigs[i].y, angle: 0, speed: 0, hp: 200, color: humanConfigs[i].color, dx: 0, dy: 0 }],
+                    ships: [{ x: humanConfigs[i].x, y: humanConfigs[i].y, angle: 0, speed: 0, hp: 200, color: humanConfigs[i].color, dx: 0, dy: 0, invulnerableUntil: Date.now() + 5000 }],
                     keys: humanConfigs[i].keys,
                     bullets: [],
                     alive: true,
@@ -163,17 +165,14 @@
 
             // Bots with safer random spawn
             for (let i = 0; i < botCount; i++) {
-                let botX, botY;
-                let validPosition = false;
+                let botX, botY, validPosition = false;
                 while (!validPosition) {
                     botX = Math.random() * (canvas.width - 200) + 100;
                     botY = Math.random() * (canvas.height - 200) + 100;
-                    validPosition = players.every(p => p.ships.every(s => Math.hypot(s.x - botX, s.y - botY) > 150)) &&
-                                   obstacles.every(o => Math.hypot(botX - (o.x + o.w / 2), botY - (o.y + o.h / 2)) > 100) &&
-                                   asteroids.every(a => Math.hypot(botX - a.x, botY - a.y) > a.size + 50);
+                    validPosition = players.every(p => p.ships.every(s => Math.hypot(s.x - botX, s.y - botY) > 200));
                 }
                 players.push({
-                    ships: [{ x: botX, y: botY, angle: 0, speed: 0, hp: 200, color: '#888', dx: 0, dy: 0 }],
+                    ships: [{ x: botX, y: botY, angle: 0, speed: 0, hp: 200, color: '#888', dx: 0, dy: 0, invulnerableUntil: Date.now() + 5000 }],
                     keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
                     bullets: [],
                     alive: true,
@@ -185,14 +184,19 @@
             }
 
             gameState = 'playing';
+            menu.style.display = 'none';
             botMenu.style.display = 'none';
             spawnObstacles();
             spawnStars();
             spawnNebula();
             spawnAsteroids();
             frameCount = 0;
-            console.log('Players initialized:', players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0].hp })));
-            gameLoop();
+
+            console.log('Game Started - Initial State:', {
+                gameState,
+                players: players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0].hp })),
+                totalPlayers: players.length
+            });
         }
 
         // Ship drawing
@@ -239,7 +243,7 @@
             });
         }
 
-        // Player update
+        // Player update with formation
         function updatePlayer(player, index) {
             if (!player.alive) return;
             const leadShip = player.ships[0];
@@ -523,14 +527,16 @@
             playSound(80, 0.5, 'sine', 0.2);
         }
 
-        // Collision logic
+        // Collision logic with invulnerability
         function checkCollisions() {
-            if (frameCount < 5) return; // Delay collision checks for 5 frames
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
                 if (!p.alive) continue;
                 for (let si = p.ships.length - 1; si >= 0; si--) {
                     const s = p.ships[si];
+                    if (Date.now() < s.invulnerableUntil) continue; // Skip if invulnerable
+
+                    // Asteroid collisions
                     for (let ai = asteroids.length - 1; ai >= 0; ai--) {
                         const a = asteroids[ai];
                         const dist = Math.hypot(s.x - a.x, s.y - a.y);
@@ -567,6 +573,7 @@
                         }
                     }
 
+                    // Obstacle collisions
                     for (let oi = obstacles.length - 1; oi >= 0; oi--) {
                         const o = obstacles[oi];
                         if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
@@ -583,6 +590,7 @@
                         }
                     }
 
+                    // Bullet collisions
                     for (let opi = 0; opi < players.length; opi++) {
                         const op = players[opi];
                         if (p === op) continue;
@@ -603,13 +611,14 @@
                         }
                     }
 
+                    // Ship-to-ship collisions
                     for (let opi = 0; opi < players.length; opi++) {
                         const op = players[opi];
                         if (op === p || !op.alive) continue;
                         for (let osi = op.ships.length - 1; osi >= 0; osi--) {
                             const os = op.ships[osi];
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            if (dist < 20 && s !== os && op !== p) { // Prevent self-collision and same-player collision
+                            if (dist < 20 && s !== os && op !== p) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 2);
                                 s.hp -= damage;
@@ -638,6 +647,7 @@
                 }
             }
 
+            // Bullet-environment collisions
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
                 for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
@@ -704,6 +714,7 @@
             });
 
             const alivePlayers = players.filter(p => p.alive);
+            console.log('Frame:', frameCount, 'Alive Players:', alivePlayers.length);
             if (alivePlayers.length === 0) {
                 gameState = 'gameover';
                 ctx.fillStyle = '#fff';
