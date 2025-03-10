@@ -17,7 +17,7 @@
             overflow: hidden;
             font-family: 'Press Start 2P', monospace;
             color: #fff;
-            zoom: 50%; /* Default 50% zoom */
+            zoom: 50%;
         }
         canvas {
             border: 1px solid #fff;
@@ -48,9 +48,9 @@
         }
         button {
             font-family: 'Press Start 2P', monospace;
-            font-size: 20px;
-            padding: 15px 30px;
-            margin: 10px;
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 5px;
             background: #222;
             color: #fff;
             border: 2px solid #fff;
@@ -74,11 +74,17 @@
     </div>
     <div id="botMenu" style="display: none;">
         <h1>ADD BOTS</h1>
-        <p style="font-size: 16px; margin: 20px 0;">How many bots?</p>
-        <button onclick="startGame(0)">0 BOTS</button><br>
-        <button onclick="startGame(1)">1 BOT</button><br>
-        <button onclick="startGame(2)">2 BOTS</button><br>
-        <button onclick="startGame(3)">3 BOTS</button>
+        <p style="font-size: 16px; margin: 20px 0;">How many bots? (0-30)</p>
+        <button onclick="startGame(0)">0</button>
+        <button onclick="startGame(1)">1</button>
+        <button onclick="startGame(2)">2</button>
+        <button onclick="startGame(3)">3</button>
+        <button onclick="startGame(5)">5</button>
+        <button onclick="startGame(10)">10</button>
+        <button onclick="startGame(15)">15</button>
+        <button onclick="startGame(20)">20</button>
+        <button onclick="startGame(25)">25</button>
+        <button onclick="startGame(30)">30</button>
     </div>
     <script>
         // Core setup
@@ -90,6 +96,10 @@
         let playerCount = 0;
         let botCount = 0;
         let eliminations = [];
+
+        // Set canvas to screen size (adjusted for 50% zoom)
+        canvas.width = window.innerWidth * 2;
+        canvas.height = window.innerHeight * 2;
 
         // Audio setup
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -107,38 +117,7 @@
         }
 
         // Game objects
-        const players = [
-            { 
-                ships: [], 
-                keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, 
-                bullets: [], 
-                alive: true,
-                formation: 'line',
-                lastShot: 0,
-                lastDash: 0,
-                isBot: false
-            },
-            { 
-                ships: [], 
-                keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, 
-                bullets: [], 
-                alive: true,
-                formation: 'line',
-                lastShot: 0,
-                lastDash: 0,
-                isBot: false
-            },
-            { 
-                ships: [], 
-                keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, 
-                bullets: [], 
-                alive: true,
-                formation: 'line',
-                lastShot: 0,
-                lastDash: 0,
-                isBot: false
-            }
-        ];
+        const players = [];
         const asteroids = [];
         const obstacles = [];
         const particles = [];
@@ -147,10 +126,6 @@
         const keys = {};
         const MAX_ASTEROIDS = 10;
         const damageDisplays = [];
-
-        // Event listeners
-        window.addEventListener('keydown', (e) => keys[e.key] = true);
-        window.addEventListener('keyup', (e) => keys[e.key] = false);
 
         // Bot menu
         function showBotMenu(players) {
@@ -162,18 +137,42 @@
         // Start game
         function startGame(bots) {
             botCount = bots;
-            const totalEntities = playerCount + botCount;
-            const mapSize = 500 + totalEntities * 50; // Dynamic map size
-            canvas.width = mapSize;
-            canvas.height = mapSize;
-            players[0].ships = [{ x: mapSize * 0.2, y: mapSize * 0.5, angle: 0, speed: 0, hp: 100, color: '#f00', dx: 0, dy: 0 }];
-            if (playerCount > 1) players[1].ships = [{ x: mapSize * 0.5, y: mapSize * 0.5, angle: 0, speed: 0, hp: 100, color: '#0f0', dx: 0, dy: 0 }];
-            if (playerCount > 2) players[2].ships = [{ x: mapSize * 0.8, y: mapSize * 0.5, angle: 0, speed: 0, hp: 100, color: '#00f', dx: 0, dy: 0 }];
-            for (let i = 0; i < botCount; i++) {
-                const bot = players[playerCount + i] || { ships: [], bullets: [], alive: true, formation: 'line', lastShot: 0, lastDash: 0, isBot: true };
-                bot.ships = [{ x: Math.random() * mapSize, y: Math.random() * mapSize, angle: 0, speed: 0, hp: 100, color: '#888', dx: 0, dy: 0 }];
-                if (!players[playerCount + i]) players.push(bot);
+            const totalPlayers = playerCount + botCount;
+            players.length = 0; // Reset players array
+
+            // Human players
+            const humanConfigs = [
+                { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00', x: canvas.width * 0.2 },
+                { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0', x: canvas.width * 0.5 },
+                { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#00f', x: canvas.width * 0.8 }
+            ];
+            for (let i = 0; i < playerCount; i++) {
+                players.push({
+                    ships: [{ x: humanConfigs[i].x, y: canvas.height * 0.5, angle: 0, speed: 0, hp: 100, color: humanConfigs[i].color, dx: 0, dy: 0 }],
+                    keys: humanConfigs[i].keys,
+                    bullets: [],
+                    alive: true,
+                    formation: 'line',
+                    lastShot: 0,
+                    lastDash: 0,
+                    isBot: false
+                });
             }
+
+            // Bots
+            for (let i = 0; i < botCount; i++) {
+                players.push({
+                    ships: [{ x: Math.random() * canvas.width, y: Math.random() * canvas.height, angle: 0, speed: 0, hp: 100, color: '#888', dx: 0, dy: 0 }],
+                    keys: { up: '', down: '', left: '', right: '', form: '', dash: '' }, // Dummy keys for bots
+                    bullets: [],
+                    alive: true,
+                    formation: 'line',
+                    lastShot: 0,
+                    lastDash: 0,
+                    isBot: true
+                });
+            }
+
             gameState = 'playing';
             botMenu.style.display = 'none';
             spawnObstacles();
@@ -184,11 +183,11 @@
         }
 
         // Ship drawing
-        function drawShip(ship, swarmSize, isLead, isPlayer) {
+        function drawShip(ship, totalEntities, isLead, isPlayer) {
             ctx.save();
             ctx.translate(ship.x, ship.y);
             ctx.rotate(ship.angle);
-            const size = Math.max(5, 50 - swarmSize * 0.45);
+            const size = Math.max(5, 50 - totalEntities * 0.2); // Shrink with crowding
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -250,8 +249,11 @@
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                // Bot AI
-                const target = players.filter(p => p.alive && p !== player && (p.isBot || Math.random() < 0.3))[0];
+                // Bot AI (Fortnite-like)
+                const target = players.filter(p => p.alive && p !== player).reduce((closest, p) => {
+                    const dist = Math.hypot(p.ships[0].x - leadShip.x, p.ships[0].y - leadShip.y);
+                    return dist < Math.hypot(closest?.ships[0].x - leadShip.x, closest?.ships[0].y - leadShip.y) ? p : closest;
+                }, null);
                 if (target) {
                     const angleToTarget = Math.atan2(target.ships[0].y - leadShip.y, target.ships[0].x - leadShip.x);
                     leadShip.angle += (angleToTarget - leadShip.angle) * 0.05;
@@ -275,7 +277,7 @@
                     ship.dy = Math.sin(ship.angle) * ship.speed;
                 } else {
                     if (player.formation === 'line') {
-                        offsetX = 0;
+                        offsetX grève= 0;
                         offsetY = i * 15;
                     } else if (player.formation === 'v') {
                         offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 10;
@@ -341,7 +343,7 @@
                     });
                 });
                 player.lastShot = Date.now();
-                playSound(500, 0.1, 'square', 0.15); // Shooting sound
+                playSound(500, 0.1, 'square', 0.15);
             }
 
             player.bullets = player.bullets.filter(b => {
@@ -500,7 +502,7 @@
                 ctx.font = '12px "Press Start 2P"';
                 ctx.textAlign = 'center';
                 ctx.fillText(pu.type, pu.x, pu.y + 4);
-                players.slice(0, playerCount + botCount).forEach(p => {
+                players.forEach(p => {
                     p.ships.forEach(s => {
                         if (Math.hypot(s.x - pu.x, s.y - pu.y) < 25 && p.ships.length < 100) {
                             const count = parseInt(pu.type.slice(1));
@@ -518,7 +520,7 @@
 
         // Explosion
         function explosion(x, y, count, color = '#ff0', size = 5) {
-            for (let i = 0; i < count * 3; i++) { // Much larger
+            for (let i = 0; i < count * 3; i++) {
                 particles.push({
                     x, y,
                     size: size + Math.random() * 5,
@@ -533,7 +535,7 @@
 
         // Collision logic
         function checkCollisions() {
-            for (let pi = 0; pi < playerCount + botCount; pi++) {
+            for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
                 if (!p.alive) continue;
                 for (let si = p.ships.length - 1; si >= 0; si--) {
@@ -590,7 +592,7 @@
                         }
                     }
 
-                    for (let opi = 0; opi < playerCount + botCount; opi++) {
+                    for (let opi = 0; opi < players.length; opi++) {
                         const op = players[opi];
                         if (p === op) continue;
                         for (let bi = op.bullets.length - 1; bi >= 0; bi--) {
@@ -610,7 +612,7 @@
                         }
                     }
 
-                    for (let opi = 0; opi < playerCount + botCount; opi++) {
+                    for (let opi = 0; opi < players.length; opi++) {
                         const op = players[opi];
                         if (op === p || !op.alive) continue;
                         for (let osi = op.ships.length - 1; osi >= 0; osi--) {
@@ -645,7 +647,7 @@
                 }
             }
 
-            for (let pi = 0; pi < playerCount + botCount; pi++) {
+            for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
                 for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
                     const b = p.bullets[bi];
@@ -696,7 +698,8 @@
         function drawUI() {
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            players.slice(0, playerCount + botCount).forEach((p, i) => {
+            const totalEntities = players.reduce((sum, p) => sum + p.ships.length, 0);
+            players.forEach((p, i) => {
                 const totalHP = p.ships.reduce((sum, ship) => sum + ship.hp, 0);
                 ctx.fillStyle = p.color;
                 ctx.fillRect(canvas.width - 210, 10 + i * 40, Math.min(200, totalHP / 10), 20);
@@ -708,7 +711,7 @@
                 ctx.fillText(`SHIPS: ${p.ships.length}`, canvas.width - 210, 50 + i * 40);
             });
 
-            const alivePlayers = players.slice(0, playerCount + botCount).filter(p => p.alive);
+            const alivePlayers = players.filter(p => p.alive);
             if (alivePlayers.length === 0) {
                 gameState = 'gameover';
                 ctx.fillStyle = '#fff';
@@ -723,9 +726,10 @@
                 gameState = 'victory';
                 ctx.fillStyle = '#fff';
                 ctx.font = '40px "Press Start 2P"';
-                ctx.fillText(`PLAYER ${players.indexOf(alivePlayers[0]) + 1} VICTORIOUS`, canvas.width / 2 - 280, canvas.height / 2 - 40);
+                ctx.fillText(`#1 VICTORY ROYALE`, canvas.width / 2 - 220, canvas.height / 2 - 40);
                 ctx.font = '20px "Press Start 2P"';
-                ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 140, canvas.height / 2 + 20);
+                ctx.fillText(`PLAYER ${players.indexOf(alivePlayers[0]) + 1} WINS`, canvas.width / 2 - 180, canvas.height / 2);
+                ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 140, canvas.height / 2 + 40);
                 eliminations.forEach((text, i) => {
                     ctx.fillText(text, canvas.width / 2 - 140, canvas.height / 2 - 100 + i * 30);
                 });
@@ -751,10 +755,11 @@
             if (gameState === 'playing' || gameState === 'victory') {
                 spawnAsteroids();
                 spawnPowerUps();
-                players.slice(0, playerCount + botCount).forEach((p, i) => {
+                const totalEntities = players.reduce((sum, p) => sum + p.ships.length, 0);
+                players.forEach((p, i) => {
                     p.index = i;
                     updatePlayer(p, i);
-                    p.ships.forEach((s, j) => drawShip(s, p.ships.length, j === 0, !p.isBot));
+                    p.ships.forEach((s, j) => drawShip(s, totalEntities, j === 0, !p.isBot));
                     drawBullets(p);
                 });
                 updateAsteroids();
