@@ -7,21 +7,27 @@
     <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAJBJREFUWEft1kEOwCAIQ1H7/89s4iYkQkhkRERk8YQJYwAJJTiT3W2A3g5o7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDuw7cC2A9sObDv4G6H0D5l4KpgAAAABJRU5ErkJggg==">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body {
+        html, body {
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: #000;
+            padding: 0;
+            height: 100%;
+            width: 100%;
             overflow: hidden;
+            background: #000;
             font-family: 'Press Start 2P', monospace;
             color: #fff;
             zoom: 50%;
         }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         canvas {
             border: 1px solid #fff;
             image-rendering: pixelated;
+            max-width: 100%;
+            max-height: 100%;
         }
         #menu, #botMenu {
             position: absolute;
@@ -233,8 +239,8 @@
             const leadShip = player.ships[0];
             const { up, down, left, right, form, dash } = player.keys;
 
-            // Human controls
             if (!player.isBot) {
+                // Human controls
                 if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.2, 4);
                 else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
                 else leadShip.speed *= 0.95;
@@ -250,7 +256,7 @@
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                // Bot AI (Fortnite-like)
+                // Bot AI - mimic human behavior
                 const target = players.filter(p => p.alive && p !== player).reduce((closest, p) => {
                     const dist = Math.hypot(p.ships[0].x - leadShip.x, p.ships[0].y - leadShip.y);
                     return dist < Math.hypot(closest?.ships[0].x - leadShip.x, closest?.ships[0].y - leadShip.y) ? p : closest;
@@ -258,15 +264,18 @@
                 if (target) {
                     const angleToTarget = Math.atan2(target.ships[0].y - leadShip.y, target.ships[0].x - leadShip.x);
                     leadShip.angle += (angleToTarget - leadShip.angle) * 0.05;
-                    leadShip.speed = Math.min(leadShip.speed + 0.1, 3);
-                    if (Math.random() < 0.02) player.formation = ['line', 'v', 'wedge', 'cluster'][Math.floor(Math.random() * 4)];
-                    if (Math.random() < 0.01 && Date.now() - player.lastDash > 5000) {
-                        leadShip.speed += 5;
-                        player.lastDash = Date.now();
-                        playSound(1000, 0.2, 'triangle', 0.2);
-                    }
+                    leadShip.speed = Math.min(leadShip.speed + (Math.random() < 0.8 ? 0.2 : -0.2), 4); // Random accel/decel
                 } else {
                     leadShip.speed *= 0.95;
+                    if (Math.random() < 0.1) leadShip.angle += (Math.random() - 0.5) * 0.2; // Wander
+                }
+                if (Math.random() < 0.05) {
+                    player.formation = ['line', 'v', 'wedge', 'cluster'][Math.floor(Math.random() * 4)]; // Random formation
+                }
+                if (Math.random() < 0.02 && Date.now() - player.lastDash > 5000) {
+                    leadShip.speed += 5;
+                    player.lastDash = Date.now();
+                    playSound(1000, 0.2, 'triangle', 0.2);
                 }
             }
 
@@ -330,9 +339,9 @@
                 });
             });
 
-            // Shooting
+            // Shooting (bots shoot more actively)
             const shootDelay = 200 + player.ships.length * 5;
-            if (Date.now() - player.lastShot > shootDelay) {
+            if (Date.now() - player.lastShot > shootDelay || (player.isBot && Math.random() < 0.1)) {
                 player.ships.forEach(ship => {
                     player.bullets.push({
                         x: ship.x + Math.cos(ship.angle) * 10,
@@ -642,7 +651,7 @@
                 }
                 if (p.alive && p.ships.length === 0) {
                     p.alive = false;
-                    eliminations.push(`PLAYER ${index + 1} ELIMINATED`);
+                    eliminations.push(`PLAYER ${pi + 1} ELIMINATED`);
                     explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 100, p.ships[0]?.color || '#fff');
                     playSound(200, 1.0, 'sine', 0.3);
                 }
