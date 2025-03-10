@@ -79,6 +79,7 @@
         let gameState = 'menu';
         let playerCount = 0;
         let camera = { x: 0, y: 0, zoom: 0.43 };
+        let eliminations = [];
 
         // Audio setup
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -153,7 +154,7 @@
             ctx.translate(ship.x - camera.x, ship.y - camera.y);
             ctx.scale(camera.zoom, camera.zoom);
             ctx.rotate(ship.angle);
-            const size = Math.max(5, 50 - swarmSize * 0.45); // Bigger start, shrinks more
+            const size = Math.max(5, 50 - swarmSize * 0.45);
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -220,7 +221,6 @@
                     targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
                     targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
 
-                    // Avoid obstacles
                     obstacles.forEach(o => {
                         const dist = Math.hypot(ship.x - (o.x + o.w / 2), ship.y - (o.y + o.h / 2));
                         if (dist < 50) {
@@ -257,8 +257,8 @@
                 });
             });
 
-            // Shooting (slower)
-            const shootDelay = 200 + player.ships.length * 5; // Slower base, scales less
+            // Shooting
+            const shootDelay = 200 + player.ships.length * 5;
             if (Date.now() - player.lastShot > shootDelay) {
                 player.ships.forEach(ship => {
                     player.bullets.push({
@@ -274,7 +274,6 @@
                 playSound(400, 0.1);
             }
 
-            // Bullet lifetime
             player.bullets = player.bullets.filter(b => {
                 b.x += b.dx;
                 b.y += b.dy;
@@ -424,19 +423,23 @@
         function updatePowerUps() {
             powerUps.forEach((pu, i) => {
                 ctx.fillStyle = '#ff0';
-                ctx.fillRect(pu.x - 5 - camera.x, pu.y - 5 - camera.y, 10, 10);
+                ctx.beginPath();
+                ctx.arc(pu.x - camera.x, pu.y - camera.y, 10, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = '#000';
-                ctx.font = '8px "Press Start 2P"';
-                ctx.fillText(pu.type, pu.x - 5 - camera.x, pu.y + 3 - camera.y);
+                ctx.font = '10px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText(pu.type, pu.x - camera.x, pu.y + 3 - camera.y);
                 players.slice(0, playerCount).forEach(p => {
                     p.ships.forEach(s => {
                         if (Math.hypot(s.x - pu.x, s.y - pu.y) < 20 && p.ships.length < 100) {
                             const count = parseInt(pu.type.slice(1));
                             for (let j = 0; j < count && p.ships.length < 100; j++) {
                                 p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 20, color: s.color, dx: 0, dy: 0 });
+                                playSound(800, 0.2, 'triangle', 0.1); // Spawn sound
                             }
                             powerUps.splice(i, 1);
-                            playSound(600, 0.3);
+                            playSound(600, 0.3, 'sine', 0.2); // Pickup sound
                         }
                     });
                 });
@@ -445,7 +448,7 @@
 
         // Explosion
         function explosion(x, y, count, color = '#ff0', size = 3) {
-            for (let i = 0; i < count * 2; i++) { // Bigger
+            for (let i = 0; i < count * 2; i++) {
                 particles.push({
                     x, y,
                     size: size + Math.random() * 3,
@@ -455,7 +458,7 @@
                     dy: (Math.random() - 0.5) * 7
                 });
             }
-            playSound(80, 0.5, 'sine', 0.2); // Louder
+            playSound(80, 0.5, 'sine', 0.2);
         }
 
         // Collision logic
@@ -465,7 +468,6 @@
                 if (!p.alive) continue;
                 for (let si = p.ships.length - 1; si >= 0; si--) {
                     const s = p.ships[si];
-                    // Asteroid collisions
                     for (let ai = asteroids.length - 1; ai >= 0; ai--) {
                         const a = asteroids[ai];
                         const dist = Math.hypot(s.x - a.x, s.y - a.y);
@@ -475,6 +477,7 @@
                             if (s.hp <= 0) {
                                 if (p.ships.length < 100) {
                                     p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
+                                    playSound(800, 0.2, 'triangle', 0.1);
                                 }
                                 p.ships.splice(si, 1);
                                 explosion(s.x, s.y, 20, s.color);
@@ -504,7 +507,6 @@
                         }
                     }
 
-                    // Obstacle collisions
                     for (let oi = obstacles.length - 1; oi >= 0; oi--) {
                         const o = obstacles[oi];
                         if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
@@ -513,6 +515,7 @@
                             if (s.hp <= 0) {
                                 if (p.ships.length < 100) {
                                     p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
+                                    playSound(800, 0.2, 'triangle', 0.1);
                                 }
                                 p.ships.splice(si, 1);
                                 explosion(s.x, s.y, 20, s.color);
@@ -524,7 +527,6 @@
                         }
                     }
 
-                    // Bullet collisions
                     for (let opi = 0; opi < playerCount; opi++) {
                         const op = players[opi];
                         if (p === op) continue;
@@ -538,6 +540,7 @@
                                 if (s.hp <= 0) {
                                     if (p.ships.length < 100) {
                                         p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
+                                        playSound(800, 0.2, 'triangle', 0.1);
                                     }
                                     p.ships.splice(si, 1);
                                     explosion(s.x, s.y, 20, s.color);
@@ -548,7 +551,6 @@
                         }
                     }
 
-                    // Ship-to-ship collisions
                     for (let opi = 0; opi < playerCount; opi++) {
                         const op = players[opi];
                         if (op === p) continue;
@@ -565,6 +567,7 @@
                                     if (p.ships.length < 100) {
                                         for (let i = 0; i < Math.min(5, Math.floor(damage / 20)) && p.ships.length < 100; i++) {
                                             p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5 + (Math.random() - 0.5) * 2, dy: -s.dy * 0.5 + (Math.random() - 0.5) * 2 });
+                                            playSound(800, 0.2, 'triangle', 0.1);
                                         }
                                     }
                                     p.ships.splice(si, 1);
@@ -574,6 +577,7 @@
                                     if (op.ships.length < 100) {
                                         for (let i = 0; i < Math.min(5, Math.floor(damage / 20)) && op.ships.length < 100; i++) {
                                             op.ships.push({ x: os.x, y: os.y, angle: os.angle, speed: os.speed / 2, hp: 20, color: os.color, dx: -os.dx * 0.5 + (Math.random() - 0.5) * 2, dy: -os.dy * 0.5 + (Math.random() - 0.5) * 2 });
+                                            playSound(800, 0.2, 'triangle', 0.1);
                                         }
                                     }
                                     op.ships.splice(osi, 1);
@@ -585,11 +589,14 @@
                         }
                     }
                 }
-                p.alive = p.ships.length > 0;
-                if (!p.alive) explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 100, p.ships[0]?.color || '#fff');
+                if (p.alive && p.ships.length === 0) {
+                    p.alive = false;
+                    eliminations.push(`PLAYER ${pi + 1} ELIMINATED`);
+                    explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 100, p.ships[0]?.color || '#fff');
+                    playSound(200, 1.0, 'sine', 0.3); // Elimination sound
+                }
             }
 
-            // Bullet vs Asteroid/Obstacle
             for (let pi = 0; pi < playerCount; pi++) {
                 const p = players[pi];
                 for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
@@ -645,35 +652,50 @@
                 camera.x += (avgX - canvas.width / 2 - camera.x) * 0.05;
                 camera.y += (avgY - canvas.height / 2 - camera.y) * 0.05;
                 const maxDist = Math.max(...activePlayers.map(p => Math.hypot(p.ships[0].x - avgX, p.ships[0].y - avgY)));
-                camera.zoom = Math.min(0.43, Math.max(0.2, 1000 / (maxDist + 500))); // Dynamic zoom
+                camera.zoom = Math.min(0.43, Math.max(0.2, 1000 / (maxDist + 500)));
             }
         }
 
         // UI
         function drawUI() {
+            // Health bar and ship count (fixed position)
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform for UI
+            const totalHP = players.slice(0, playerCount).reduce((sum, p) => sum + p.ships.reduce((s, ship) => s + ship.hp, 0), 0);
+            const totalShips = players.slice(0, playerCount).reduce((sum, p) => sum + p.ships.length, 0);
+            ctx.fillStyle = '#f00';
+            ctx.fillRect(canvas.width - 210, 10, Math.min(200, totalHP / 10), 20);
+            ctx.strokeStyle = '#fff';
+            ctx.strokeRect(canvas.width - 210, 10, 200, 20);
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px "Press Start 2P"';
+            ctx.fillText(`HP: ${totalHP}`, canvas.width - 210, 40);
+            ctx.fillText(`SHIPS: ${totalShips}`, canvas.width - 210, 60);
+            ctx.fillStyle = '#fff';
+            ctx.font = '16px "Press Start 2P"';
+            players.slice(0, playerCount).forEach((p, i) => {
+                ctx.fillText(`P${i + 1}`, 10, 20 + i * 20);
+            });
+
+            // Game over and eliminations
             if (players.slice(0, playerCount).every(p => !p.alive)) {
                 gameState = 'gameover';
                 ctx.fillStyle = '#fff';
                 ctx.font = '40px "Press Start 2P"';
-                ctx.fillText('GAME OVER', canvas.width / 2 - 140, canvas.height / 2 - 20);
+                ctx.fillText('GAME OVER', canvas.width / 2 - 140, canvas.height / 2 - 40);
                 ctx.font = '20px "Press Start 2P"';
                 ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 140, canvas.height / 2 + 20);
-            } else {
-                ctx.fillStyle = '#fff';
-                ctx.font = '16px "Press Start 2P"';
-                players.slice(0, playerCount).forEach((p, i) => {
-                    ctx.fillText(`P${i + 1}: ${p.ships.length} SHIPS`, 10, 20 + i * 20);
+                eliminations.forEach((text, i) => {
+                    ctx.fillText(text, canvas.width / 2 - 140, canvas.height / 2 - 100 + i * 30);
                 });
-                // Health bar
-                const totalHP = players.slice(0, playerCount).reduce((sum, p) => sum + p.ships.reduce((s, ship) => s + ship.hp, 0), 0);
-                ctx.fillStyle = '#f00';
-                ctx.fillRect(canvas.width - 210, 10, totalHP / 10, 20);
-                ctx.strokeStyle = '#fff';
-                ctx.strokeRect(canvas.width - 210, 10, 200, 20);
-                ctx.fillStyle = '#fff';
-                ctx.font = '12px "Press Start 2P"';
-                ctx.fillText(`HP: ${totalHP}`, canvas.width - 210, 40);
+            } else {
+                eliminations.forEach((text, i) => {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '20px "Press Start 2P"';
+                    ctx.fillText(text, canvas.width / 2 - 140, canvas.height / 2 - 100 + i * 30);
+                });
             }
+            ctx.restore();
             drawDamage();
         }
 
@@ -700,8 +722,8 @@
                 updatePowerUps();
                 checkCollisions();
                 updateCamera();
-                drawUI();
             }
+            drawUI();
 
             if (gameState === 'gameover' && keys['r']) {
                 location.reload();
