@@ -26,9 +26,9 @@
         #menu, #botMenu, #difficultyMenu, #howToPlayModal {
             position: absolute;
             top: 50%;
-            left: 0;
-            width: 100%;
-            transform: translateY(-50%);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
             text-align: center;
             background: linear-gradient(to bottom, #1a1a1a, #000);
             padding: 40px 20px;
@@ -43,7 +43,7 @@
         }
         h1 {
             font-size: 64px;
-            margin: 0 0 30px 0;
+            margin: 0 0 40px 0;
             text-shadow: 0 0 15px #0ff;
             animation: flicker 0.1s infinite alternate;
         }
@@ -55,13 +55,17 @@
             font-family: 'Press Start 2P', monospace;
             font-size: 20px;
             padding: 15px 30px;
-            margin: 10px;
+            margin: 15px 10px;
             background: #333;
             color: #fff;
             border: 3px solid #fff;
             cursor: pointer;
             transition: all 0.3s;
             border-radius: 5px;
+            display: block; /* Vertical layout */
+            width: 40%; /* Adjusted for two-column */
+            margin-left: auto;
+            margin-right: auto;
         }
         button:hover {
             background: #555;
@@ -107,7 +111,7 @@
         <button onclick="showBotMenu(2)">2 Players</button>
         <button onclick="showBotMenu(3)">3 Players</button>
         <button onclick="showHowToPlay()">How to Play</button>
-        <button onclick="location.reload()" style="margin-top: 30px;">Back</button>
+        <button onclick="location.reload()" style="margin-top: 40px;">Back</button>
     </div>
     <div id="botMenu" style="display: none;">
         <h1>CONFIGURE BOTS</h1>
@@ -372,25 +376,25 @@
             });
         }
 
-        // Player update with slower speed
+        // Player update with slower speed and sensitivity
         function updatePlayer(player, index) {
             if (!player.alive || !player.ships[0]) return;
             const leadShip = player.ships[0];
             const { up, down, left, right, form, dash } = player.keys;
 
             if (!player.isBot) {
-                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.15, 3);
-                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
+                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.1, 2);
+                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.1, -1);
                 else leadShip.speed *= 0.95;
-                if (keys[left]) leadShip.angle -= 0.15;
-                if (keys[right]) leadShip.angle += 0.15;
+                if (keys[left]) leadShip.angle -= 0.1;
+                if (keys[right]) leadShip.angle += 0.1;
                 if (keys[form]) {
                     keys[form] = false;
                     player.formation = getNextFormation(player.formation);
                     showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
                 }
                 if (keys[dash] && Date.now() - player.lastDash > 3000) {
-                    leadShip.speed += 5; // Reduced dash boost
+                    leadShip.speed += 5;
                     player.lastDash = Date.now();
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
@@ -436,8 +440,8 @@
                     }[player.difficulty];
                     const angleToTarget = Math.atan2(target.y - leadShip.y, target.x - leadShip.x);
                     leadShip.angle += (angleToTarget - leadShip.angle) * angleAdjustment;
-                    if (targetDistance > 100) leadShip.speed = Math.min(leadShip.speed + 0.15, 3);
-                    else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
+                    if (targetDistance > 100) leadShip.speed = Math.min(leadShip.speed + 0.1, 2);
+                    else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.1, -1);
                     else leadShip.speed *= 0.95;
 
                     for (let a of asteroids) {
@@ -555,11 +559,11 @@
             return formations[(index + 1) % formations.length];
         }
 
-        // Bullet drawing (larger and more visible)
+        // Bullet drawing
         function drawBullets(player) {
             player.bullets.forEach(b => {
                 ctx.fillStyle = b.color;
-                ctx.fillRect(b.x - 1, b.y - 1, 2, 2); // Increased to 2x2 pixels
+                ctx.fillRect(b.x - 1, b.y - 1, 2, 2);
             });
         }
 
@@ -680,7 +684,7 @@
             });
         }
 
-        // Power-ups (larger and more readable)
+        // Power-ups
         function spawnPowerUps() {
             if (Math.random() < 0.005) {
                 const roll = Math.random();
@@ -697,10 +701,10 @@
             powerUps.forEach((pu, i) => {
                 ctx.fillStyle = '#ff0';
                 ctx.beginPath();
-                ctx.arc(pu.x, pu.y, 10, 0, Math.PI * 2); // Larger radius
+                ctx.arc(pu.x, pu.y, 10, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.fillStyle = '#000';
-                ctx.font = '12px "Press Start 2P"'; // Larger text
+                ctx.font = '12px "Press Start 2P"';
                 ctx.textAlign = 'center';
                 ctx.fillText(pu.type, pu.x, pu.y + 4);
                 players.forEach(p => {
@@ -735,7 +739,7 @@
             playSound(80, 0.5, 'sine', 0.2);
         }
 
-        // Collision logic with fixed ship collisions
+        // Collision logic with controlled asteroid fragments
         function checkCollisions() {
             Object.keys(grid).forEach(key => delete grid[key]);
             players.forEach(p => p.ships.forEach(s => {
@@ -785,15 +789,15 @@
                                 a.hp -= 10;
                                 showDamage(a.x, a.y, 10, '#888');
                                 if (a.hp <= 0) {
-                                    if (a.size > 5) {
-                                        const splitCount = Math.min(5, Math.floor(Math.sqrt(s.dx * s.dx + s.dy * s.dy) / 2) + 2);
+                                    if (a.size > 10) {
+                                        const splitCount = Math.min(3, Math.floor(Math.sqrt(s.dx * s.dx + s.dy * s.dy) / 2) + 1);
                                         for (let i = 0; i < splitCount; i++) {
                                             asteroids.push({
                                                 x: a.x,
                                                 y: a.y,
-                                                size: a.size / splitCount,
-                                                dx: a.dx + (Math.random() - 0.5) * 3,
-                                                dy: a.dy + (Math.random() - 0.5) * 3,
+                                                size: Math.max(10, a.size / splitCount), // Minimum size 10
+                                                dx: a.dx + (Math.random() - 0.5) * 1, // Reduced speed
+                                                dy: a.dy + (Math.random() - 0.5) * 1,
                                                 angle: 0,
                                                 spin: (Math.random() - 0.5) * 0.02,
                                                 hp: 500
@@ -846,7 +850,7 @@
                             const op = players.find(p => p.ships.includes(os));
                             if (!op || op === p || !op.alive) return;
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            if (dist < 5 && s !== os) { // Minimum distance for collision
+                            if (dist < 5 && s !== os) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 2);
                                 s.hp -= damage;
@@ -895,15 +899,15 @@
                                 a.hp -= 20;
                                 showDamage(a.x, a.y, 20, '#888');
                                 if (a.hp <= 0) {
-                                    if (a.size > 5) {
-                                        const splitCount = Math.min(5, Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 2);
+                                    if (a.size > 10) {
+                                        const splitCount = Math.min(3, Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 1);
                                         for (let i = 0; i < splitCount; i++) {
                                             asteroids.push({
                                                 x: a.x,
                                                 y: a.y,
-                                                size: a.size / splitCount,
-                                                dx: a.dx + (Math.random() - 0.5) * 3,
-                                                dy: a.dy + (Math.random() - 0.5) * 3,
+                                                size: Math.max(10, a.size / splitCount),
+                                                dx: a.dx + (Math.random() - 0.5) * 1,
+                                                dy: a.dy + (Math.random() - 0.5) * 1,
                                                 angle: 0,
                                                 spin: (Math.random() - 0.5) * 0.02,
                                                 hp: 500
