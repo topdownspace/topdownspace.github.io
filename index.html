@@ -63,7 +63,7 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="1000" height="800"></canvas>
+    <canvas id="gameCanvas" width="2000" height="1600"></canvas>
     <div id="menu">
         <h1>SWARM WARS</h1>
         <p style="font-size: 16px; margin: 20px 0;">Select Players:</p>
@@ -98,7 +98,7 @@
         // Game objects
         const players = [
             { 
-                ships: [{ x: 200, y: 400, angle: 0, speed: 0, hp: 100, color: '#f00', dx: 0, dy: 0 }], 
+                ships: [{ x: 400, y: 800, angle: 0, speed: 0, hp: 100, color: '#f00', dx: 0, dy: 0 }], 
                 keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e' }, 
                 bullets: [], 
                 alive: true,
@@ -106,7 +106,7 @@
                 lastShot: 0
             },
             { 
-                ships: [{ x: 500, y: 400, angle: 0, speed: 0, hp: 100, color: '#0f0', dx: 0, dy: 0 }], 
+                ships: [{ x: 1000, y: 800, angle: 0, speed: 0, hp: 100, color: '#0f0', dx: 0, dy: 0 }], 
                 keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift' }, 
                 bullets: [], 
                 alive: true,
@@ -114,7 +114,7 @@
                 lastShot: 0
             },
             { 
-                ships: [{ x: 800, y: 400, angle: 0, speed: 0, hp: 100, color: '#00f', dx: 0, dy: 0 }], 
+                ships: [{ x: 1600, y: 800, angle: 0, speed: 0, hp: 100, color: '#00f', dx: 0, dy: 0 }], 
                 keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o' }, 
                 bullets: [], 
                 alive: true,
@@ -129,7 +129,7 @@
         const stars = [];
         const keys = {};
         const MAX_ASTEROIDS = 10;
-        const hpDisplays = [];
+        const damageDisplays = [];
 
         // Event listeners
         window.addEventListener('keydown', (e) => keys[e.key] = true);
@@ -153,7 +153,7 @@
             ctx.translate(ship.x - camera.x, ship.y - camera.y);
             ctx.scale(camera.zoom, camera.zoom);
             ctx.rotate(ship.angle);
-            const size = Math.max(5, 20 - swarmSize * 0.18);
+            const size = Math.max(5, 50 - swarmSize * 0.45); // Bigger start, shrinks more
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -163,25 +163,25 @@
             ctx.fill();
             if (ship.speed > 0 && Math.random() > 0.5) {
                 ctx.fillStyle = '#ff0';
-                ctx.fillRect(-size / 2 - 3, -size / 4, 3, size / 2);
+                ctx.fillRect(-size / 2 - 5, -size / 4, 5, size / 2);
             }
             ctx.restore();
         }
 
-        // HP display
-        function showHP(x, y, hp, color) {
-            hpDisplays.push({ x, y, hp, color, time: Date.now() });
+        // Damage display
+        function showDamage(x, y, damage, color) {
+            damageDisplays.push({ x, y, damage, color, time: Date.now() });
         }
 
-        function drawHP() {
-            hpDisplays.forEach((d, i) => {
+        function drawDamage() {
+            damageDisplays.forEach((d, i) => {
                 if (Date.now() - d.time > 500) {
-                    hpDisplays.splice(i, 1);
+                    damageDisplays.splice(i, 1);
                     return;
                 }
                 ctx.fillStyle = d.color;
                 ctx.font = '12px "Press Start 2P"';
-                ctx.fillText(d.hp, d.x - camera.x, d.y - 10 - camera.y);
+                ctx.fillText(`-${d.damage}`, d.x - camera.x, d.y - 10 - camera.y);
             });
         }
 
@@ -196,7 +196,7 @@
             if (keys[left]) leadShip.angle -= 0.1;
             if (keys[right]) leadShip.angle += 0.1;
             if (keys[form]) {
-                keys[form] = false; // Debounce
+                keys[form] = false;
                 player.formation = player.formation === 'line' ? 'v' : player.formation === 'v' ? 'wedge' : 'line';
             }
 
@@ -257,8 +257,8 @@
                 });
             });
 
-            // Shooting (slower with more ships)
-            const shootDelay = 50 + player.ships.length * 10;
+            // Shooting (slower)
+            const shootDelay = 200 + player.ships.length * 5; // Slower base, scales less
             if (Date.now() - player.lastShot > shootDelay) {
                 player.ships.forEach(ship => {
                     player.bullets.push({
@@ -303,7 +303,7 @@
                     dy: (Math.random() - 0.5) * 2,
                     angle: 0,
                     spin: (Math.random() - 0.5) * 0.02,
-                    hp: 50
+                    hp: 500
                 });
             }
         }
@@ -342,7 +342,7 @@
                     x, y,
                     w: 60 + Math.random() * 60,
                     h: 60 + Math.random() * 60,
-                    hp: 100
+                    hp: 1000
                 });
             }
         }
@@ -356,7 +356,7 @@
 
         // Stars
         function spawnStars() {
-            for (let i = 0; i < 150; i++) {
+            for (let i = 0; i < 300; i++) {
                 stars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
@@ -375,11 +375,11 @@
         // Nebula
         const nebula = [];
         function spawnNebula() {
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 20; i++) {
                 nebula.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: 80 + Math.random() * 120,
+                    size: 100 + Math.random() * 150,
                     color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.1)`
                 });
             }
@@ -410,24 +410,31 @@
 
         // Power-ups
         function spawnPowerUps() {
-            if (Math.random() < 0.005) { // Rare
+            if (Math.random() < 0.005) {
+                const roll = Math.random();
+                const type = roll < 0.2 ? '+1' : roll < 0.4 ? '+2' : roll < 0.6 ? '+3' : roll < 0.8 ? '+4' : roll < 0.95 ? '+5' : '+10';
                 powerUps.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    type: Math.random() < 0.5 ? 'speed' : 'ship'
+                    type
                 });
             }
         }
 
         function updatePowerUps() {
             powerUps.forEach((pu, i) => {
-                ctx.fillStyle = pu.type === 'speed' ? '#ff0' : '#0ff';
+                ctx.fillStyle = '#ff0';
                 ctx.fillRect(pu.x - 5 - camera.x, pu.y - 5 - camera.y, 10, 10);
+                ctx.fillStyle = '#000';
+                ctx.font = '8px "Press Start 2P"';
+                ctx.fillText(pu.type, pu.x - 5 - camera.x, pu.y + 3 - camera.y);
                 players.slice(0, playerCount).forEach(p => {
                     p.ships.forEach(s => {
-                        if (Math.hypot(s.x - pu.x, s.y - pu.y) < 20) {
-                            if (pu.type === 'speed') s.speed += 2;
-                            else if (p.ships.length < 100) p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 20, color: s.color, dx: 0, dy: 0 });
+                        if (Math.hypot(s.x - pu.x, s.y - pu.y) < 20 && p.ships.length < 100) {
+                            const count = parseInt(pu.type.slice(1));
+                            for (let j = 0; j < count && p.ships.length < 100; j++) {
+                                p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 20, color: s.color, dx: 0, dy: 0 });
+                            }
                             powerUps.splice(i, 1);
                             playSound(600, 0.3);
                         }
@@ -437,18 +444,18 @@
         }
 
         // Explosion
-        function explosion(x, y, count, color = '#ff0', size = 2) {
-            for (let i = 0; i < count; i++) {
+        function explosion(x, y, count, color = '#ff0', size = 3) {
+            for (let i = 0; i < count * 2; i++) { // Bigger
                 particles.push({
                     x, y,
-                    size: size + Math.random() * 2,
-                    life: 20,
+                    size: size + Math.random() * 3,
+                    life: 30,
                     color,
-                    dx: (Math.random() - 0.5) * 5,
-                    dy: (Math.random() - 0.5) * 5
+                    dx: (Math.random() - 0.5) * 7,
+                    dy: (Math.random() - 0.5) * 7
                 });
             }
-            playSound(80, 0.3, 'sine');
+            playSound(80, 0.5, 'sine', 0.2); // Louder
         }
 
         // Collision logic
@@ -464,16 +471,16 @@
                         const dist = Math.hypot(s.x - a.x, s.y - a.y);
                         if (dist < a.size + 10) {
                             s.hp -= 10;
-                            showHP(s.x, s.y, s.hp, s.color);
+                            showDamage(s.x, s.y, 10, s.color);
                             if (s.hp <= 0) {
                                 if (p.ships.length < 100) {
                                     p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
                                 }
                                 p.ships.splice(si, 1);
-                                explosion(s.x, s.y, 10, s.color);
+                                explosion(s.x, s.y, 20, s.color);
                             }
                             a.hp -= 10;
-                            showHP(a.x, a.y, a.hp, '#888');
+                            showDamage(a.x, a.y, 10, '#888');
                             if (a.hp <= 0) {
                                 if (a.size > 20) {
                                     const splitCount = Math.min(5, Math.floor(Math.sqrt(s.dx * s.dx + s.dy * s.dy) / 2) + 2);
@@ -486,12 +493,12 @@
                                             dy: a.dy + (Math.random() - 0.5) * 3,
                                             angle: 0,
                                             spin: (Math.random() - 0.5) * 0.02,
-                                            hp: 20
+                                            hp: 500
                                         });
                                     }
                                 }
                                 asteroids.splice(ai, 1);
-                                explosion(a.x, a.y, 15);
+                                explosion(a.x, a.y, 30);
                             }
                             break;
                         }
@@ -502,16 +509,16 @@
                         const o = obstacles[oi];
                         if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
                             s.hp -= 20;
-                            showHP(s.x, s.y, s.hp, s.color);
+                            showDamage(s.x, s.y, 20, s.color);
                             if (s.hp <= 0) {
                                 if (p.ships.length < 100) {
                                     p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
                                 }
                                 p.ships.splice(si, 1);
-                                explosion(s.x, s.y, 10, s.color);
+                                explosion(s.x, s.y, 20, s.color);
                             }
                             o.hp -= 20;
-                            showHP(o.x + o.w / 2, o.y, o.hp, '#555');
+                            showDamage(o.x + o.w / 2, o.y, 20, '#555');
                             if (o.hp <= 0) obstacles.splice(oi, 1);
                             break;
                         }
@@ -524,16 +531,16 @@
                         for (let bi = op.bullets.length - 1; bi >= 0; bi--) {
                             const b = op.bullets[bi];
                             if (Math.hypot(s.x - b.x, s.y - b.y) < 10) {
-                                s.hp -= 20; // Easier splitting
-                                s.dx -= b.dx * 0.2; // Knockback
+                                s.hp -= 20;
+                                s.dx -= b.dx * 0.2;
                                 s.dy -= b.dy * 0.2;
-                                showHP(s.x, s.y, s.hp, s.color);
+                                showDamage(s.x, s.y, 20, s.color);
                                 if (s.hp <= 0) {
                                     if (p.ships.length < 100) {
                                         p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
                                     }
                                     p.ships.splice(si, 1);
-                                    explosion(s.x, s.y, 10, s.color);
+                                    explosion(s.x, s.y, 20, s.color);
                                 }
                                 op.bullets.splice(bi, 1);
                                 break;
@@ -552,8 +559,8 @@
                                 const damage = Math.floor(speed * 5);
                                 s.hp -= damage;
                                 os.hp -= damage;
-                                showHP(s.x, s.y, s.hp, s.color);
-                                showHP(os.x, os.y, os.hp, os.color);
+                                showDamage(s.x, s.y, damage, s.color);
+                                showDamage(os.x, os.y, damage, os.color);
                                 if (s.hp <= 0) {
                                     if (p.ships.length < 100) {
                                         for (let i = 0; i < Math.min(5, Math.floor(damage / 20)) && p.ships.length < 100; i++) {
@@ -561,7 +568,7 @@
                                         }
                                     }
                                     p.ships.splice(si, 1);
-                                    explosion(s.x, s.y, 20, s.color);
+                                    explosion(s.x, s.y, 40, s.color);
                                 }
                                 if (os.hp <= 0) {
                                     if (op.ships.length < 100) {
@@ -570,7 +577,7 @@
                                         }
                                     }
                                     op.ships.splice(osi, 1);
-                                    explosion(os.x, os.y, 20, os.color);
+                                    explosion(os.x, os.y, 40, os.color);
                                 }
                                 playSound(100, 0.5, 'sine', 0.3);
                                 break;
@@ -579,7 +586,7 @@
                     }
                 }
                 p.alive = p.ships.length > 0;
-                if (!p.alive) explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 50, p.ships[0]?.color || '#fff');
+                if (!p.alive) explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 100, p.ships[0]?.color || '#fff');
             }
 
             // Bullet vs Asteroid/Obstacle
@@ -591,7 +598,7 @@
                         const a = asteroids[ai];
                         if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
                             a.hp -= 20;
-                            showHP(a.x, a.y, a.hp, '#888');
+                            showDamage(a.x, a.y, 20, '#888');
                             if (a.hp <= 0) {
                                 if (a.size > 20) {
                                     const splitCount = Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 2;
@@ -604,12 +611,12 @@
                                             dy: a.dy + (Math.random() - 0.5) * 3,
                                             angle: 0,
                                             spin: (Math.random() - 0.5) * 0.02,
-                                            hp: 20
+                                            hp: 500
                                         });
                                     }
                                 }
                                 asteroids.splice(ai, 1);
-                                explosion(a.x, a.y, 15);
+                                explosion(a.x, a.y, 30);
                             }
                             p.bullets.splice(bi, 1);
                             break;
@@ -619,7 +626,7 @@
                         const o = obstacles[oi];
                         if (b.x > o.x && b.x < o.x + o.w && b.y > o.y && b.y < o.y + o.h) {
                             o.hp -= 20;
-                            showHP(o.x + o.w / 2, o.y, o.hp, '#555');
+                            showDamage(o.x + o.w / 2, o.y, 20, '#555');
                             if (o.hp <= 0) obstacles.splice(oi, 1);
                             p.bullets.splice(bi, 1);
                             break;
@@ -637,6 +644,8 @@
                 const avgY = activePlayers.reduce((sum, p) => sum + p.ships[0].y, 0) / activePlayers.length;
                 camera.x += (avgX - canvas.width / 2 - camera.x) * 0.05;
                 camera.y += (avgY - canvas.height / 2 - camera.y) * 0.05;
+                const maxDist = Math.max(...activePlayers.map(p => Math.hypot(p.ships[0].x - avgX, p.ships[0].y - avgY)));
+                camera.zoom = Math.min(0.43, Math.max(0.2, 1000 / (maxDist + 500))); // Dynamic zoom
             }
         }
 
@@ -655,8 +664,17 @@
                 players.slice(0, playerCount).forEach((p, i) => {
                     ctx.fillText(`P${i + 1}: ${p.ships.length} SHIPS`, 10, 20 + i * 20);
                 });
+                // Health bar
+                const totalHP = players.slice(0, playerCount).reduce((sum, p) => sum + p.ships.reduce((s, ship) => s + ship.hp, 0), 0);
+                ctx.fillStyle = '#f00';
+                ctx.fillRect(canvas.width - 210, 10, totalHP / 10, 20);
+                ctx.strokeStyle = '#fff';
+                ctx.strokeRect(canvas.width - 210, 10, 200, 20);
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px "Press Start 2P"';
+                ctx.fillText(`HP: ${totalHP}`, canvas.width - 210, 40);
             }
-            drawHP();
+            drawDamage();
         }
 
         // Game loop
