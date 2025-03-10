@@ -64,6 +64,22 @@
             background: #444;
             box-shadow: 0 0 15px #0ff;
         }
+        #uiPanel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 200px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px #fff;
+            z-index: 10;
+        }
+        #uiPanel div {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-bottom: 1px solid #fff;
+        }
     </style>
 </head>
 <body>
@@ -89,6 +105,7 @@
         <button onclick="startGame(25)">25</button>
         <button onclick="startGame(30)">30</button>
     </div>
+    <div id="uiPanel" style="display: none;"></div>
     <script>
         // Core setup
         let playerCount = 0;
@@ -101,6 +118,7 @@
         const ctx = canvas.getContext('2d');
         const menu = document.getElementById('menu');
         const botMenu = document.getElementById('botMenu');
+        const uiPanel = document.getElementById('uiPanel');
 
         // Set canvas to screen size
         canvas.width = window.innerWidth;
@@ -186,6 +204,7 @@
             gameState = 'playing';
             menu.style.display = 'none';
             botMenu.style.display = 'none';
+            uiPanel.style.display = 'block';
             spawnObstacles();
             spawnStars();
             spawnNebula();
@@ -199,12 +218,12 @@
             });
         }
 
-        // Ship drawing
+        // Ship drawing with smaller scale
         function drawShip(ship, totalEntities, isLead, isPlayer) {
             ctx.save();
             ctx.translate(ship.x, ship.y);
             ctx.rotate(ship.angle);
-            const size = Math.max(5, 50 - totalEntities * 0.045);
+            const size = Math.max(3, 30 - totalEntities * 0.03); // Smaller base size (30px), min 3px
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -214,13 +233,13 @@
             ctx.fill();
             if (ship.speed > 0 && Math.random() > 0.5) {
                 ctx.fillStyle = '#ff0';
-                ctx.fillRect(-size / 2 - 5, -size / 4, 5, size / 2);
+                ctx.fillRect(-size / 2 - 3, -size / 4, 3, size / 2);
             }
             if (isLead && isPlayer) {
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.moveTo(0, -size - 5);
-                ctx.lineTo(5, -size);
+                ctx.moveTo(0, -size - 3);
+                ctx.lineTo(3, -size);
                 ctx.fill();
             }
             ctx.restore();
@@ -238,29 +257,29 @@
                     return;
                 }
                 ctx.fillStyle = d.color;
-                ctx.font = '12px "Press Start 2P"';
-                ctx.fillText(`- ${d.damage}`, d.x, d.y - 10);
+                ctx.font = '10px "Press Start 2P"'; // Smaller font
+                ctx.fillText(`- ${d.damage}`, d.x, d.y - 6);
             });
         }
 
-        // Player update with formation
+        // Player update with crash fix and speed boost
         function updatePlayer(player, index) {
-            if (!player.alive) return;
+            if (!player.alive || !player.ships[0]) return; // Crash fix: Check if ships[0] exists
             const leadShip = player.ships[0];
             const { up, down, left, right, form, dash } = player.keys;
 
             if (!player.isBot) {
-                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.2, 4);
-                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
+                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.3, 6); // Increased max speed to 6
+                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.3, -3);
                 else leadShip.speed *= 0.95;
-                if (keys[left]) leadShip.angle -= 0.1;
-                if (keys[right]) leadShip.angle += 0.1;
+                if (keys[left]) leadShip.angle -= 0.15; // Faster rotation
+                if (keys[right]) leadShip.angle += 0.15;
                 if (keys[form]) {
                     keys[form] = false;
                     player.formation = player.formation === 'line' ? 'v' : player.formation === 'v' ? 'wedge' : player.formation === 'wedge' ? 'cluster' : 'line';
                 }
-                if (keys[dash] && Date.now() - player.lastDash > 5000) {
-                    leadShip.speed += 5;
+                if (keys[dash] && Date.now() - player.lastDash > 3000) { // Reduced dash cooldown to 3s
+                    leadShip.speed += 10; // Increased dash speed to 10
                     player.lastDash = Date.now();
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
@@ -269,11 +288,11 @@
                 if (target) {
                     const angleToTarget = Math.atan2(target.ships[0].y - leadShip.y, target.ships[0].x - leadShip.x);
                     leadShip.angle += (angleToTarget - leadShip.angle) * 0.05;
-                    if (Math.random() < 0.8) leadShip.speed = Math.min(leadShip.speed + 0.2, 4);
-                    else leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
+                    if (Math.random() < 0.8) leadShip.speed = Math.min(leadShip.speed + 0.3, 6);
+                    else leadShip.speed = Math.max(leadShip.speed - 0.3, -3);
                     if (Math.random() < 0.05) player.formation = ['line', 'v', 'wedge', 'cluster'][Math.floor(Math.random() * 4)];
-                    if (Math.random() < 0.02 && Date.now() - player.lastDash > 5000) {
-                        leadShip.speed += 5;
+                    if (Math.random() < 0.02 && Date.now() - player.lastDash > 3000) {
+                        leadShip.speed += 10;
                         player.lastDash = Date.now();
                         playSound(1000, 0.2, 'triangle', 0.2);
                     }
@@ -286,52 +305,52 @@
             player.ships.forEach((ship, i) => {
                 let targetX, targetY, offsetX, offsetY;
                 if (i === 0) {
-                    ship.dx = Math.cos(ship.angle) * ship.speed;
-                    ship.dy = Math.sin(ship.angle) * ship.speed;
+                    ship.dx = Math.cos(ship.angle) * ship.speed * 1.5; // Increased speed multiplier
+                    ship.dy = Math.sin(ship.angle) * ship.speed * 1.5;
                 } else {
                     if (player.formation === 'line') {
                         offsetX = 0;
-                        offsetY = i * 15;
+                        offsetY = i * 10; // Smaller offset
                     } else if (player.formation === 'v') {
-                        offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 10;
-                        offsetY = i * 10;
+                        offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 7; // Smaller offset
+                        offsetY = i * 7;
                     } else if (player.formation === 'wedge') {
-                        offsetX = (i - 1) * 10;
-                        offsetY = Math.abs(i - 1) * 10;
+                        offsetX = (i - 1) * 7;
+                        offsetY = Math.abs(i - 1) * 7;
                     } else { // cluster
                         const angle = (i / player.ships.length) * Math.PI * 2;
-                        offsetX = Math.cos(angle) * 15;
-                        offsetY = Math.sin(angle) * 15;
+                        offsetX = Math.cos(angle) * 10;
+                        offsetY = Math.sin(angle) * 10;
                     }
                     targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
                     targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
-                    ship.dx = (targetX - ship.x) * 0.3;
-                    ship.dy = (targetY - ship.y) * 0.3;
+                    ship.dx = (targetX - ship.x) * 0.3 * 1.5; // Increased tracking speed
+                    ship.dy = (targetY - ship.y) * 0.3 * 1.5;
                     ship.angle = leadShip.angle;
                 }
                 ship.dx *= 0.98;
                 ship.dy *= 0.98;
                 ship.x += ship.dx;
                 ship.y += ship.dy;
-                ship.x = Math.max(10, Math.min(canvas.width - 10, ship.x));
-                ship.y = Math.max(10, Math.min(canvas.height - 10, ship.y));
+                ship.x = Math.max(5, Math.min(canvas.width - 5, ship.x)); // Smaller boundaries
+                ship.y = Math.max(5, Math.min(canvas.height - 5, ship.y));
                 particles.push({
-                    x: ship.x - Math.cos(ship.angle) * 5,
-                    y: ship.y - Math.sin(ship.angle) * 5,
-                    size: 1,
+                    x: ship.x - Math.cos(ship.angle) * 3, // Smaller particles
+                    y: ship.y - Math.sin(ship.angle) * 3,
+                    size: 0.5,
                     life: 8,
                     color: ship.color
                 });
             });
 
-            const shootDelay = 200 + player.ships.length * 5;
-            if (Date.now() - player.lastShot > shootDelay || (player.isBot && Math.random() < 0.1)) {
+            const shootDelay = 150 + player.ships.length * 3; // Faster shooting
+            if (Date.now() - player.lastShot > shootDelay || (player.isBot && Math.random() < 0.15)) {
                 player.ships.forEach(ship => {
                     player.bullets.push({
-                        x: ship.x + Math.cos(ship.angle) * 10,
-                        y: ship.y + Math.sin(ship.angle) * 10,
-                        dx: Math.cos(ship.angle) * 6,
-                        dy: Math.sin(ship.angle) * 6,
+                        x: ship.x + Math.cos(ship.angle) * 6, // Smaller bullet offset
+                        y: ship.y + Math.sin(ship.angle) * 6,
+                        dx: Math.cos(ship.angle) * 4, // Faster bullets
+                        dy: Math.sin(ship.angle) * 4,
                         color: ship.color,
                         time: Date.now()
                     });
@@ -341,10 +360,10 @@
             }
 
             player.bullets = player.bullets.filter(b => {
-                b.x += b.dx;
-                b.y += b.dy;
+                b.x += b.dx * 1.5; // Increased bullet speed
+                b.y += b.dy * 1.5;
                 if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) return false;
-                particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 1, life: 5, color: b.color });
+                particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 0.5, life: 5, color: b.color });
                 return Date.now() - b.time < 2000;
             });
         }
@@ -353,17 +372,17 @@
         function drawBullets(player) {
             player.bullets.forEach(b => {
                 ctx.fillStyle = b.color;
-                ctx.fillRect(b.x - 1, b.y - 1, 2, 2);
+                ctx.fillRect(b.x - 1, b.y - 1, 1, 1); // Smaller bullets
             });
         }
 
-        // Asteroid spawning
+        // Asteroid spawning with smaller size
         function spawnAsteroids() {
             while (asteroids.length < MAX_ASTEROIDS) {
                 asteroids.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: 40 + Math.random() * 20,
+                    size: 20 + Math.random() * 20, // Smaller range (20-40px)
                     dx: (Math.random() - 0.5) * 2,
                     dy: (Math.random() - 0.5) * 2,
                     angle: 0,
@@ -395,18 +414,18 @@
             });
         }
 
-        // Obstacle spawning
+        // Obstacle spawning with smaller size
         function spawnObstacles() {
             for (let i = 0; i < 2; i++) {
                 let x, y;
                 do {
                     x = Math.random() * canvas.width;
                     y = Math.random() * canvas.height;
-                } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 100)));
+                } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 50))); // Smaller safe distance
                 obstacles.push({
                     x, y,
-                    w: 60 + Math.random() * 60,
-                    h: 60 + Math.random() * 60,
+                    w: 30 + Math.random() * 30, // Smaller range (30-60px)
+                    h: 30 + Math.random() * 30,
                     hp: 1000
                 });
             }
@@ -425,7 +444,7 @@
                 stars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: Math.random() * 2
+                    size: Math.random() * 1 // Smaller stars
                 });
             }
         }
@@ -444,7 +463,7 @@
                 nebula.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: 100 + Math.random() * 150,
+                    size: 50 + Math.random() * 75, // Smaller range (50-125px)
                     color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.1)`
                 });
             }
@@ -473,11 +492,11 @@
             });
         }
 
-        // Power-ups
+        // Power-ups with increased growth
         function spawnPowerUps() {
-            if (Math.random() < 0.005) {
+            if (Math.random() < 0.01) { // Increased spawn chance
                 const roll = Math.random();
-                const type = roll < 0.2 ? '+1' : roll < 0.4 ? '+2' : roll < 0.6 ? '+3' : roll < 0.8 ? '+4' : roll < 0.95 ? '+5' : '+10';
+                const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20'; // Increased range
                 powerUps.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
@@ -490,18 +509,18 @@
             powerUps.forEach((pu, i) => {
                 ctx.fillStyle = '#ff0';
                 ctx.beginPath();
-                ctx.arc(pu.x, pu.y, 15, 0, Math.PI * 2);
+                ctx.arc(pu.x, pu.y, 10, 0, Math.PI * 2); // Smaller power-up
                 ctx.fill();
                 ctx.fillStyle = '#000';
-                ctx.font = '12px "Press Start 2P"';
+                ctx.font = '10px "Press Start 2P"';
                 ctx.textAlign = 'center';
-                ctx.fillText(pu.type, pu.x, pu.y + 4);
+                ctx.fillText(pu.type, pu.x, pu.y + 3);
                 players.forEach(p => {
                     p.ships.forEach(s => {
-                        if (Math.hypot(s.x - pu.x, s.y - pu.y) < 25 && p.ships.length < 100) {
+                        if (Math.hypot(s.x - pu.x, s.y - pu.y) < 15 && p.ships.length < 200) { // Increased limit to 200
                             const count = parseInt(pu.type.slice(1));
-                            for (let j = 0; j < count && p.ships.length < 100; j++) {
-                                p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 20, color: s.color, dx: 0, dy: 0 });
+                            for (let j = 0; j < count && p.ships.length < 200; j++) {
+                                p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 100, color: s.color, dx: 0, dy: 0 }); // Increased HP to 100
                                 playSound(800, 0.2, 'triangle', 0.1);
                             }
                             powerUps.splice(i, 1);
@@ -513,15 +532,15 @@
         }
 
         // Explosion
-        function explosion(x, y, count, color = '#ff0', size = 5) {
+        function explosion(x, y, count, color = '#ff0', size = 3) { // Smaller explosions
             for (let i = 0; i < count * 3; i++) {
                 particles.push({
                     x, y,
-                    size: size + Math.random() * 5,
+                    size: size + Math.random() * 3,
                     life: 40,
                     color,
-                    dx: (Math.random() - 0.5) * 10,
-                    dy: (Math.random() - 0.5) * 10
+                    dx: (Math.random() - 0.5) * 6,
+                    dy: (Math.random() - 0.5) * 6
                 });
             }
             playSound(80, 0.5, 'sine', 0.2);
@@ -531,16 +550,16 @@
         function checkCollisions() {
             for (let pi = 0; pi < players.length; pi++) {
                 const p = players[pi];
-                if (!p.alive) continue;
+                if (!p.alive || !p.ships[0]) continue; // Crash fix
                 for (let si = p.ships.length - 1; si >= 0; si--) {
                     const s = p.ships[si];
-                    if (Date.now() < s.invulnerableUntil) continue; // Skip if invulnerable
+                    if (Date.now() < s.invulnerableUntil) continue;
 
                     // Asteroid collisions
                     for (let ai = asteroids.length - 1; ai >= 0; ai--) {
                         const a = asteroids[ai];
                         const dist = Math.hypot(s.x - a.x, s.y - a.y);
-                        if (dist < a.size + 10) {
+                        if (dist < a.size + 5) { // Smaller collision radius
                             s.hp -= 10;
                             showDamage(s.x, s.y, 10, s.color);
                             if (s.hp <= 0) {
@@ -550,7 +569,7 @@
                             a.hp -= 10;
                             showDamage(a.x, a.y, 10, '#888');
                             if (a.hp <= 0) {
-                                if (a.size > 20) {
+                                if (a.size > 10) {
                                     const splitCount = Math.min(5, Math.floor(Math.sqrt(s.dx * s.dx + s.dy * s.dy) / 2) + 2);
                                     for (let i = 0; i < splitCount; i++) {
                                         asteroids.push({
@@ -596,7 +615,7 @@
                         if (p === op) continue;
                         for (let bi = op.bullets.length - 1; bi >= 0; bi--) {
                             const b = op.bullets[bi];
-                            if (Math.hypot(s.x - b.x, s.y - b.y) < 10) {
+                            if (Math.hypot(s.x - b.x, s.y - b.y) < 5) { // Smaller collision radius
                                 s.hp -= 10;
                                 s.dx -= b.dx * 0.1;
                                 s.dy -= b.dy * 0.1;
@@ -618,7 +637,7 @@
                         for (let osi = op.ships.length - 1; osi >= 0; osi--) {
                             const os = op.ships[osi];
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            if (dist < 20 && s !== os && op !== p) {
+                            if (dist < 10 && s !== os && op !== p) { // Smaller collision radius
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 2);
                                 s.hp -= damage;
@@ -658,7 +677,7 @@
                             a.hp -= 20;
                             showDamage(a.x, a.y, 20, '#888');
                             if (a.hp <= 0) {
-                                if (a.size > 20) {
+                                if (a.size > 10) {
                                     const splitCount = Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 2;
                                     for (let i = 0; i < splitCount; i++) {
                                         asteroids.push({
@@ -696,21 +715,21 @@
             console.log('Post-collision state:', players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0]?.hp || 0 })));
         }
 
-        // UI
+        // UI with organized layout
         function drawUI() {
-            ctx.save();
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            const totalEntities = players.reduce((sum, p) => sum + p.ships.length, 0);
+            uiPanel.innerHTML = '';
             players.forEach((p, i) => {
                 const totalHP = p.ships.reduce((sum, ship) => sum + (ship.hp || 0), 0);
-                ctx.fillStyle = p.color;
-                ctx.fillRect(10, 10 + i * 40, Math.min(200, totalHP / 10), 20);
-                ctx.strokeStyle = '#fff';
-                ctx.strokeRect(10, 10 + i * 40, 200, 20);
-                ctx.fillStyle = '#fff';
-                ctx.font = '12px "Press Start 2P"';
-                ctx.fillText(`P${i + 1} HP: ${totalHP}`, 10, 30 + i * 40);
-                ctx.fillText(`SHIPS: ${p.ships.length}`, 10, 50 + i * 40);
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <p>Player ${i + 1}</p>
+                    <p>HP: ${totalHP}</p>
+                    <p>Ships: ${p.ships.length}</p>
+                    <div style="width: 100%; background: #333; border: 1px solid #fff;">
+                        <div style="width: ${Math.min(100, totalHP / 2)}%; height: 10px; background: ${p.color};"></div>
+                    </div>
+                `;
+                uiPanel.appendChild(div);
             });
 
             const alivePlayers = players.filter(p => p.alive);
@@ -718,32 +737,31 @@
             if (alivePlayers.length === 0) {
                 gameState = 'gameover';
                 ctx.fillStyle = '#fff';
-                ctx.font = '40px "Press Start 2P"';
-                ctx.fillText('GAME OVER', canvas.width / 2 - 140, canvas.height / 2 - 40);
-                ctx.font = '20px "Press Start 2P"';
-                ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 140, canvas.height / 2 + 20);
+                ctx.font = '30px "Press Start 2P"'; // Smaller text
+                ctx.fillText('GAME OVER', canvas.width / 2 - 105, canvas.height / 2 - 30);
+                ctx.font = '15px "Press Start 2P"';
+                ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 105, canvas.height / 2 + 15);
                 eliminations.forEach((text, i) => {
-                    ctx.fillText(text, canvas.width / 2 - 140, canvas.height / 2 - 100 + i * 30);
+                    ctx.fillText(text, canvas.width / 2 - 105, canvas.height / 2 - 60 + i * 20);
                 });
             } else if (alivePlayers.length === 1) {
                 gameState = 'victory';
                 ctx.fillStyle = '#fff';
-                ctx.font = '40px "Press Start 2P"';
-                ctx.fillText('#1 VICTORY ROYALE', canvas.width / 2 - 220, canvas.height / 2 - 40);
-                ctx.font = '20px "Press Start 2P"';
-                ctx.fillText(`PLAYER ${players.indexOf(alivePlayers[0]) + 1} WINS`, canvas.width / 2 - 180, canvas.height / 2);
-                ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 140, canvas.height / 2 + 40);
+                ctx.font = '30px "Press Start 2P"';
+                ctx.fillText('#1 VICTORY ROYALE', canvas.width / 2 - 165, canvas.height / 2 - 30);
+                ctx.font = '15px "Press Start 2P"';
+                ctx.fillText(`PLAYER ${players.indexOf(alivePlayers[0]) + 1} WINS`, canvas.width / 2 - 135, canvas.height / 2);
+                ctx.fillText('PRESS R TO RESTART', canvas.width / 2 - 105, canvas.height / 2 + 30);
                 eliminations.forEach((text, i) => {
-                    ctx.fillText(text, canvas.width / 2 - 140, canvas.height / 2 - 100 + i * 30);
+                    ctx.fillText(text, canvas.width / 2 - 105, canvas.height / 2 - 60 + i * 20);
                 });
             } else {
                 eliminations.forEach((text, i) => {
                     ctx.fillStyle = '#fff';
-                    ctx.font = '20px "Press Start 2P"';
-                    ctx.fillText(text, canvas.width / 2 - 140, canvas.height / 2 - 100 + i * 30);
+                    ctx.font = '15px "Press Start 2P"';
+                    ctx.fillText(text, canvas.width / 2 - 105, canvas.height / 2 - 60 + i * 20);
                 });
             }
-            ctx.restore();
             drawDamage();
         }
 
