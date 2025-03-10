@@ -23,8 +23,79 @@
             position: absolute;
             top: 0;
             left: 0;
+            z-index: 1;
         }
-        #menu, #botMenu, #difficultyMenu, #howToPlayModal {
+        /* Enhanced main menu styling */
+        #menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            text-align: center;
+            background: linear-gradient(45deg, #1a1a1a, #000);
+            padding: 50px 30px;
+            border: 5px solid #fff;
+            box-shadow: 0 0 30px #0ff, 0 0 50px #00f;
+            animation: pulse 4s infinite alternate, nebula 10s infinite;
+            z-index: 20;
+            overflow: hidden;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 30px #0ff, 0 0 50px #00f; }
+            100% { box-shadow: 0 0 50px #0ff, 0 0 70px #00f; }
+        }
+        @keyframes nebula {
+            0% { background-position: 0 0; }
+            100% { background-position: 100% 0; }
+        }
+        #menu::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 0, 255, 0.1) 0%, rgba(0, 0, 255, 0.1) 70%, transparent 100%);
+            animation: rotate 20s linear infinite;
+            z-index: -1;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #menu h1 {
+            font-size: 80px;
+            margin: 0 0 50px 0;
+            text-shadow: 0 0 20px #0ff, 0 0 30px #00f;
+            animation: flicker 0.2s infinite alternate;
+            color: #0ff;
+        }
+        @keyframes flicker {
+            0% { opacity: 0.9; }
+            100% { opacity: 1; }
+        }
+        #menu button {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 24px;
+            padding: 20px 40px;
+            margin: 20px 15px;
+            background: #333;
+            color: #fff;
+            border: 4px solid #0ff;
+            cursor: pointer;
+            transition: all 0.4s;
+            border-radius: 10px;
+            display: inline-block;
+            width: 45%;
+        }
+        #menu button:hover {
+            background: #555;
+            box-shadow: 0 0 40px #0ff, 0 0 60px #00f;
+            transform: scale(1.05);
+            color: #0ff;
+        }
+        #botMenu, #difficultyMenu {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -41,36 +112,6 @@
         @keyframes glow {
             0% { box-shadow: 0 0 10px #fff; }
             100% { box-shadow: 0 0 30px #fff; }
-        }
-        h1 {
-            font-size: 64px;
-            margin: 0 0 40px 0;
-            text-shadow: 0 0 15px #0ff;
-            animation: flicker 0.1s infinite alternate;
-        }
-        @keyframes flicker {
-            0% { opacity: 0.9; }
-            100% { opacity: 1; }
-        }
-        button {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 20px;
-            padding: 15px 30px;
-            margin: 15px 10px;
-            background: #333;
-            color: #fff;
-            border: 3px solid #fff;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-radius: 5px;
-            display: block;
-            width: 40%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        button:hover {
-            background: #555;
-            box-shadow: 0 0 20px #0ff;
         }
         #uiPanel {
             position: fixed;
@@ -97,9 +138,46 @@
             padding: 40px;
             max-height: 80%;
             overflow-y: auto;
+            z-index: 30;
         }
         #howToPlayModal.show {
             display: block;
+        }
+        /* New sections beneath the game */
+        #aboutSection, #howToPlaySection {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-top: 2px solid #fff;
+            text-align: center;
+            color: #ccc;
+            font-size: 12px;
+            line-height: 1.5;
+            z-index: 2;
+            display: none; /* Hidden by default, show when game starts */
+        }
+        #aboutSection.show, #howToPlaySection.show {
+            display: block;
+        }
+        /* Starfield animation */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQI12NgYGD4zwABYAFjMAACQDP+AGiW/3WAAAAAElFTkSuQmCC') repeat;
+            animation: stars 10s linear infinite;
+            z-index: -2;
+            opacity: 0.3;
+        }
+        @keyframes stars {
+            0% { background-position: 0 0; }
+            100% { background-position: 100% 100%; }
         }
     </style>
 </head>
@@ -107,12 +185,12 @@
     <canvas id="gameCanvas"></canvas>
     <div id="menu">
         <h1>SWARM WARS</h1>
-        <p style="font-size: 20px; margin: 20px 0;">Select Number of Players</p>
+        <p style="font-size: 24px; margin: 30px 0; color: #0ff;">Command Your Fleet to Victory!</p>
         <button onclick="showBotMenu(1)">1 Player</button>
         <button onclick="showBotMenu(2)">2 Players</button>
         <button onclick="showBotMenu(3)">3 Players</button>
         <button onclick="showHowToPlay()">How to Play</button>
-        <button onclick="location.reload()" style="margin-top: 40px;">Back</button>
+        <button onclick="location.reload()" style="margin-top: 50px;">Back</button>
     </div>
     <div id="botMenu" style="display: none;">
         <h1>CONFIGURE BOTS</h1>
@@ -149,6 +227,23 @@
         </p>
     </div>
     <div id="uiPanel"></div>
+    <div id="aboutSection">
+        <h2>About Swarm Wars</h2>
+        <p>Swarm Wars is a thrilling top-down space combat game where you command a fleet of ships against AI or other players. Battle through asteroid fields, collect power-ups, and outlast your opponents to claim victory! Developed by the xAI team, inspired by classic arcade shooters.</p>
+        <p>Version: 1.0 | Created by: xAI Dev Team</p>
+    </div>
+    <div id="howToPlaySection">
+        <h2>How to Play</h2>
+        <p>
+            - <strong>Move:</strong> Use WASD (Player 1), Arrow Keys (Player 2), or IJKL (Player 3).<br>
+            - <strong>Formation:</strong> Press E, Shift, or O to cycle formations.<br>
+            - <strong>Dash:</strong> Press Q, /, or U (2s cooldown).<br>
+            - <strong>Shooting:</strong> Automatic based on ship count.<br>
+            - <strong>Power-Ups:</strong> Collect +2 to +20 ships to grow your fleet.<br>
+            - <strong>Avoid:</strong> Steer clear of asteroids and obstacles.<br>
+            - <strong>Win:</strong> Be the last survivor!
+        </p>
+    </div>
     <script>
         // Core setup
         let playerCount = 0;
@@ -157,7 +252,7 @@
         let eliminations = [];
         let frameCount = 0;
         const MAX_BULLETS_PER_PLAYER = 50;
-        const MAX_PARTICLES = 600; // Increased for cooler explosions
+        const MAX_PARTICLES = 600;
         const MAX_SHIPS_PER_PLAYER = 100;
 
         const canvas = document.getElementById('gameCanvas');
@@ -167,6 +262,8 @@
         const difficultyMenu = document.getElementById('difficultyMenu');
         const howToPlayModal = document.getElementById('howToPlayModal');
         const uiPanel = document.getElementById('uiPanel');
+        const aboutSection = document.getElementById('aboutSection');
+        const howToPlaySection = document.getElementById('howToPlaySection');
 
         // Set canvas to square
         const squareSize = Math.min(window.innerWidth - 200, window.innerHeight);
@@ -201,7 +298,7 @@
         let formationDisplays = [];
         const powerUpDisplays = [];
         const MAX_ASTEROIDS = 10;
-        const GRID_SIZE = 40; // Further reduced for better collision detection
+        const GRID_SIZE = 40;
         const grid = {};
 
         function getGridCell(x, y) {
@@ -266,7 +363,8 @@
                     dashSpeed: 0,
                     formationChangeSpeed: 0,
                     isBot: false,
-                    difficulty: 'player'
+                    difficulty: 'player',
+                    lastTargetUpdate: 0
                 });
             }
 
@@ -289,7 +387,9 @@
                     dashSpeed: 0,
                     formationChangeSpeed: 0,
                     isBot: true,
-                    difficulty: difficulty || 'average'
+                    difficulty: difficulty || 'average',
+                    lastTargetUpdate: 0,
+                    currentTarget: null
                 });
             }
 
@@ -297,6 +397,8 @@
             menu.style.display = 'none';
             botMenu.style.display = 'none';
             difficultyMenu.style.display = 'none';
+            aboutSection.classList.add('show');
+            howToPlaySection.classList.add('show');
             spawnObstacles();
             spawnStars();
             spawnNebula();
@@ -385,7 +487,7 @@
             });
         }
 
-        // Player update with consistent formation speed, improved dash, and particles
+        // Player update with smarter AI
         function updatePlayer(player, index) {
             if (!player.alive || !player.ships[0]) return;
             const leadShip = player.ships[0];
@@ -400,33 +502,40 @@
                 if (keys[right]) leadShip.angle += 0.1;
                 if (keys[form]) {
                     keys[form] = false;
-                    player.formationChangeSpeed = leadShip.speed; // Preserve speed for all ships
+                    player.formationChangeSpeed = leadShip.speed;
                     player.formation = getNextFormation(player.formation);
                     showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
                     isForming = true;
                 }
                 if (keys[dash] && Date.now() - player.lastDash > 2000) {
                     player.dashSpeed = leadShip.speed + 15;
-                    player.dashEnd = Date.now() + 250; // Reduced to 250ms
+                    player.dashEnd = Date.now() + 250;
                     player.lastDash = Date.now();
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                let targetPlayer = null;
+                // Smarter target selection
+                if (Date.now() - player.lastTargetUpdate > 2000 || (player.currentTarget && !player.currentTarget.alive)) {
+                    let bestTarget = null;
+                    let maxShips = -1;
+                    players.forEach(p => {
+                        if (p.alive && p !== player && p.ships.length > 0 && p.ships.length > maxShips) {
+                            maxShips = p.ships.length;
+                            bestTarget = p;
+                        }
+                    });
+                    player.currentTarget = bestTarget;
+                    player.lastTargetUpdate = Date.now();
+                }
+
+                let targetPlayer = player.currentTarget;
                 let nearestPowerUp = null;
                 let minDistanceToPlayer = Infinity;
                 let minDistanceToPowerUp = Infinity;
 
-                players.forEach(p => {
-                    if (p.alive && p !== player && p.ships.length > 0) {
-                        const dist = Math.hypot(p.ships[0].x - leadShip.x, p.ships[0].y - leadShip.y);
-                        if (dist < minDistanceToPlayer) {
-                            minDistanceToPlayer = dist;
-                            targetPlayer = p;
-                        }
-                    }
-                });
-
+                if (targetPlayer) {
+                    minDistanceToPlayer = Math.hypot(targetPlayer.ships[0].x - leadShip.x, targetPlayer.ships[0].y - leadShip.y);
+                }
                 powerUps.forEach(pu => {
                     const dist = Math.hypot(pu.x - leadShip.x, pu.y - leadShip.y);
                     if (dist < 300 && dist < minDistanceToPowerUp) {
@@ -461,26 +570,43 @@
                         angleToTarget = Math.atan2(predictedY - leadShip.y, predictedX - leadShip.x);
                     }
                     leadShip.angle += (angleToTarget - leadShip.angle) * angleAdjustment;
-                    if (targetDistance > 100) leadShip.speed = Math.min(leadShip.speed + 0.15, 3);
-                    else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
-                    else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
 
+                    // Advanced obstacle avoidance
                     for (let a of asteroids) {
                         const distToAsteroid = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
-                        if (distToAsteroid < a.size + 20) {
-                            leadShip.angle += (leadShip.x < a.x ? 0.2 * (player.difficulty === 'fncs' ? 2 : 1) : -0.2 * (player.difficulty === 'fncs' ? 2 : 1));
+                        if (distToAsteroid < a.size + 40) {
+                            const relativeX = a.x - leadShip.x + a.dx * 10;
+                            const relativeY = a.y - leadShip.y + a.dy * 10;
+                            const avoidanceAngle = Math.atan2(relativeY, relativeX) + (Math.PI / 2) * (leadShip.x < a.x ? 1 : -1);
+                            leadShip.angle += avoidanceAngle * 0.3 * (player.difficulty === 'fncs' ? 2 : 1);
                             break;
                         }
                     }
                     for (let o of obstacles) {
                         const distToObstacle = Math.hypot((o.x + o.w / 2) - leadShip.x, (o.y + o.h / 2) - leadShip.y);
-                        if (distToObstacle < 50) {
-                            leadShip.angle += (leadShip.x < o.x + o.w / 2 ? 0.3 * (player.difficulty === 'fncs' ? 1.5 : 1) : -0.3 * (player.difficulty === 'fncs' ? 1.5 : 1));
+                        if (distToObstacle < 70) {
+                            const relativeX = (o.x + o.w / 2) - leadShip.x;
+                            const relativeY = (o.y + o.h / 2) - leadShip.y;
+                            const avoidanceAngle = Math.atan2(relativeY, relativeX) + (Math.PI / 2) * (leadShip.x < o.x + o.w / 2 ? 1 : -1);
+                            leadShip.angle += avoidanceAngle * 0.4 * (player.difficulty === 'fncs' ? 1.5 : 1);
                         }
                         if (leadShip.x > o.x && leadShip.x < o.x + o.w && leadShip.y > o.y && leadShip.y < o.y + o.h) {
                             leadShip.angle += (leadShip.x < o.x + o.w / 2 ? 0.3 : -0.3);
                             break;
                         }
+                    }
+
+                    if (targetDistance > 100) leadShip.speed = Math.min(leadShip.speed + 0.15, 3);
+                    else if (targetDistance < 50) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
+                    else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
+
+                    // Tactical formation switching
+                    if (player.ships.length > 10 && player.formation !== 'swarm') {
+                        player.formation = 'swarm';
+                        showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
+                    } else if (player.ships.length < 5 && player.formation !== 'diamond') {
+                        player.formation = 'diamond';
+                        showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
                     }
 
                     if (target !== nearestPowerUp && targetDistance < 100 && Date.now() - player.lastShot > 150) {
@@ -494,7 +620,7 @@
                                     const dist = Math.hypot(target.x - ship.x, target.y - ship.y);
                                     const predictedX = target.x + targetDx * leadFactor * dist;
                                     const predictedY = target.y + targetDy * leadFactor * dist;
-                                    shootAngle = Math.atan2(predictedY - ship.y, predictedX - ship.x);
+                                    shootAngle = Math.atan2(predictedY - ship.y, predictedX - ship.x) + (Math.random() - 0.5) * 0.1; // Slight spread
                                 }
                                 player.bullets.push({
                                     x: ship.x + Math.cos(shootAngle) * 4,
@@ -509,8 +635,8 @@
                         player.lastShot = Date.now();
                         playSound(500, 0.1, 'square', 0.15);
                     }
-                    const dashChance = { 'fortnite': 0, 'average': 0.01, 'fncs': 0.1 }[player.difficulty];
-                    if (Math.random() < dashChance && Date.now() - player.lastDash > 2000) {
+                    const dashChance = { 'fortnite': 0, 'average': 0.01, 'fncs': 0.15 }[player.difficulty];
+                    if ((Math.random() < dashChance || (targetDistance < 50 && player.difficulty === 'fncs')) && Date.now() - player.lastDash > 2000) {
                         player.dashSpeed = leadShip.speed + 15;
                         player.dashEnd = Date.now() + 250;
                         player.lastDash = Date.now();
@@ -568,11 +694,10 @@
                     ship.dy = (targetY - ship.y) * 0.2 * 1.5;
                     ship.angle = leadShip.angle;
 
-                    // Ensure all ships maintain speed during formation change
                     if (isForming) {
                         ship.speed = player.formationChangeSpeed;
                     } else {
-                        ship.speed = leadShip.speed; // Sync with lead ship speed
+                        ship.speed = leadShip.speed;
                     }
                 }
                 ship.dx *= 0.98;
@@ -789,21 +914,20 @@
 
         // Enhanced explosion with varied colors and dynamics
         function explosion(x, y, count, baseColor = '#ff0', size = 2, isFinal = false) {
-            const colors = ['#ff0', '#f00', '#fff', '#ff0', '#f00']; // Mix of colors
+            const colors = ['#ff0', '#f00', '#fff', '#ff0', '#f00'];
             for (let i = 0; i < Math.min(count, MAX_PARTICLES - particles.length); i++) {
                 const color = colors[Math.floor(Math.random() * colors.length)];
-                const particleSize = size + Math.random() * 1.5; // Slight size variation
+                const particleSize = size + Math.random() * 1.5;
                 particles.push({
                     x, y,
                     size: particleSize,
                     life: 40,
                     color,
-                    dx: (Math.random() - 0.5) * 6, // Increased velocity range
+                    dx: (Math.random() - 0.5) * 6,
                     dy: (Math.random() - 0.5) * 6
                 });
             }
             if (isFinal) {
-                // Secondary wave of smaller particles for final explosion
                 for (let i = 0; i < Math.min(count / 2, MAX_PARTICLES - particles.length); i++) {
                     const color = colors[Math.floor(Math.random() * colors.length)];
                     particles.push({
@@ -912,8 +1036,8 @@
                             return;
                         } else if (entity.dx && entity.dy) { // Bullet from other player
                             const b = entity;
-                            if (Math.hypot(s.x - b.x, s.y - b.y) < 8) { // Increased collision radius
-                                s.hp -= 30; // Increased bullet damage
+                            if (Math.hypot(s.x - b.x, s.y - b.y) < 8) {
+                                s.hp -= 30;
                                 s.dx -= b.dx * 0.1;
                                 s.dy -= b.dy * 0.1;
                                 showDamage(s.x, s.y, 30, s.color);
@@ -931,7 +1055,7 @@
                             const op = players.find(p => p.ships.includes(os));
                             if (!op || op === p || !op.alive) return;
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            const shipSize = 15; // Increased for better detection
+                            const shipSize = 15;
                             const collided = dist < 15 || (
                                 s.x + shipSize > os.x - shipSize &&
                                 s.x - shipSize < os.x + shipSize &&
@@ -940,7 +1064,7 @@
                             );
                             if (collided && s !== os) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
-                                const damage = Math.floor(speed * 4); // Increased ramming damage
+                                const damage = Math.floor(speed * 4);
                                 s.hp -= damage;
                                 os.hp -= damage;
                                 showDamage(s.x, s.y, damage, s.color);
@@ -969,9 +1093,9 @@
                         const deathColor = p.ships[0]?.color || '#fff';
                         const aliveCount = players.filter(p => p.alive).length;
                         if (aliveCount === 1) {
-                            explosion(deathX, deathY, 600, deathColor, 4, true); // Huge final explosion
+                            explosion(deathX, deathY, 600, deathColor, 4, true);
                         } else {
-                            explosion(deathX, deathY, 200, deathColor, 3); // Cooler regular explosion
+                            explosion(deathX, deathY, 200, deathColor, 3);
                         }
                         playSound(200, 1.0, 'sine', 0.3);
                     }
@@ -1090,6 +1214,8 @@
             if (gameState === 'victory' && alivePlayers.length === 0) {
                 gameState = 'menu';
                 menu.style.display = 'block';
+                aboutSection.classList.remove('show');
+                howToPlaySection.classList.remove('show');
                 eliminations = [];
                 players.length = 0;
                 asteroids.length = 0;
