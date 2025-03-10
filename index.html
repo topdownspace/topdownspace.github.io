@@ -171,7 +171,7 @@
             ctx.restore();
         }
 
-        // Player update with swarm behavior
+        // Player update with aligned mini ships
         function updatePlayer(player) {
             if (!player.alive) return;
             const leadShip = player.ships[0];
@@ -182,21 +182,21 @@
             if (keys[left]) leadShip.angle -= 0.1;
             if (keys[right]) leadShip.angle += 0.1;
 
-            // Swarm movement
+            // Move and align ships
             player.ships.forEach((ship, i) => {
                 if (i === 0) {
                     ship.dx = Math.cos(ship.angle) * ship.speed;
                     ship.dy = Math.sin(ship.angle) * ship.speed;
                 } else {
-                    const targetX = leadShip.x + (Math.random() - 0.5) * 50;
-                    const targetY = leadShip.y + (Math.random() - 0.5) * 50;
-                    const dx = (targetX - ship.x) * 0.05;
-                    const dy = (targetY - ship.y) * 0.05;
-                    ship.dx += dx;
-                    ship.dy += dy;
-                    ship.angle = Math.atan2(ship.dy, ship.dx);
+                    // Align behind lead ship
+                    const offset = i * 15;
+                    const targetX = leadShip.x - Math.cos(leadShip.angle) * offset;
+                    const targetY = leadShip.y - Math.sin(leadShip.angle) * offset;
+                    ship.dx += (targetX - ship.x) * 0.1;
+                    ship.dy += (targetY - ship.y) * 0.1;
+                    ship.angle = leadShip.angle; // Face same direction
                 }
-                ship.dx *= 0.98; // Friction
+                ship.dx *= 0.98;
                 ship.dy *= 0.98;
                 ship.x += ship.dx;
                 ship.y += ship.dy;
@@ -241,7 +241,7 @@
         function drawBullets(player) {
             player.bullets.forEach(b => {
                 ctx.fillStyle = b.color;
-                ctx.fillRect(b.x - 1 - camera.x, b.y - 1 - camera.y, 2, 2); // Smaller bullets
+                ctx.fillRect(b.x - 1 - camera.x, b.y - 1 - camera.y, 2, 2);
             });
         }
 
@@ -472,6 +472,7 @@
                     // Bullet collisions
                     players.forEach(op => {
                         op.bullets.forEach((b, bi) => {
+                            if (p === op) return; // No self-damage from bullets
                             if (Math.hypot(s.x - b.x, s.y - b.y) < 10) {
                                 op.bullets.splice(bi, 1);
                                 b.dx *= -0.5;
@@ -494,18 +495,18 @@
                         });
                     });
 
-                    // Mini ship collisions
+                    // Ship-to-ship collisions (massive damage)
                     players.forEach(op => {
                         if (op === p) return;
                         op.ships.forEach((os, osi) => {
                             if (Math.hypot(s.x - os.x, s.y - os.y) < 20) {
-                                const tempDx = s.dx;
-                                const tempDy = s.dy;
-                                s.dx = os.dx * 0.8;
-                                s.dy = os.dy * 0.8;
-                                os.dx = tempDx * 0.8;
-                                os.dy = tempDy * 0.8;
-                                if (p.ships.length < 100) {
+                                const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
+                                const damage = Math.floor(speed * 2); // Massive damage
+                                let splitCountP = Math.min(5, Math.floor(damage / 20));
+                                let splitCountOP = Math.min(5, Math.floor(damage / 20));
+                                
+                                // Damage to player p
+                                while (splitCountP > 0 && p.ships.length < 100) {
                                     p.ships.push({
                                         x: s.x,
                                         y: s.y,
@@ -516,10 +517,13 @@
                                         dx: -s.dx * 0.5,
                                         dy: -s.dy * 0.5
                                     });
+                                    splitCountP--;
                                 }
                                 p.ships.splice(si, 1);
-                                explosion(s.x, s.y, Math.sqrt(s.mass) * 2, s.color);
-                                if (op.ships.length < 100) {
+                                explosion(s.x, s.y, Math.sqrt(s.mass) * 3, s.color);
+
+                                // Damage to opponent op
+                                while (splitCountOP > 0 && op.ships.length < 100) {
                                     op.ships.push({
                                         x: os.x,
                                         y: os.y,
@@ -530,9 +534,12 @@
                                         dx: -os.dx * 0.5,
                                         dy: -os.dy * 0.5
                                     });
+                                    splitCountOP--;
                                 }
                                 op.ships.splice(osi, 1);
-                                explosion(os.x, os.y, Math.sqrt(os.mass) * 2, os.color);
+                                explosion(os.x, os.y, Math.sqrt(os.mass) * 3, os.color);
+
+                                playSound(120, 0.5, 'sine', 0.2); // Big crash sound
                             }
                         });
                     });
