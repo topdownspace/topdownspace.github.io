@@ -78,8 +78,7 @@
         const menu = document.getElementById('menu');
         let gameState = 'menu';
         let playerCount = 0;
-        let shake = 0;
-        let camera = { x: 0, y: 0, zoom: 1 };
+        let camera = { x: 0, y: 0, zoom: 0.43 }; // Zoomed out 2.3x
 
         // Audio setup
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -158,20 +157,11 @@
             if (ship.speed > 0 && Math.random() > 0.5) {
                 ctx.fillStyle = '#ff0';
                 ctx.fillRect(-size / 2 - 3, -size / 4, 3, size / 2);
-                particles.push({
-                    x: ship.x - Math.cos(ship.angle) * size / 2,
-                    y: ship.y - Math.sin(ship.angle) * size / 2,
-                    size: 2,
-                    life: 10,
-                    color: '#ff0',
-                    dx: -Math.cos(ship.angle) * (1 + Math.random()),
-                    dy: -Math.sin(ship.angle) * (1 + Math.random())
-                });
             }
             ctx.restore();
         }
 
-        // Player update
+        // Player update with redesigned swarm
         function updatePlayer(player) {
             if (!player.alive) return;
             const leadShip = player.ships[0];
@@ -188,15 +178,13 @@
                     ship.dx = Math.cos(ship.angle) * ship.speed;
                     ship.dy = Math.sin(ship.angle) * ship.speed;
                 } else {
-                    const cols = Math.ceil(Math.sqrt(player.ships.length));
-                    const row = Math.floor(i / cols);
-                    const col = i % cols;
-                    const offsetX = col * 15 - (cols - 1) * 7.5;
-                    const offsetY = row * 15;
-                    const targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
-                    const targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
-                    ship.dx += (targetX - ship.x) * 0.2;
-                    ship.dy += (targetY - ship.y) * 0.2;
+                    // V-shaped formation
+                    const offset = i * 15;
+                    const side = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 10;
+                    const targetX = leadShip.x - Math.cos(leadShip.angle) * offset + Math.sin(leadShip.angle) * side;
+                    const targetY = leadShip.y - Math.sin(leadShip.angle) * offset - Math.cos(leadShip.angle) * side;
+                    ship.dx = (targetX - ship.x) * 0.3;
+                    ship.dy = (targetY - ship.y) * 0.3;
                     ship.angle = leadShip.angle;
                 }
                 ship.dx *= 0.98;
@@ -205,13 +193,15 @@
                 ship.y += ship.dy;
                 ship.x = Math.max(10, Math.min(canvas.width - 10, ship.x));
                 ship.y = Math.max(10, Math.min(canvas.height - 10, ship.y));
-                particles.push({
-                    x: ship.x - Math.cos(ship.angle) * 5,
-                    y: ship.y - Math.sin(ship.angle) * 5,
-                    size: 1,
-                    life: 8,
-                    color: ship.color
-                });
+                if (playerCount >= player.index + 1) { // Only active players spawn particles
+                    particles.push({
+                        x: ship.x - Math.cos(ship.angle) * 5,
+                        y: ship.y - Math.sin(ship.angle) * 5,
+                        size: 1,
+                        life: 8,
+                        color: ship.color
+                    });
+                }
             });
 
             // Shooting
@@ -235,7 +225,9 @@
                 b.y += b.dy;
                 b.dx *= 0.99;
                 b.dy *= 0.99;
-                particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 1, life: 5, color: b.color });
+                if (playerCount >= player.index + 1) {
+                    particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 1, life: 5, color: b.color });
+                }
             });
             player.bullets = player.bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
         }
@@ -373,7 +365,7 @@
             powerUps.forEach((pu, i) => {
                 ctx.fillStyle = pu.type === 'mass' ? '#ff0' : '#0ff';
                 ctx.fillRect(pu.x - 5 - camera.x, pu.y - 5 - camera.y, 10, 10);
-                players.forEach(p => {
+                players.slice(0, playerCount).forEach(p => {
                     p.ships.forEach(s => {
                         if (Math.hypot(s.x - pu.x, s.y - pu.y) < 20) {
                             if (pu.type === 'mass' && p.ships.length < 100) {
@@ -401,17 +393,19 @@
                     dy: (Math.random() - 0.5) * 5
                 });
             }
-            shake = 10;
             playSound(80, 0.3, 'sine');
         }
 
         // Collision logic
         function checkCollisions() {
-            players.forEach(p => {
-                if (!p.alive) return;
-                p.ships.forEach((s, si) => {
+            for (let pi = 0; pi < playerCount; pi++) {
+                const p = players[pi];
+                if (!p.alive) continue;
+                for (let si = p.ships.length - 1; si >= 0; si--) {
+                    const s = p.ships[si];
                     // Asteroid collisions
-                    asteroids.forEach((a, ai) => {
+                    for (let ai = asteroids.length - 1; ai >= 0; ai--) {
+                        const a = asteroids[ai];
                         const dist = Math.hypot(s.x - a.x, s.y - a.y);
                         if (dist < a.size + Math.sqrt(s.mass) * 2) {
                             const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy);
@@ -445,11 +439,13 @@
                             }
                             p.ships.splice(si, 1);
                             explosion(s.x, s.y, Math.sqrt(s.mass) * 2, s.color);
+                            break;
                         }
-                    });
+                    }
 
                     // Obstacle collisions
-                    obstacles.forEach(o => {
+                    for (let oi = obstacles.length - 1; oi >= 0; oi--) {
+                        const o = obstacles[oi];
                         if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
                             s.dx *= -0.8;
                             s.dy *= -0.8;
@@ -469,13 +465,16 @@
                             }
                             p.ships.splice(si, 1);
                             explosion(s.x, s.y, Math.sqrt(s.mass) * 2, s.color);
+                            break;
                         }
-                    });
+                    }
 
                     // Bullet collisions
-                    players.forEach(op => {
-                        op.bullets.forEach((b, bi) => {
-                            if (p === op) return;
+                    for (let opi = 0; opi < playerCount; opi++) {
+                        const op = players[opi];
+                        if (p === op) continue;
+                        for (let bi = op.bullets.length - 1; bi >= 0; bi--) {
+                            const b = op.bullets[bi];
                             if (Math.hypot(s.x - b.x, s.y - b.y) < 10) {
                                 op.bullets.splice(bi, 1);
                                 b.dx *= -0.5;
@@ -494,14 +493,17 @@
                                 }
                                 p.ships.splice(si, 1);
                                 explosion(s.x, s.y, Math.sqrt(s.mass) * 2, s.color);
+                                break;
                             }
-                        });
-                    });
+                        }
+                    }
 
                     // Ship-to-ship collisions
-                    players.forEach(op => {
-                        if (op === p) return;
-                        op.ships.forEach((os, osi) => {
+                    for (let opi = 0; opi < playerCount; opi++) {
+                        const op = players[opi];
+                        if (op === p) continue;
+                        for (let osi = op.ships.length - 1; osi >= 0; osi--) {
+                            const os = op.ships[osi];
                             if (Math.hypot(s.x - os.x, s.y - os.y) < 20) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 5);
@@ -541,17 +543,21 @@
                                 explosion(os.x, os.y, Math.sqrt(os.mass) * 4, os.color);
 
                                 playSound(100, 0.5, 'sine', 0.3);
+                                break;
                             }
-                        });
-                    });
-                });
+                        }
+                    }
+                }
                 p.alive = p.ships.length > 0;
-            });
+            }
 
             // Bullet vs Asteroid
-            players.forEach(p => {
-                p.bullets.forEach((b, bi) => {
-                    asteroids.forEach((a, ai) => {
+            for (let pi = 0; pi < playerCount; pi++) {
+                const p = players[pi];
+                for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
+                    const b = p.bullets[bi];
+                    for (let ai = asteroids.length - 1; ai >= 0; ai--) {
+                        const a = asteroids[ai];
                         if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
                             if (a.size > 20) {
                                 const splitCount = Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 2;
@@ -570,10 +576,11 @@
                             asteroids.splice(ai, 1);
                             p.bullets.splice(bi, 1);
                             explosion(a.x, a.y, 15);
+                            break;
                         }
-                    });
-                });
-            });
+                    }
+                }
+            }
         }
 
         // Camera
@@ -584,7 +591,6 @@
                 const avgY = activePlayers.reduce((sum, p) => sum + p.ships[0].y, 0) / activePlayers.length;
                 camera.x += (avgX - canvas.width / 2 - camera.x) * 0.05;
                 camera.y += (avgY - canvas.height / 2 - camera.y) * 0.05;
-                camera.zoom = Math.max(0.5, Math.min(1, 1 - activePlayers.length * 0.1));
             }
         }
 
@@ -609,10 +615,6 @@
         // Game loop
         function gameLoop() {
             ctx.save();
-            if (shake > 0) {
-                ctx.translate(Math.random() * shake - shake / 2, Math.random() * shake - shake / 2);
-                shake--;
-            }
             ctx.fillStyle = '#111';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             drawNebula();
@@ -621,7 +623,8 @@
             if (gameState === 'playing') {
                 spawnAsteroids();
                 spawnPowerUps();
-                players.slice(0, playerCount).forEach(p => {
+                players.slice(0, playerCount).forEach((p, i) => {
+                    p.index = i; // Add index for particle control
                     updatePlayer(p);
                     p.ships.forEach(s => drawShip(s, p.ships.length));
                     drawBullets(p);
