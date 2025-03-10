@@ -157,7 +157,7 @@
         let eliminations = [];
         let frameCount = 0;
         const MAX_BULLETS_PER_PLAYER = 50;
-        const MAX_PARTICLES = 500;
+        const MAX_PARTICLES = 600; // Increased for cooler explosions
         const MAX_SHIPS_PER_PLAYER = 100;
 
         const canvas = document.getElementById('gameCanvas');
@@ -201,7 +201,7 @@
         let formationDisplays = [];
         const powerUpDisplays = [];
         const MAX_ASTEROIDS = 10;
-        const GRID_SIZE = 50; // Reduced for better collision detection
+        const GRID_SIZE = 40; // Further reduced for better collision detection
         const grid = {};
 
         function getGridCell(x, y) {
@@ -385,7 +385,7 @@
             });
         }
 
-        // Player update with formation speed preservation, enhanced dash, and particles
+        // Player update with consistent formation speed, improved dash, and particles
         function updatePlayer(player, index) {
             if (!player.alive || !player.ships[0]) return;
             const leadShip = player.ships[0];
@@ -400,14 +400,14 @@
                 if (keys[right]) leadShip.angle += 0.1;
                 if (keys[form]) {
                     keys[form] = false;
-                    player.formationChangeSpeed = leadShip.speed; // Preserve speed
+                    player.formationChangeSpeed = leadShip.speed; // Preserve speed for all ships
                     player.formation = getNextFormation(player.formation);
                     showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
                     isForming = true;
                 }
                 if (keys[dash] && Date.now() - player.lastDash > 2000) {
                     player.dashSpeed = leadShip.speed + 15;
-                    player.dashEnd = Date.now() + 500; // 500ms dash duration
+                    player.dashEnd = Date.now() + 250; // Reduced to 250ms
                     player.lastDash = Date.now();
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
@@ -512,13 +512,13 @@
                     const dashChance = { 'fortnite': 0, 'average': 0.01, 'fncs': 0.1 }[player.difficulty];
                     if (Math.random() < dashChance && Date.now() - player.lastDash > 2000) {
                         player.dashSpeed = leadShip.speed + 15;
-                        player.dashEnd = Date.now() + 500;
+                        player.dashEnd = Date.now() + 250;
                         player.lastDash = Date.now();
                         playSound(1000, 0.2, 'triangle', 0.2);
                     }
                     const formChance = { 'fortnite': 0, 'average': 0.02, 'fncs': 0.1 }[player.difficulty];
                     if (Math.random() < formChance) {
-                        player.formationChangeSpeed = leadShip.speed; // Preserve speed
+                        player.formationChangeSpeed = leadShip.speed;
                         player.formation = getNextFormation(player.formation);
                         showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
                         isForming = true;
@@ -532,7 +532,6 @@
             // Handle dash speed and particles
             if (Date.now() <= player.dashEnd) {
                 leadShip.speed = player.dashSpeed;
-                // Add dash particles
                 particles.push({
                     x: leadShip.x - Math.cos(leadShip.angle) * 5,
                     y: leadShip.y - Math.sin(leadShip.angle) * 5,
@@ -543,7 +542,7 @@
                     dy: -Math.sin(leadShip.angle) * 2
                 });
             } else if (player.dashSpeed > 0) {
-                player.dashSpeed *= 0.95; // Smooth deceleration after dash
+                player.dashSpeed *= 0.95;
                 leadShip.speed = Math.max(leadShip.speed * 0.95, player.dashSpeed);
                 if (player.dashSpeed < 0.1) player.dashSpeed = 0;
             }
@@ -568,6 +567,13 @@
                     ship.dx = (targetX - ship.x) * 0.2 * 1.5;
                     ship.dy = (targetY - ship.y) * 0.2 * 1.5;
                     ship.angle = leadShip.angle;
+
+                    // Ensure all ships maintain speed during formation change
+                    if (isForming) {
+                        ship.speed = player.formationChangeSpeed;
+                    } else {
+                        ship.speed = leadShip.speed; // Sync with lead ship speed
+                    }
                 }
                 ship.dx *= 0.98;
                 ship.dy *= 0.98;
@@ -582,11 +588,6 @@
                     life: 8,
                     color: ship.color
                 });
-
-                // Restore speed after formation change
-                if (isForming && i === 0) {
-                    leadShip.speed = player.formationChangeSpeed;
-                }
             });
 
             if (Date.now() - player.lastShot > 150 + player.ships.length * 3) {
@@ -786,22 +787,39 @@
             });
         }
 
-        // Explosion
-        function explosion(x, y, count, color = '#ff0', size = 2) {
-            for (let i = 0; i < Math.min(count * 3, MAX_PARTICLES - particles.length); i++) {
+        // Enhanced explosion with varied colors and dynamics
+        function explosion(x, y, count, baseColor = '#ff0', size = 2, isFinal = false) {
+            const colors = ['#ff0', '#f00', '#fff', '#ff0', '#f00']; // Mix of colors
+            for (let i = 0; i < Math.min(count, MAX_PARTICLES - particles.length); i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const particleSize = size + Math.random() * 1.5; // Slight size variation
                 particles.push({
                     x, y,
-                    size: size + Math.random() * 2,
+                    size: particleSize,
                     life: 40,
                     color,
-                    dx: (Math.random() - 0.5) * 4,
-                    dy: (Math.random() - 0.5) * 4
+                    dx: (Math.random() - 0.5) * 6, // Increased velocity range
+                    dy: (Math.random() - 0.5) * 6
                 });
+            }
+            if (isFinal) {
+                // Secondary wave of smaller particles for final explosion
+                for (let i = 0; i < Math.min(count / 2, MAX_PARTICLES - particles.length); i++) {
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    particles.push({
+                        x, y,
+                        size: 1 + Math.random(),
+                        life: 60,
+                        color,
+                        dx: (Math.random() - 0.5) * 3,
+                        dy: (Math.random() - 0.5) * 3
+                    });
+                }
             }
             playSound(80, 0.5, 'sine', 0.2);
         }
 
-        // Collision logic with improved consistency
+        // Collision logic with improved consistency and higher damage
         function checkCollisions() {
             Object.keys(grid).forEach(key => delete grid[key]);
             players.forEach(p => p.ships.forEach(s => {
@@ -894,11 +912,11 @@
                             return;
                         } else if (entity.dx && entity.dy) { // Bullet from other player
                             const b = entity;
-                            if (Math.hypot(s.x - b.x, s.y - b.y) < 6) { // Increased collision radius
-                                s.hp -= 15;
+                            if (Math.hypot(s.x - b.x, s.y - b.y) < 8) { // Increased collision radius
+                                s.hp -= 30; // Increased bullet damage
                                 s.dx -= b.dx * 0.1;
                                 s.dy -= b.dy * 0.1;
-                                showDamage(s.x, s.y, 15, s.color);
+                                showDamage(s.x, s.y, 30, s.color);
                                 console.log(`Ship ${pi}:${si} hit by bullet at (${b.x}, ${b.y}), new HP: ${s.hp}`);
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
@@ -913,8 +931,8 @@
                             const op = players.find(p => p.ships.includes(os));
                             if (!op || op === p || !op.alive) return;
                             const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            const shipSize = 12; // Increased for better early-game detection
-                            const collided = dist < 12 || (
+                            const shipSize = 15; // Increased for better detection
+                            const collided = dist < 15 || (
                                 s.x + shipSize > os.x - shipSize &&
                                 s.x - shipSize < os.x + shipSize &&
                                 s.y + shipSize > os.y - shipSize &&
@@ -922,7 +940,7 @@
                             );
                             if (collided && s !== os) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
-                                const damage = Math.floor(speed * 2);
+                                const damage = Math.floor(speed * 4); // Increased ramming damage
                                 s.hp -= damage;
                                 os.hp -= damage;
                                 showDamage(s.x, s.y, damage, s.color);
@@ -951,11 +969,9 @@
                         const deathColor = p.ships[0]?.color || '#fff';
                         const aliveCount = players.filter(p => p.alive).length;
                         if (aliveCount === 1) {
-                            // Huge explosion for the last death before victory
-                            explosion(deathX, deathY, 500, deathColor, 4);
+                            explosion(deathX, deathY, 600, deathColor, 4, true); // Huge final explosion
                         } else {
-                            // Bigger explosion for regular deaths
-                            explosion(deathX, deathY, 200, deathColor, 3);
+                            explosion(deathX, deathY, 200, deathColor, 3); // Cooler regular explosion
                         }
                         playSound(200, 1.0, 'sine', 0.3);
                     }
@@ -1063,7 +1079,7 @@
             eliminations = eliminations.filter(e => Date.now() - e.time < 5000);
             eliminations.forEach((e, i) => {
                 const elapsed = Date.now() - e.time;
-                e.opacity = Math.max(0, 1 - elapsed / 5000); // Fade over 5 seconds
+                e.opacity = Math.max(0, 1 - elapsed / 5000);
                 ctx.fillStyle = `rgba(255, 255, 255, ${e.opacity})`;
                 ctx.font = '12px "Press Start 2P"';
                 ctx.textAlign = 'center';
