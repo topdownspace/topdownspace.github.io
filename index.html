@@ -78,7 +78,7 @@
         const menu = document.getElementById('menu');
         let gameState = 'menu';
         let playerCount = 0;
-        let camera = { x: 0, y: 0, zoom: 0.43 }; // Zoomed out 2.3x
+        let camera = { x: 0, y: 0, zoom: 0.43 };
 
         // Audio setup
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -98,22 +98,28 @@
         // Game objects
         const players = [
             { 
-                ships: [{ x: 200, y: 400, angle: 0, speed: 0, mass: 100, color: '#f00', dx: 0, dy: 0 }], 
-                keys: { up: 'w', down: 's', left: 'a', right: 'd' }, 
+                ships: [{ x: 200, y: 400, angle: 0, speed: 0, hp: 100, color: '#f00', dx: 0, dy: 0 }], 
+                keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e' }, 
                 bullets: [], 
-                alive: true 
+                alive: true,
+                formation: 'line',
+                lastShot: 0
             },
             { 
-                ships: [{ x: 500, y: 400, angle: 0, speed: 0, mass: 100, color: '#0f0', dx: 0, dy: 0 }], 
-                keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' }, 
+                ships: [{ x: 500, y: 400, angle: 0, speed: 0, hp: 100, color: '#0f0', dx: 0, dy: 0 }], 
+                keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift' }, 
                 bullets: [], 
-                alive: true 
+                alive: true,
+                formation: 'line',
+                lastShot: 0
             },
             { 
-                ships: [{ x: 800, y: 400, angle: 0, speed: 0, mass: 100, color: '#00f', dx: 0, dy: 0 }], 
-                keys: { up: 'i', down: 'k', left: 'j', right: 'l' }, 
+                ships: [{ x: 800, y: 400, angle: 0, speed: 0, hp: 100, color: '#00f', dx: 0, dy: 0 }], 
+                keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o' }, 
                 bullets: [], 
-                alive: true 
+                alive: true,
+                formation: 'line',
+                lastShot: 0
             }
         ];
         const asteroids = [];
@@ -123,6 +129,7 @@
         const stars = [];
         const keys = {};
         const MAX_ASTEROIDS = 10;
+        const hpDisplays = [];
 
         // Event listeners
         window.addEventListener('keydown', (e) => keys[e.key] = true);
@@ -161,51 +168,98 @@
             ctx.restore();
         }
 
-        // Player update with redesigned swarm
+        // HP display
+        function showHP(x, y, hp, color) {
+            hpDisplays.push({ x, y, hp, color, time: Date.now() });
+        }
+
+        function drawHP() {
+            hpDisplays.forEach((d, i) => {
+                if (Date.now() - d.time > 500) {
+                    hpDisplays.splice(i, 1);
+                    return;
+                }
+                ctx.fillStyle = d.color;
+                ctx.font = '12px "Press Start 2P"';
+                ctx.fillText(d.hp, d.x - camera.x, d.y - 10 - camera.y);
+            });
+        }
+
+        // Player update
         function updatePlayer(player) {
             if (!player.alive) return;
             const leadShip = player.ships[0];
-            const { up, down, left, right } = player.keys;
+            const { up, down, left, right, form } = player.keys;
             if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.2, 4);
             else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
             else leadShip.speed *= 0.95;
             if (keys[left]) leadShip.angle -= 0.1;
             if (keys[right]) leadShip.angle += 0.1;
+            if (keys[form]) {
+                keys[form] = false; // Debounce
+                player.formation = player.formation === 'line' ? 'v' : player.formation === 'v' ? 'wedge' : 'line';
+            }
 
             // Move and align ships
             player.ships.forEach((ship, i) => {
+                let targetX, targetY, offsetX, offsetY;
                 if (i === 0) {
                     ship.dx = Math.cos(ship.angle) * ship.speed;
                     ship.dy = Math.sin(ship.angle) * ship.speed;
                 } else {
-                    // V-shaped formation
-                    const offset = i * 15;
-                    const side = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 10;
-                    const targetX = leadShip.x - Math.cos(leadShip.angle) * offset + Math.sin(leadShip.angle) * side;
-                    const targetY = leadShip.y - Math.sin(leadShip.angle) * offset - Math.cos(leadShip.angle) * side;
+                    if (player.formation === 'line') {
+                        offsetX = 0;
+                        offsetY = i * 15;
+                    } else if (player.formation === 'v') {
+                        offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 10;
+                        offsetY = i * 10;
+                    } else { // wedge
+                        offsetX = (i - 1) * 10;
+                        offsetY = Math.abs(i - 1) * 10;
+                    }
+                    targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
+                    targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
+
+                    // Avoid obstacles
+                    obstacles.forEach(o => {
+                        const dist = Math.hypot(ship.x - (o.x + o.w / 2), ship.y - (o.y + o.h / 2));
+                        if (dist < 50) {
+                            const angle = Math.atan2(ship.y - (o.y + o.h / 2), ship.x - (o.x + o.w / 2));
+                            targetX += Math.cos(angle) * 20;
+                            targetY += Math.sin(angle) * 20;
+                        }
+                    });
+
                     ship.dx = (targetX - ship.x) * 0.3;
                     ship.dy = (targetY - ship.y) * 0.3;
                     ship.angle = leadShip.angle;
                 }
                 ship.dx *= 0.98;
                 ship.dy *= 0.98;
+                obstacles.forEach(o => {
+                    const dist = Math.hypot(ship.x - (o.x + o.w / 2), ship.y - (o.y + o.h / 2));
+                    if (dist < 50) {
+                        const angle = Math.atan2(ship.y - (o.y + o.h / 2), ship.x - (o.x + o.w / 2));
+                        ship.dx += Math.cos(angle) * 0.5;
+                        ship.dy += Math.sin(angle) * 0.5;
+                    }
+                });
                 ship.x += ship.dx;
                 ship.y += ship.dy;
                 ship.x = Math.max(10, Math.min(canvas.width - 10, ship.x));
                 ship.y = Math.max(10, Math.min(canvas.height - 10, ship.y));
-                if (playerCount >= player.index + 1) { // Only active players spawn particles
-                    particles.push({
-                        x: ship.x - Math.cos(ship.angle) * 5,
-                        y: ship.y - Math.sin(ship.angle) * 5,
-                        size: 1,
-                        life: 8,
-                        color: ship.color
-                    });
-                }
+                particles.push({
+                    x: ship.x - Math.cos(ship.angle) * 5,
+                    y: ship.y - Math.sin(ship.angle) * 5,
+                    size: 1,
+                    life: 8,
+                    color: ship.color
+                });
             });
 
-            // Shooting
-            if (Math.random() < 0.05) {
+            // Shooting (slower with more ships)
+            const shootDelay = 50 + player.ships.length * 10;
+            if (Date.now() - player.lastShot > shootDelay) {
                 player.ships.forEach(ship => {
                     player.bullets.push({
                         x: ship.x + Math.cos(ship.angle) * 10,
@@ -213,23 +267,21 @@
                         dx: Math.cos(ship.angle) * 6,
                         dy: Math.sin(ship.angle) * 6,
                         color: ship.color,
-                        mass: 1
+                        time: Date.now()
                     });
-                    playSound(400, 0.1);
                 });
+                player.lastShot = Date.now();
+                playSound(400, 0.1);
             }
 
-            // Bullet physics
-            player.bullets.forEach(b => {
+            // Bullet lifetime
+            player.bullets = player.bullets.filter(b => {
                 b.x += b.dx;
                 b.y += b.dy;
-                b.dx *= 0.99;
-                b.dy *= 0.99;
-                if (playerCount >= player.index + 1) {
-                    particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 1, life: 5, color: b.color });
-                }
+                if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) return false;
+                particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 1, life: 5, color: b.color });
+                return Date.now() - b.time < 2000;
             });
-            player.bullets = player.bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
         }
 
         // Bullet drawing
@@ -250,7 +302,8 @@
                     dx: (Math.random() - 0.5) * 2,
                     dy: (Math.random() - 0.5) * 2,
                     angle: 0,
-                    spin: (Math.random() - 0.5) * 0.05
+                    spin: (Math.random() - 0.5) * 0.02,
+                    hp: 50
                 });
             }
         }
@@ -279,12 +332,17 @@
 
         // Obstacle spawning
         function spawnObstacles() {
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 2; i++) {
+                let x, y;
+                do {
+                    x = Math.random() * canvas.width;
+                    y = Math.random() * canvas.height;
+                } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 100)));
                 obstacles.push({
-                    x: 250 + i * 200,
-                    y: 200 + Math.random() * 400,
+                    x, y,
                     w: 60 + Math.random() * 60,
-                    h: 60 + Math.random() * 60
+                    h: 60 + Math.random() * 60,
+                    hp: 100
                 });
             }
         }
@@ -352,27 +410,24 @@
 
         // Power-ups
         function spawnPowerUps() {
-            if (Math.random() < 0.01) {
+            if (Math.random() < 0.005) { // Rare
                 powerUps.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    type: Math.random() < 0.5 ? 'mass' : 'speed'
+                    type: Math.random() < 0.5 ? 'speed' : 'ship'
                 });
             }
         }
 
         function updatePowerUps() {
             powerUps.forEach((pu, i) => {
-                ctx.fillStyle = pu.type === 'mass' ? '#ff0' : '#0ff';
+                ctx.fillStyle = pu.type === 'speed' ? '#ff0' : '#0ff';
                 ctx.fillRect(pu.x - 5 - camera.x, pu.y - 5 - camera.y, 10, 10);
                 players.slice(0, playerCount).forEach(p => {
                     p.ships.forEach(s => {
                         if (Math.hypot(s.x - pu.x, s.y - pu.y) < 20) {
-                            if (pu.type === 'mass' && p.ships.length < 100) {
-                                p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, mass: 20, color: s.color, dx: 0, dy: 0 });
-                            } else if (pu.type === 'speed') {
-                                s.speed += 2;
-                            }
+                            if (pu.type === 'speed') s.speed += 2;
+                            else if (p.ships.length < 100) p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 20, color: s.color, dx: 0, dy: 0 });
                             powerUps.splice(i, 1);
                             playSound(600, 0.3);
                         }
@@ -407,38 +462,37 @@
                     for (let ai = asteroids.length - 1; ai >= 0; ai--) {
                         const a = asteroids[ai];
                         const dist = Math.hypot(s.x - a.x, s.y - a.y);
-                        if (dist < a.size + Math.sqrt(s.mass) * 2) {
-                            const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy);
-                            if (a.size > 20) {
-                                const splitCount = Math.min(5, Math.floor(speed / 2) + 2);
-                                for (let i = 0; i < splitCount; i++) {
-                                    asteroids.push({
-                                        x: a.x,
-                                        y: a.y,
-                                        size: a.size / splitCount,
-                                        dx: a.dx + (Math.random() - 0.5) * speed,
-                                        dy: a.dy + (Math.random() - 0.5) * speed,
-                                        angle: 0,
-                                        spin: (Math.random() - 0.5) * 0.05
-                                    });
+                        if (dist < a.size + 10) {
+                            s.hp -= 10;
+                            showHP(s.x, s.y, s.hp, s.color);
+                            if (s.hp <= 0) {
+                                if (p.ships.length < 100) {
+                                    p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
                                 }
+                                p.ships.splice(si, 1);
+                                explosion(s.x, s.y, 10, s.color);
                             }
-                            asteroids.splice(ai, 1);
-                            explosion(a.x, a.y, 15);
-                            if (p.ships.length < 100) {
-                                p.ships.push({
-                                    x: s.x,
-                                    y: s.y,
-                                    angle: s.angle,
-                                    speed: s.speed / 2,
-                                    mass: 20,
-                                    color: s.color,
-                                    dx: -s.dx * 0.5,
-                                    dy: -s.dy * 0.5
-                                });
+                            a.hp -= 10;
+                            showHP(a.x, a.y, a.hp, '#888');
+                            if (a.hp <= 0) {
+                                if (a.size > 20) {
+                                    const splitCount = Math.min(5, Math.floor(Math.sqrt(s.dx * s.dx + s.dy * s.dy) / 2) + 2);
+                                    for (let i = 0; i < splitCount; i++) {
+                                        asteroids.push({
+                                            x: a.x,
+                                            y: a.y,
+                                            size: a.size / splitCount,
+                                            dx: a.dx + (Math.random() - 0.5) * 3,
+                                            dy: a.dy + (Math.random() - 0.5) * 3,
+                                            angle: 0,
+                                            spin: (Math.random() - 0.5) * 0.02,
+                                            hp: 20
+                                        });
+                                    }
+                                }
+                                asteroids.splice(ai, 1);
+                                explosion(a.x, a.y, 15);
                             }
-                            p.ships.splice(si, 1);
-                            explosion(s.x, s.y, Math.sqrt(s.mass) * 2, s.color);
                             break;
                         }
                     }
@@ -447,24 +501,18 @@
                     for (let oi = obstacles.length - 1; oi >= 0; oi--) {
                         const o = obstacles[oi];
                         if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
-                            s.dx *= -0.8;
-                            s.dy *= -0.8;
-                            s.x += s.dx;
-                            s.y += s.dy;
-                            if (p.ships.length < 100) {
-                                p.ships.push({
-                                    x: s.x,
-                                    y: s.y,
-                                    angle: s.angle,
-                                    speed: s.speed / 2,
-                                    mass: 20,
-                                    color: s.color,
-                                    dx: -s.dx * 0.5,
-                                    dy: -s.dy * 0.5
-                                });
+                            s.hp -= 20;
+                            showHP(s.x, s.y, s.hp, s.color);
+                            if (s.hp <= 0) {
+                                if (p.ships.length < 100) {
+                                    p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
+                                }
+                                p.ships.splice(si, 1);
+                                explosion(s.x, s.y, 10, s.color);
                             }
-                            p.ships.splice(si, 1);
-                            explosion(s.x, s.y, Math.sqrt(s.mass) * 2, s.color);
+                            o.hp -= 20;
+                            showHP(o.x + o.w / 2, o.y, o.hp, '#555');
+                            if (o.hp <= 0) obstacles.splice(oi, 1);
                             break;
                         }
                     }
@@ -476,23 +524,18 @@
                         for (let bi = op.bullets.length - 1; bi >= 0; bi--) {
                             const b = op.bullets[bi];
                             if (Math.hypot(s.x - b.x, s.y - b.y) < 10) {
-                                op.bullets.splice(bi, 1);
-                                b.dx *= -0.5;
-                                b.dy *= -0.5;
-                                if (p.ships.length < 100) {
-                                    p.ships.push({
-                                        x: s.x,
-                                        y: s.y,
-                                        angle: s.angle,
-                                        speed: s.speed / 2,
-                                        mass: 20,
-                                        color: s.color,
-                                        dx: -s.dx * 0.5,
-                                        dy: -s.dy * 0.5
-                                    });
+                                s.hp -= 20; // Easier splitting
+                                s.dx -= b.dx * 0.2; // Knockback
+                                s.dy -= b.dy * 0.2;
+                                showHP(s.x, s.y, s.hp, s.color);
+                                if (s.hp <= 0) {
+                                    if (p.ships.length < 100) {
+                                        p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5, dy: -s.dy * 0.5 });
+                                    }
+                                    p.ships.splice(si, 1);
+                                    explosion(s.x, s.y, 10, s.color);
                                 }
-                                p.ships.splice(si, 1);
-                                explosion(s.x, s.y, Math.sqrt(s.mass) * 2, s.color);
+                                op.bullets.splice(bi, 1);
                                 break;
                             }
                         }
@@ -507,41 +550,28 @@
                             if (Math.hypot(s.x - os.x, s.y - os.y) < 20) {
                                 const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
                                 const damage = Math.floor(speed * 5);
-                                let splitCountP = Math.min(10, Math.floor(damage / 20));
-                                let splitCountOP = Math.min(10, Math.floor(damage / 20));
-                                
-                                while (splitCountP > 0 && p.ships.length < 100) {
-                                    p.ships.push({
-                                        x: s.x,
-                                        y: s.y,
-                                        angle: s.angle,
-                                        speed: s.speed / 2,
-                                        mass: 20,
-                                        color: s.color,
-                                        dx: -s.dx * 0.5 + (Math.random() - 0.5) * 2,
-                                        dy: -s.dy * 0.5 + (Math.random() - 0.5) * 2
-                                    });
-                                    splitCountP--;
+                                s.hp -= damage;
+                                os.hp -= damage;
+                                showHP(s.x, s.y, s.hp, s.color);
+                                showHP(os.x, os.y, os.hp, os.color);
+                                if (s.hp <= 0) {
+                                    if (p.ships.length < 100) {
+                                        for (let i = 0; i < Math.min(5, Math.floor(damage / 20)) && p.ships.length < 100; i++) {
+                                            p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: s.speed / 2, hp: 20, color: s.color, dx: -s.dx * 0.5 + (Math.random() - 0.5) * 2, dy: -s.dy * 0.5 + (Math.random() - 0.5) * 2 });
+                                        }
+                                    }
+                                    p.ships.splice(si, 1);
+                                    explosion(s.x, s.y, 20, s.color);
                                 }
-                                p.ships.splice(si, 1);
-                                explosion(s.x, s.y, Math.sqrt(s.mass) * 4, s.color);
-
-                                while (splitCountOP > 0 && op.ships.length < 100) {
-                                    op.ships.push({
-                                        x: os.x,
-                                        y: os.y,
-                                        angle: os.angle,
-                                        speed: os.speed / 2,
-                                        mass: 20,
-                                        color: os.color,
-                                        dx: -os.dx * 0.5 + (Math.random() - 0.5) * 2,
-                                        dy: -os.dy * 0.5 + (Math.random() - 0.5) * 2
-                                    });
-                                    splitCountOP--;
+                                if (os.hp <= 0) {
+                                    if (op.ships.length < 100) {
+                                        for (let i = 0; i < Math.min(5, Math.floor(damage / 20)) && op.ships.length < 100; i++) {
+                                            op.ships.push({ x: os.x, y: os.y, angle: os.angle, speed: os.speed / 2, hp: 20, color: os.color, dx: -os.dx * 0.5 + (Math.random() - 0.5) * 2, dy: -os.dy * 0.5 + (Math.random() - 0.5) * 2 });
+                                        }
+                                    }
+                                    op.ships.splice(osi, 1);
+                                    explosion(os.x, os.y, 20, os.color);
                                 }
-                                op.ships.splice(osi, 1);
-                                explosion(os.x, os.y, Math.sqrt(os.mass) * 4, os.color);
-
                                 playSound(100, 0.5, 'sine', 0.3);
                                 break;
                             }
@@ -549,9 +579,10 @@
                     }
                 }
                 p.alive = p.ships.length > 0;
+                if (!p.alive) explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 50, p.ships[0]?.color || '#fff');
             }
 
-            // Bullet vs Asteroid
+            // Bullet vs Asteroid/Obstacle
             for (let pi = 0; pi < playerCount; pi++) {
                 const p = players[pi];
                 for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
@@ -559,23 +590,38 @@
                     for (let ai = asteroids.length - 1; ai >= 0; ai--) {
                         const a = asteroids[ai];
                         if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
-                            if (a.size > 20) {
-                                const splitCount = Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 2;
-                                for (let i = 0; i < splitCount; i++) {
-                                    asteroids.push({
-                                        x: a.x,
-                                        y: a.y,
-                                        size: a.size / splitCount,
-                                        dx: a.dx + (Math.random() - 0.5) * 3,
-                                        dy: a.dy + (Math.random() - 0.5) * 3,
-                                        angle: 0,
-                                        spin: (Math.random() - 0.5) * 0.05
-                                    });
+                            a.hp -= 20;
+                            showHP(a.x, a.y, a.hp, '#888');
+                            if (a.hp <= 0) {
+                                if (a.size > 20) {
+                                    const splitCount = Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 2;
+                                    for (let i = 0; i < splitCount; i++) {
+                                        asteroids.push({
+                                            x: a.x,
+                                            y: a.y,
+                                            size: a.size / splitCount,
+                                            dx: a.dx + (Math.random() - 0.5) * 3,
+                                            dy: a.dy + (Math.random() - 0.5) * 3,
+                                            angle: 0,
+                                            spin: (Math.random() - 0.5) * 0.02,
+                                            hp: 20
+                                        });
+                                    }
                                 }
+                                asteroids.splice(ai, 1);
+                                explosion(a.x, a.y, 15);
                             }
-                            asteroids.splice(ai, 1);
                             p.bullets.splice(bi, 1);
-                            explosion(a.x, a.y, 15);
+                            break;
+                        }
+                    }
+                    for (let oi = obstacles.length - 1; oi >= 0; oi--) {
+                        const o = obstacles[oi];
+                        if (b.x > o.x && b.x < o.x + o.w && b.y > o.y && b.y < o.y + o.h) {
+                            o.hp -= 20;
+                            showHP(o.x + o.w / 2, o.y, o.hp, '#555');
+                            if (o.hp <= 0) obstacles.splice(oi, 1);
+                            p.bullets.splice(bi, 1);
                             break;
                         }
                     }
@@ -610,6 +656,7 @@
                     ctx.fillText(`P${i + 1}: ${p.ships.length} SHIPS`, 10, 20 + i * 20);
                 });
             }
+            drawHP();
         }
 
         // Game loop
@@ -624,7 +671,7 @@
                 spawnAsteroids();
                 spawnPowerUps();
                 players.slice(0, playerCount).forEach((p, i) => {
-                    p.index = i; // Add index for particle control
+                    p.index = i;
                     updatePlayer(p);
                     p.ships.forEach(s => drawShip(s, p.ships.length));
                     drawBullets(p);
