@@ -18,18 +18,44 @@
         }
         #gameContainer {
             width: 90%;
-            height: 90vh;
-            margin: 5vh auto 50px; /* Increased bottom margin */
+            margin: 0 auto;
             position: relative;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #uiPanel {
+            width: 100%;
+            height: 100px; /* Fixed height for top bar */
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px;
+            border-bottom: 2px solid #fff;
+            box-shadow: 0 0 10px #fff;
+            z-index: 10;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            display: flex;
             justify-content: flex-start;
-            align-items: flex-start;
-            overflow: hidden;
+            align-items: center;
+        }
+        #uiPanel div {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 3px;
+            border-right: 1px solid #fff;
+            font-size: 10px;
+            text-align: center;
+            min-width: 120px;
+        }
+        #uiPanel div:last-child {
+            border-right: none;
         }
         #canvasWrapper {
-            width: calc(100% - 210px);
-            height: 100%;
+            width: 100%;
+            height: 80vh; /* Adjusted height */
             position: relative;
+            margin-top: 10px;
         }
         canvas {
             border: 1px solid #fff;
@@ -40,12 +66,12 @@
         }
         #menu {
             position: absolute;
-            top: 0;
+            top: 100px; /* Below UI panel */
             left: 0;
-            width: calc(100% - 210px);
-            height: 100%;
+            width: 100%;
+            height: calc(80vh - 100px); /* Adjusted for UI panel height */
             text-align: center;
-            background: rgba(26, 26, 26, 0.7); /* Semi-transparent */
+            background: rgba(26, 26, 26, 0.7);
             padding: 20px;
             border: 5px solid #fff;
             box-shadow: 0 0 30px #0ff, 0 0 50px #00f;
@@ -129,26 +155,9 @@
             0% { box-shadow: 0 0 10px #fff; }
             100% { box-shadow: 0 0 30px #fff; }
         }
-        #uiPanel {
-            width: 200px;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 5px;
-            border-left: 2px solid #fff;
-            box-shadow: 0 0 10px #fff;
-            z-index: 10;
-            overflow-y: auto;
-            margin-left: 10px;
-        }
-        #uiPanel div {
-            margin-bottom: 5px;
-            padding: 3px;
-            border-bottom: 1px solid #fff;
-            font-size: 10px;
-        }
         #contentBelow {
             width: 90%;
-            margin: 0 auto 20px;
+            margin: 20px auto;
             padding: 20px;
             text-align: center;
             color: #ccc;
@@ -188,10 +197,10 @@
 </head>
 <body>
     <div id="gameContainer">
+        <div id="uiPanel"></div>
         <div id="canvasWrapper">
             <canvas id="gameCanvas"></canvas>
         </div>
-        <div id="uiPanel"></div>
     </div>
     <div id="menu">
         <h1>SWARM WARS</h1>
@@ -897,8 +906,8 @@
         }
 
         function spawnPowerUps() {
-            if (gameState === 'playing' && frameCount % 30 === 0) { // Every ~0.5s
-                if (Math.random() < 0.1) { // 10% chance per check
+            if (gameState === 'playing' && frameCount % 30 === 0) {
+                if (Math.random() < 0.1) {
                     const roll = Math.random();
                     const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
                     powerUps.push({
@@ -908,7 +917,7 @@
                         radius: 12,
                         pulse: 0
                     });
-                    console.log('Power-up spawned at:', powerUps[powerUps.length - 1]); // Debug log
+                    console.log('Power-up spawned at:', powerUps[powerUps.length - 1]);
                 }
             }
         }
@@ -924,7 +933,7 @@
                     radius: 12,
                     pulse: 0
                 });
-                console.log('Power-up spawned from asteroid at:', { x, y }); // Debug log
+                console.log('Power-up spawned from asteroid at:', { x, y });
             }
         }
 
@@ -967,7 +976,7 @@
                             showPowerUp(pu.x, pu.y, count, '#0f0');
                             powerUps.splice(i, 1);
                             playSound(600, 0.3, 'sine', 0.2);
-                            console.log(`Power-up collected by Player ${pi + 1}`); // Debug log
+                            console.log(`Power-up collected by Player ${pi + 1}`);
                             collected = true;
                             break;
                         }
@@ -1252,7 +1261,7 @@
                 ctx.fillText(`${winner.isBot ? 'BOT' : 'PLAYER'} ${winnerIndex} WINS`, canvas.width / 2, canvas.height / 2 + 20);
             }
             ctx.fillText('PRESS R TO RESTART', canvas.width / 2, canvas.height / 2 + 60);
-            if (gameState === 'victory' && frameCount % 60 === 0) { // Play once per second
+            if (gameState === 'victory' && frameCount % 60 === 0) {
                 playSound(400, 1.0, 'sine', 0.3);
             }
         }
@@ -1261,8 +1270,6 @@
             uiPanel.innerHTML = '';
             const baseFontSize = 10;
             const fontSize = Math.max(6, baseFontSize - Math.max(0, players.length - 10) * 0.5);
-            uiPanel.querySelectorAll('div').forEach(div => div.style.fontSize = `${fontSize}px`);
-
             players.forEach((p, i) => {
                 if (!p.alive) return;
                 const totalHP = p.ships.reduce((sum, ship) => sum + (ship.hp || 0), 0);
@@ -1322,9 +1329,6 @@
                 });
                 checkCollisions();
                 updateParticles();
-                ctx.restore(); // Restore before menu to draw on top
-                ctx.save();
-                // Menu drawn last to overlay
             } else if (gameState === 'playing' && !paused) {
                 spawnAsteroids();
                 spawnPowerUps();
