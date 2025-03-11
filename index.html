@@ -19,11 +19,17 @@
         #gameContainer {
             width: 90%;
             height: 90vh;
-            margin: 5vh auto 0;
+            margin: 5vh auto 20px; /* Added bottom margin for separation */
             position: relative;
             display: flex;
-            justify-content: center;
+            justify-content: flex-start; /* Adjusted to accommodate sidebar */
             align-items: flex-start;
+            overflow: hidden; /* Prevent overlap */
+        }
+        #canvasWrapper {
+            width: calc(100% - 210px); /* Leave space for sidebar */
+            height: 100%;
+            position: relative;
         }
         canvas {
             border: 1px solid #fff;
@@ -36,7 +42,7 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
+            width: calc(100% - 210px); /* Match canvas width */
             height: 100%;
             text-align: center;
             background: linear-gradient(45deg, #1a1a1a, #000);
@@ -124,9 +130,6 @@
             100% { box-shadow: 0 0 30px #fff; }
         }
         #uiPanel {
-            position: absolute;
-            right: 0;
-            top: 0;
             width: 200px;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
@@ -135,6 +138,7 @@
             box-shadow: 0 0 10px #fff;
             z-index: 10;
             overflow-y: auto;
+            margin-left: 10px; /* Space between canvas and sidebar */
         }
         #uiPanel div {
             margin-bottom: 5px;
@@ -144,12 +148,14 @@
         }
         #contentBelow {
             width: 90%;
-            margin: 20px auto;
+            margin: 0 auto 20px;
             padding: 20px;
             text-align: center;
             color: #ccc;
             font-size: 12px;
             line-height: 1.5;
+            position: relative; /* Ensure it stays below canvas */
+            z-index: 0;
         }
         #howToPlaySection, #aboutSection {
             background: rgba(0, 0, 0, 0.7);
@@ -182,7 +188,9 @@
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
+        <div id="canvasWrapper">
+            <canvas id="gameCanvas"></canvas>
+        </div>
         <div id="uiPanel"></div>
     </div>
     <div id="menu">
@@ -241,7 +249,7 @@
                 - <strong>Win:</strong> Outlast all opponents to claim victory!<br>
                 - <strong>Pause:</strong> Press 'P' to pause/unpause the game.
             </p>
-            <!-- Placeholder for images; replace with actual image URLs -->
+            <!-- Placeholder for images -->
             <img src="placeholder.png" alt="Gameplay Screenshot" style="display: block;">
         </div>
         <div id="aboutSection">
@@ -321,7 +329,7 @@
         function startGameWithBots(bots) {
             botCount = bots;
             if (botCount === 0) {
-                startGame(0, null); // No difficulty needed
+                startGame(0, null);
             } else {
                 showDifficultyMenu(botCount);
             }
@@ -554,7 +562,7 @@
 
                 let target = null;
                 let targetDistance = Infinity;
-                if (nearestPowerUp && minDistanceToPlayer * 0.5 && player.ships.length < MAX_SHIPS_PER_PLAYER / 2) {
+                if (nearestPowerUp && minDistanceToPowerUp < minDistanceToPlayer * 0.5 && player.ships.length < MAX_SHIPS_PER_PLAYER / 2) {
                     target = nearestPowerUp;
                     targetDistance = minDistanceToPowerUp;
                 } else if (targetPlayer) {
@@ -632,7 +640,7 @@
                                     time: Date.now(),
                                     owner: player
                                 });
-                                playSound(800, 0.1, 'sawtooth', 0.15); // Pew pew sound
+                                playSound(800, 0.1, 'sawtooth', 0.15);
                             }
                         });
                         player.lastShot = Date.now();
@@ -728,7 +736,7 @@
                             time: Date.now(),
                             owner: player
                         });
-                        playSound(800, 0.1, 'sawtooth', 0.15); // Pew pew sound
+                        playSound(800, 0.1, 'sawtooth', 0.15);
                     }
                 });
                 player.lastShot = Date.now();
@@ -879,7 +887,7 @@
                 if (p.dy) p.y += p.dy;
                 p.dx = p.dx ? p.dx * 0.95 : 0;
                 p.dy = p.dy ? p.dy * 0.95 : 0;
-                p.opacity = Math.max(0, p.life / (p.lifeMax || 40)); // Fade out
+                p.opacity = Math.max(0, p.life / (p.lifeMax || 40));
                 if (p.life <= 0 || p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) particles.splice(i, 1);
                 else {
                     ctx.fillStyle = `rgba(${parseInt(p.color.slice(1, 3), 16)}, ${parseInt(p.color.slice(3, 5), 16)}, ${parseInt(p.color.slice(5, 7), 16)}, ${p.opacity})`;
@@ -889,12 +897,26 @@
         }
 
         function spawnPowerUps() {
-            if (gameState === 'playing' && Math.random() < 0.005 && frameCount % 60 === 0) {
+            if (gameState === 'playing' && Math.random() < 0.02 && frameCount % 30 === 0) { // Increased spawn rate
                 const roll = Math.random();
                 const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
                 powerUps.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
+                    type,
+                    radius: 12,
+                    pulse: 0
+                });
+            }
+        }
+
+        function spawnPowerUpFromAsteroid(x, y) {
+            if (Math.random() < 0.3) { // 30% chance
+                const roll = Math.random();
+                const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
+                powerUps.push({
+                    x,
+                    y,
                     type,
                     radius: 12,
                     pulse: 0
@@ -1051,6 +1073,7 @@
                                             });
                                         }
                                     }
+                                    spawnPowerUpFromAsteroid(a.x, a.y); // Chance for power-up
                                     const index = asteroids.indexOf(a);
                                     if (index > -1) asteroids.splice(index, 1);
                                     explosion(a.x, a.y, 30);
@@ -1137,7 +1160,7 @@
                         const deathX = s.x || canvas.width / 2;
                         const deathY = s.y || canvas.height / 2;
                         const deathColor = s.color || '#fff';
-                        const aliveCount = activePlayers.length;
+                        const aliveCount = activePlayers.length - 1; // Account for current player
                         if (aliveCount === 1) {
                             explosion(deathX, deathY, 600, deathColor, 4, true);
                         } else {
@@ -1184,6 +1207,7 @@
                                             });
                                         }
                                     }
+                                    spawnPowerUpFromAsteroid(a.x, a.y); // Chance for power-up
                                     const index = asteroids.indexOf(a);
                                     if (index > -1) asteroids.splice(index, 1);
                                     explosion(a.x, a.y, 30);
@@ -1206,6 +1230,24 @@
                     });
                 }
             }
+        }
+
+        function drawVictoryScreen() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '30px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('#1 VICTORY ROYALE', canvas.width / 2, canvas.height / 2 - 20);
+            const alivePlayers = players.filter(p => p.alive);
+            if (alivePlayers.length === 1) {
+                const winner = alivePlayers[0];
+                const winnerIndex = players.indexOf(winner) + 1;
+                ctx.font = '16px "Press Start 2P"';
+                ctx.fillText(`${winner.isBot ? 'BOT' : 'PLAYER'} ${winnerIndex} WINS`, canvas.width / 2, canvas.height / 2 + 20);
+            }
+            ctx.fillText('PRESS R TO RESTART', canvas.width / 2, canvas.height / 2 + 60);
+            playSound(400, 1.0, 'sine', 0.3); // Victory sound
         }
 
         function drawUI() {
@@ -1233,15 +1275,7 @@
             const alivePlayers = players.filter(p => p.alive);
             if (alivePlayers.length === 1 && gameState === 'playing') {
                 gameState = 'victory';
-                ctx.fillStyle = '#fff';
-                ctx.font = '20px "Press Start 2P"';
-                ctx.textAlign = 'center';
-                ctx.fillText('#1 VICTORY ROYALE', canvas.width / 2, canvas.height / 2 - 20);
-                ctx.font = '12px "Press Start 2P"';
-                const winner = alivePlayers[0];
-                const winnerIndex = players.indexOf(winner) + 1;
-                ctx.fillText(`${winner.isBot ? 'BOT' : 'PLAYER'} ${winnerIndex} WINS`, canvas.width / 2, canvas.height / 2);
-                ctx.fillText('PRESS R TO RESTART', canvas.width / 2, canvas.height / 2 + 20);
+                drawVictoryScreen();
             }
 
             eliminations = eliminations.filter(e => Date.now() - e.time < 5000);
@@ -1307,6 +1341,7 @@
                     }
                 });
                 updateParticles();
+                drawVictoryScreen();
             }
 
             drawUI();
