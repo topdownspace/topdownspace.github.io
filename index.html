@@ -19,15 +19,15 @@
         #gameContainer {
             width: 90%;
             height: 90vh;
-            margin: 5vh auto 20px; /* Added bottom margin for separation */
+            margin: 5vh auto 50px; /* Increased bottom margin */
             position: relative;
             display: flex;
-            justify-content: flex-start; /* Adjusted to accommodate sidebar */
+            justify-content: flex-start;
             align-items: flex-start;
-            overflow: hidden; /* Prevent overlap */
+            overflow: hidden;
         }
         #canvasWrapper {
-            width: calc(100% - 210px); /* Leave space for sidebar */
+            width: calc(100% - 210px);
             height: 100%;
             position: relative;
         }
@@ -42,10 +42,10 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: calc(100% - 210px); /* Match canvas width */
+            width: calc(100% - 210px);
             height: 100%;
             text-align: center;
-            background: linear-gradient(45deg, #1a1a1a, #000);
+            background: rgba(26, 26, 26, 0.7); /* Semi-transparent */
             padding: 20px;
             border: 5px solid #fff;
             box-shadow: 0 0 30px #0ff, 0 0 50px #00f;
@@ -138,7 +138,7 @@
             box-shadow: 0 0 10px #fff;
             z-index: 10;
             overflow-y: auto;
-            margin-left: 10px; /* Space between canvas and sidebar */
+            margin-left: 10px;
         }
         #uiPanel div {
             margin-bottom: 5px;
@@ -154,7 +154,7 @@
             color: #ccc;
             font-size: 12px;
             line-height: 1.5;
-            position: relative; /* Ensure it stays below canvas */
+            position: relative;
             z-index: 0;
         }
         #howToPlaySection, #aboutSection {
@@ -897,21 +897,24 @@
         }
 
         function spawnPowerUps() {
-            if (gameState === 'playing' && Math.random() < 0.02 && frameCount % 30 === 0) { // Increased spawn rate
-                const roll = Math.random();
-                const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
-                powerUps.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    type,
-                    radius: 12,
-                    pulse: 0
-                });
+            if (gameState === 'playing' && frameCount % 30 === 0) { // Every ~0.5s
+                if (Math.random() < 0.1) { // 10% chance per check
+                    const roll = Math.random();
+                    const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
+                    powerUps.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        type,
+                        radius: 12,
+                        pulse: 0
+                    });
+                    console.log('Power-up spawned at:', powerUps[powerUps.length - 1]); // Debug log
+                }
             }
         }
 
         function spawnPowerUpFromAsteroid(x, y) {
-            if (Math.random() < 0.3) { // 30% chance
+            if (Math.random() < 0.3) {
                 const roll = Math.random();
                 const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
                 powerUps.push({
@@ -921,6 +924,7 @@
                     radius: 12,
                     pulse: 0
                 });
+                console.log('Power-up spawned from asteroid at:', { x, y }); // Debug log
             }
         }
 
@@ -963,6 +967,7 @@
                             showPowerUp(pu.x, pu.y, count, '#0f0');
                             powerUps.splice(i, 1);
                             playSound(600, 0.3, 'sine', 0.2);
+                            console.log(`Power-up collected by Player ${pi + 1}`); // Debug log
                             collected = true;
                             break;
                         }
@@ -1073,7 +1078,7 @@
                                             });
                                         }
                                     }
-                                    spawnPowerUpFromAsteroid(a.x, a.y); // Chance for power-up
+                                    spawnPowerUpFromAsteroid(a.x, a.y);
                                     const index = asteroids.indexOf(a);
                                     if (index > -1) asteroids.splice(index, 1);
                                     explosion(a.x, a.y, 30);
@@ -1160,7 +1165,7 @@
                         const deathX = s.x || canvas.width / 2;
                         const deathY = s.y || canvas.height / 2;
                         const deathColor = s.color || '#fff';
-                        const aliveCount = activePlayers.length - 1; // Account for current player
+                        const aliveCount = activePlayers.length - 1;
                         if (aliveCount === 1) {
                             explosion(deathX, deathY, 600, deathColor, 4, true);
                         } else {
@@ -1207,7 +1212,7 @@
                                             });
                                         }
                                     }
-                                    spawnPowerUpFromAsteroid(a.x, a.y); // Chance for power-up
+                                    spawnPowerUpFromAsteroid(a.x, a.y);
                                     const index = asteroids.indexOf(a);
                                     if (index > -1) asteroids.splice(index, 1);
                                     explosion(a.x, a.y, 30);
@@ -1247,7 +1252,9 @@
                 ctx.fillText(`${winner.isBot ? 'BOT' : 'PLAYER'} ${winnerIndex} WINS`, canvas.width / 2, canvas.height / 2 + 20);
             }
             ctx.fillText('PRESS R TO RESTART', canvas.width / 2, canvas.height / 2 + 60);
-            playSound(400, 1.0, 'sine', 0.3); // Victory sound
+            if (gameState === 'victory' && frameCount % 60 === 0) { // Play once per second
+                playSound(400, 1.0, 'sine', 0.3);
+            }
         }
 
         function drawUI() {
@@ -1315,6 +1322,9 @@
                 });
                 checkCollisions();
                 updateParticles();
+                ctx.restore(); // Restore before menu to draw on top
+                ctx.save();
+                // Menu drawn last to overlay
             } else if (gameState === 'playing' && !paused) {
                 spawnAsteroids();
                 spawnPowerUps();
