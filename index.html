@@ -10,211 +10,159 @@
         html, body {
             margin: 0;
             padding: 0;
+            height: 100%;
             width: 100%;
+            overflow: hidden;
             background: #000;
             font-family: 'Press Start 2P', monospace;
             color: #fff;
-            overflow-x: hidden;
         }
         #gameContainer {
-            width: 90%;
-            margin: 0 auto;
-            position: relative;
+            width: 80%;
+            height: 90%;
+            position: absolute;
+            top: 5%;
+            left: 10%;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #uiPanel {
-            width: 100%;
-            height: 100px; /* Fixed height for top bar */
-            background: rgba(0, 0, 0, 0.8);
-            padding: 5px;
-            border-bottom: 2px solid #fff;
-            box-shadow: 0 0 10px #fff;
-            z-index: 10;
-            overflow-x: auto;
-            overflow-y: hidden;
-            white-space: nowrap;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-        }
-        #uiPanel div {
-            display: inline-block;
-            margin: 0 10px;
-            padding: 3px;
-            border-right: 1px solid #fff;
-            font-size: 10px;
-            text-align: center;
-            min-width: 120px;
-        }
-        #uiPanel div:last-child {
-            border-right: none;
-        }
-        #canvasWrapper {
-            width: 100%;
-            height: 80vh; /* Adjusted height */
-            position: relative;
-            margin-top: 10px;
+            border: 1px solid #fff;
         }
         canvas {
             border: 1px solid #fff;
             image-rendering: pixelated;
-            z-index: 1;
-            width: 100%;
-            height: 100%;
+            flex-grow: 1;
         }
-        #menu {
-            position: absolute;
-            top: 100px; /* Below UI panel */
-            left: 0;
-            width: 100%;
-            height: calc(80vh - 100px); /* Adjusted for UI panel height */
-            text-align: center;
-            background: rgba(26, 26, 26, 0.7);
-            padding: 20px;
-            border: 5px solid #fff;
-            box-shadow: 0 0 30px #0ff, 0 0 50px #00f;
-            animation: pulse 4s infinite alternate, nebula 10s infinite;
-            z-index: 20;
-            overflow: hidden;
-            display: block;
-        }
-        #botMenu, #difficultyMenu, #howToPlayModal {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 500px;
-            text-align: center;
-            background: linear-gradient(to bottom, #1a1a1a, #000);
-            padding: 20px;
-            border: 4px solid #fff;
-            box-shadow: 0 0 20px #fff;
-            animation: glow 1.5s infinite alternate;
-            z-index: 20;
-            overflow: hidden;
-            display: none;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 30px #0ff, 0 0 50px #00f; }
-            100% { box-shadow: 0 0 50px #0ff, 0 0 70px #00f; }
-        }
-        @keyframes nebula {
-            0% { background-position: 0 0; }
-            100% { background-position: 100% 0; }
-        }
-        #menu::before, #botMenu::before, #difficultyMenu::before, #howToPlayModal::before {
-            content: '';
+        #menu, #botMenu, #difficultyMenu, #howToPlayModal {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle, rgba(255, 0, 255, 0.1) 0%, rgba(0, 0, 255, 0.1) 70%, transparent 100%);
-            animation: rotate 20s linear infinite;
-            z-index: -1;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px #fff;
+            animation: glow 1.5s infinite alternate;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #fff; }
+            100% { box-shadow: 0 0 15px #fff; }
         }
-        #menu h1, #botMenu h1, #difficultyMenu h1, #howToPlayModal h1 {
-            font-size: 60px;
-            margin: 0 0 40px 0;
-            text-shadow: 0 0 20px #0ff, 0 0 30px #00f;
-            animation: flicker 0.2s infinite alternate;
-            color: #0ff;
+        h1 {
+            font-size: 32px;
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 7px #0ff;
+            animation: flicker 0.1s infinite alternate;
         }
         @keyframes flicker {
             0% { opacity: 0.9; }
             100% { opacity: 1; }
         }
-        #menu button, #botMenu button, #difficultyMenu button, #howToPlayModal button {
+        button {
             font-family: 'Press Start 2P', monospace;
-            font-size: 20px;
-            padding: 15px 30px;
-            margin: 15px 10px;
+            font-size: 10px;
+            padding: 7px 15px;
+            margin: 7px 5px;
             background: #333;
             color: #fff;
-            border: 4px solid #0ff;
+            border: 1px solid #fff;
             cursor: pointer;
-            transition: all 0.4s;
-            border-radius: 10px;
-            display: inline-block;
-            width: 40%;
+            transition: all 0.3s;
+            border-radius: 2px;
+            width: 30%;
         }
-        #menu button:hover, #botMenu button:hover, #difficultyMenu button:hover, #howToPlayModal button:hover {
+        button:hover {
             background: #555;
-            box-shadow: 0 0 40px #0ff, 0 0 60px #00f;
-            transform: scale(1.05);
-            color: #0ff;
+            box-shadow: 0 0 10px #0ff;
         }
-        @keyframes glow {
-            0% { box-shadow: 0 0 10px #fff; }
-            100% { box-shadow: 0 0 30px #fff; }
+        #uiPanel {
+            width: 100px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px;
+            border-left: 1px solid #fff;
+            box-shadow: 0 0 5px #fff;
+            z-index: 10;
+            overflow-y: auto;
         }
-        #contentBelow {
-            width: 90%;
-            margin: 20px auto;
-            padding: 20px;
-            text-align: center;
-            color: #ccc;
+        #uiPanel div {
+            margin-bottom: 5px;
+            padding: 2px;
+            border-bottom: 1px solid #fff;
             font-size: 12px;
-            line-height: 1.5;
-            position: relative;
-            z-index: 0;
         }
-        #howToPlaySection, #aboutSection {
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid #fff;
+        #howToPlayModal {
+            display: none;
+            background: rgba(0, 0, 0, 0.9);
             padding: 20px;
-            margin-bottom: 20px;
+            max-height: 80%;
+            overflow-y: auto;
         }
-        #howToPlaySection img {
-            max-width: 100%;
-            height: auto;
-            margin: 10px 0;
+        #howToPlayModal.show {
+            display: flex;
         }
-        body::before {
-            content: '';
-            position: fixed;
+        #victoryScreen {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQI12NgYGD4zwABYAFjMAACQDP+AGiW/3WAAAAAElFTkSuQmCC') repeat;
-            animation: stars 10s linear infinite;
-            z-index: -2;
-            opacity: 0.3;
+            height: 20%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 15;
+            animation: victoryGlow 1s infinite alternate;
         }
-        @keyframes stars {
-            0% { background-position: 0 0; }
-            100% { background-position: 100% 100%; }
+        @keyframes victoryGlow {
+            0% { text-shadow: 0 0 5px #ff0; }
+            100% { text-shadow: 0 0 15px #f00; }
+        }
+        #victoryScreen h1 {
+            font-size: 24px;
+            color: #ff0;
+            text-shadow: 0 0 7px #f00;
+            animation: victoryPulse 0.5s infinite alternate;
+        }
+        @keyframes victoryPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        #victoryScreen p {
+            font-size: 12px;
+            color: #0ff;
+            margin: 5px 0;
+        }
+        #victoryScreen button {
+            width: 20%;
+            font-size: 8px;
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
         <div id="uiPanel"></div>
-        <div id="canvasWrapper">
-            <canvas id="gameCanvas"></canvas>
-        </div>
     </div>
     <div id="menu">
         <h1>SWARM WARS</h1>
-        <p style="font-size: 24px; margin: 30px 0; color: #0ff;">Command Your Fleet to Victory!</p>
+        <p style="font-size: 10px; margin: 10px 0;">Select Number of Players</p>
         <button onclick="showBotMenu(1)">1 Player</button>
         <button onclick="showBotMenu(2)">2 Players</button>
         <button onclick="showBotMenu(3)">3 Players</button>
-        <button><a href="#howToPlaySection" style="color: #fff; text-decoration: none;" onclick="hideMenu()">How to Play</a></button>
-        <button onclick="location.reload()" style="margin-top: 30px;">Back</button>
+        <button onclick="showHowToPlay()">How to Play</button>
+        <button onclick="location.reload()" style="margin-top: 20px;">Back</button>
     </div>
-    <div id="botMenu">
+    <div id="botMenu" style="display: none;">
         <h1>CONFIGURE BOTS</h1>
-        <p style="font-size: 14px; margin: 20px 0;">Select Number of Bots (0-20)</p>
-        <button onclick="startGameWithBots(0)">0 Bots</button>
+        <p style="font-size: 10px; margin: 10px 0;">Select Number of Bots (0-50)</p>
+        <button onclick="showDifficultyMenu(0)">0 Bots</button>
         <button onclick="showDifficultyMenu(1)">1 Bot</button>
         <button onclick="showDifficultyMenu(2)">2 Bots</button>
         <button onclick="showDifficultyMenu(3)">3 Bots</button>
@@ -222,11 +170,12 @@
         <button onclick="showDifficultyMenu(10)">10 Bots</button>
         <button onclick="showDifficultyMenu(15)">15 Bots</button>
         <button onclick="showDifficultyMenu(20)">20 Bots</button>
+        <button onclick="showDifficultyMenu(50)">50 Bots</button>
         <button onclick="goBack()">Back</button>
     </div>
-    <div id="difficultyMenu">
+    <div id="difficultyMenu" style="display: none;">
         <h1>SELECT BOT DIFFICULTY</h1>
-        <p style="font-size: 14px; margin: 20px 0;">Choose Difficulty Level</p>
+        <p style="font-size: 10px; margin: 10px 0;">Choose Difficulty Level</p>
         <button onclick="startGame(botCount, 'fortnite')">Fortnite Bot (Easy)</button>
         <button onclick="startGame(botCount, 'average')">Average Gamer (Medium)</button>
         <button onclick="startGame(botCount, 'fncs')">FNCS Champion (Hard)</button>
@@ -234,61 +183,63 @@
     </div>
     <div id="howToPlayModal">
         <h1>HOW TO PLAY</h1>
-        <p style="font-size: 12px; margin: 20px 0; line-height: 1.5; background: rgba(255, 255, 255, 0.1); padding: 10px;">
+        <p style="font-size: 9px; margin: 10px 0; line-height: 1.5; background: rgba(255, 255, 255, 0.1); padding: 10px;">
             - <strong>Move:</strong> Use WASD (Player 1), Arrow Keys (Player 2), or IJKL (Player 3).<br>
             - <strong>Formation:</strong> Press E, Shift, or O to cycle formations.<br>
             - <strong>Dash:</strong> Press Q, /, or U (2s cooldown).<br>
             - <strong>Shooting:</strong> Automatic based on ship count.<br>
-            - <strong>Power-Ups:</strong> Collect +2 to +20 ships to grow your fleet.<br>
+            - <strong>Power-Ups:</strong> Collect +2 to +20 ships.<br>
             - <strong>Avoid:</strong> Steer clear of asteroids and obstacles.<br>
             - <strong>Win:</strong> Be the last survivor!<br>
             <button onclick="hideHowToPlay()">Close</button>
         </p>
     </div>
-    <div id="contentBelow">
-        <div id="howToPlaySection">
-            <h2>How to Play</h2>
-            <p>
-                - <strong>Move:</strong> Use WASD (Player 1), Arrow Keys (Player 2), or IJKL (Player 3).<br>
-                - <strong>Formation:</strong> Press E, Shift, or O to cycle through formations (Diamond, Compact, Swarm, etc.).<br>
-                - <strong>Dash:</strong> Press Q, /, or U for a quick speed boost (2s cooldown).<br>
-                - <strong>Shooting:</strong> Your fleet shoots automatically; more ships mean more firepower.<br>
-                - <strong>Power-Ups:</strong> Collect glowing orbs labeled +2 to +20 to add ships to your fleet.<br>
-                - <strong>Avoid:</strong> Dodge asteroids and obstacles to survive.<br>
-                - <strong>Win:</strong> Outlast all opponents to claim victory!<br>
-                - <strong>Pause:</strong> Press 'P' to pause/unpause the game.
-            </p>
-            <!-- Placeholder for images -->
-            <img src="placeholder.png" alt="Gameplay Screenshot" style="display: block;">
-        </div>
-        <div id="aboutSection">
-            <h2>About</h2>
-            <p>Swarm Wars is a thrilling top-down space combat game where you command a fleet of ships against AI or other players. Battle through asteroid fields, collect power-ups, and outlast your opponents to claim victory! Made by Horseywin.</p>
-            <p>Version: 1.0</p>
-        </div>
+    <div id="victoryScreen">
+        <h1>👑 VICTORY ROYALE! 👑</h1>
+        <p id="winnerText"></p>
+        <button onclick="restartGame()">Play Again</button>
     </div>
     <script>
+        // Core setup
         let playerCount = 0;
         let botCount = 0;
         let gameState = 'menu';
         let eliminations = [];
         let frameCount = 0;
-        let paused = false;
+        let countdownStart = 0;
+        let countdownValue = 3;
         const MAX_BULLETS_PER_PLAYER = 50;
-        const MAX_PARTICLES = 600;
+        const MAX_PARTICLES = 1200;
         const MAX_SHIPS_PER_PLAYER = 100;
+        const PLAYER_SPEED = {
+            max: 1.5,
+            min: -0.75,
+            acceleration: 0.075,
+            deceleration: 0.95
+        };
+        const MIN_DISTANCE = 75;
 
+        const gameContainer = document.getElementById('gameContainer');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const menu = document.getElementById('menu');
         const botMenu = document.getElementById('botMenu');
         const difficultyMenu = document.getElementById('difficultyMenu');
         const howToPlayModal = document.getElementById('howToPlayModal');
+        const victoryScreen = document.getElementById('victoryScreen');
+        const winnerText = document.getElementById('winnerText');
         const uiPanel = document.getElementById('uiPanel');
 
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
+        // Set canvas size
+        const sidebarWidth = 100;
+        const squareSize = Math.min(
+            gameContainer.clientWidth - sidebarWidth,
+            gameContainer.clientHeight
+        );
+        canvas.width = squareSize;
+        canvas.height = squareSize;
 
+        // Audio setup
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(frequency, duration, type = 'square', volume = 0.1) {
             const osc = audioCtx.createOscillator();
@@ -303,143 +254,193 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
+        // Game objects with spatial grid
         const players = [];
+        const menuBots = [];
         const asteroids = [];
         const obstacles = [];
         const particles = [];
         const powerUps = [];
         const stars = [];
-        const demoBots = [];
         const keys = {};
         const damageDisplays = [];
         let formationDisplays = [];
         const powerUpDisplays = [];
         const MAX_ASTEROIDS = 10;
-        const GRID_SIZE = 40;
+        const GRID_SIZE = 20;
         const grid = {};
 
         function getGridCell(x, y) {
             return `${Math.floor(x / GRID_SIZE)},${Math.floor(y / GRID_SIZE)}`;
         }
 
+        // Menu navigation
         function showBotMenu(players) {
             playerCount = players;
             menu.style.display = 'none';
-            botMenu.style.display = 'block';
-            difficultyMenu.style.display = 'none';
+            botMenu.style.display = 'flex';
         }
 
         function showDifficultyMenu(bots) {
             botCount = bots;
             botMenu.style.display = 'none';
-            difficultyMenu.style.display = 'block';
-        }
-
-        function startGameWithBots(bots) {
-            botCount = bots;
             if (botCount === 0) {
                 startGame(0, null);
             } else {
-                showDifficultyMenu(botCount);
+                difficultyMenu.style.display = 'flex';
             }
         }
 
         function goBack() {
             if (difficultyMenu.style.display !== 'none') {
                 difficultyMenu.style.display = 'none';
-                botMenu.style.display = 'block';
+                botMenu.style.display = 'flex';
             } else if (botMenu.style.display !== 'none') {
                 botMenu.style.display = 'none';
-                menu.style.display = 'block';
+                menu.style.display = 'flex';
             }
         }
 
-        function hideMenu() {
-            menu.style.display = 'none';
+        // Initialize menu bots
+        function initMenuBots() {
+            menuBots.length = 0;
+            const positions = [];
+            const getSafePosition = () => {
+                let x, y;
+                do {
+                    x = Math.random() * (canvas.width - 25) + 12.5;
+                    y = Math.random() * (canvas.height - 25) + 12.5;
+                } while (positions.some(pos => Math.hypot(pos.x - x, pos.y - y) < MIN_DISTANCE));
+                positions.push({ x, y });
+                return { x, y };
+            };
+
+            for (let i = 0; i < 10; i++) {
+                const pos = getSafePosition();
+                menuBots.push({
+                    ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: Infinity, color: '#888', dx: (Math.random() - 0.5) * 0.25, dy: (Math.random() - 0.5) * 0.25 }],
+                    keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
+                    bullets: [],
+                    alive: true,
+                    formation: 'spiral',
+                    lastShot: 0,
+                    lastDash: 0,
+                    dashEnd: 0,
+                    dashSpeed: 0,
+                    formationChangeSpeed: 0,
+                    isBot: true,
+                    difficulty: 'average'
+                });
+            }
         }
 
+        // Start game with countdown
         function startGame(bots, difficulty) {
             botCount = bots;
             players.length = 0;
+            menuBots.length = 0;
             asteroids.length = 0;
             obstacles.length = 0;
             particles.length = 0;
             powerUps.length = 0;
-            demoBots.length = 0;
             damageDisplays.length = 0;
             formationDisplays.length = 0;
             powerUpDisplays.length = 0;
             Object.keys(grid).forEach(key => delete grid[key]);
 
+            const positions = [];
+            const getSafePosition = () => {
+                let x, y;
+                do {
+                    x = Math.random() * (canvas.width - 25) + 12.5;
+                    y = Math.random() * (canvas.height - 25) + 12.5;
+                } while (positions.some(pos => Math.hypot(pos.x - x, pos.y - y) < MIN_DISTANCE));
+                positions.push({ x, y });
+                return { x, y };
+            };
+
             const humanConfigs = [
-                { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00', x: canvas.width * 0.2, y: canvas.height * 0.4 },
-                { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0', x: canvas.width * 0.5, y: canvas.height * 0.6 },
-                { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#00f', x: canvas.width * 0.8, y: canvas.height * 0.4 }
+                { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00' },
+                { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0' },
+                { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#00f' }
             ];
             for (let i = 0; i < playerCount; i++) {
-                players.push(createPlayer(humanConfigs[i].x, humanConfigs[i].y, humanConfigs[i].color, humanConfigs[i].keys, false, 'player'));
+                const pos = getSafePosition();
+                players.push({
+                    ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 200, color: humanConfigs[i].color, dx: (Math.random() - 0.5) * 0.25, dy: (Math.random() - 0.5) * 0.25 }],
+                    keys: humanConfigs[i].keys,
+                    bullets: [],
+                    alive: true,
+                    formation: 'spiral',
+                    lastShot: 0,
+                    lastDash: 0,
+                    dashEnd: 0,
+                    dashSpeed: 0,
+                    formationChangeSpeed: 0,
+                    isBot: false,
+                    difficulty: 'player'
+                });
             }
 
             for (let i = 0; i < botCount; i++) {
-                let botX, botY, validPosition = false;
-                while (!validPosition) {
-                    botX = Math.random() * (canvas.width - 200) + 100;
-                    botY = Math.random() * (canvas.height - 200) + 100;
-                    validPosition = players.every(p => p.ships.every(s => Math.hypot(s.x - botX, s.y - botY) > 200));
-                }
-                players.push(createPlayer(botX, botY, '#888', { up: '', down: '', left: '', right: '', form: '', dash: '' }, true, difficulty || 'average'));
+                const pos = getSafePosition();
+                players.push({
+                    ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 200, color: '#888', dx: (Math.random() - 0.5) * 0.25, dy: (Math.random() - 0.5) * 0.25 }],
+                    keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
+                    bullets: [],
+                    alive: true,
+                    formation: 'spiral',
+                    lastShot: 0,
+                    lastDash: 0,
+                    dashEnd: 0,
+                    dashSpeed: 0,
+                    formationChangeSpeed: 0,
+                    isBot: true,
+                    difficulty: difficulty || 'average'
+                });
             }
 
-            gameState = 'playing';
+            gameState = 'countdown';
+            countdownStart = Date.now();
+            countdownValue = 3;
             menu.style.display = 'none';
             botMenu.style.display = 'none';
             difficultyMenu.style.display = 'none';
+            victoryScreen.style.display = 'none';
             spawnObstacles();
             spawnStars();
             spawnNebula();
             spawnAsteroids();
             frameCount = 0;
+
+            console.log('Game Starting - Countdown Initiated:', {
+                gameState,
+                players: players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0].hp, isBot: p.isBot, x: p.ships[0].x, y: p.ships[0].y })),
+                totalPlayers: players.length
+            });
         }
 
-        function createPlayer(x, y, color, keys, isBot, difficulty) {
-            return {
-                ships: [{ x, y, angle: 0, speed: 0, hp: 200, color, dx: 0, dy: 0 }],
-                keys,
-                bullets: [],
-                alive: true,
-                formation: 'line-h',
-                lastShot: 0,
-                lastDash: 0,
-                dashEnd: 0,
-                dashSpeed: 0,
-                formationChangeSpeed: 0,
-                isBot,
-                difficulty,
-                lastTargetUpdate: 0,
-                currentTarget: null,
-                lastFormationChange: 0
-            };
+        function restartGame() {
+            gameState = 'menu';
+            victoryScreen.style.display = 'none';
+            menu.style.display = 'flex';
+            uiPanel.style.display = 'block';
+            eliminations = [];
+            players.length = 0;
+            asteroids.length = 0;
+            obstacles.length = 0;
+            particles.length = 0;
+            powerUps.length = 0;
+            initMenuBots();
+            frameCount = 0;
         }
 
-        function spawnDemoBots() {
-            demoBots.length = 0;
-            for (let i = 0; i < 4; i++) {
-                demoBots.push(createPlayer(
-                    Math.random() * canvas.width,
-                    Math.random() * canvas.height,
-                    i % 2 === 0 ? '#f00' : '#0f0',
-                    { up: '', down: '', left: '', right: '', form: '', dash: '' },
-                    true,
-                    'average'
-                ));
-            }
-        }
-
+        // Ship drawing
         function drawShip(ship, totalEntities, isLead, isPlayer) {
             ctx.save();
             ctx.translate(ship.x, ship.y);
             ctx.rotate(ship.angle);
-            const size = Math.max(2, 20 - totalEntities * 0.02);
+            const size = Math.max(1, 10 - totalEntities * 0.01);
             ctx.fillStyle = ship.color;
             ctx.beginPath();
             ctx.moveTo(size, 0);
@@ -449,22 +450,23 @@
             ctx.fill();
             if (ship.speed > 0 && Math.random() > 0.5) {
                 ctx.fillStyle = '#ff0';
-                ctx.fillRect(-size / 2 - 2, -size / 4, 2, size / 2);
+                ctx.fillRect(-size / 2 - 1, -size / 4, 1, size / 2);
             }
             if (isLead && isPlayer) {
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.moveTo(0, -size - 2);
-                ctx.lineTo(2, -size);
+                ctx.moveTo(0, -size - 1);
+                ctx.lineTo(1, -size);
                 ctx.fill();
             }
             ctx.restore();
         }
 
+        // Damage, formation, and power-up display
         function showDamage(x, y, damage, color) {
-            const offsetX = (Math.random() - 0.5) * 20;
-            const offsetY = (Math.random() - 0.5) * 20;
-            damageDisplays.push({ x: x + offsetX, y: y + offsetY - 4, damage, color, time: Date.now() });
+            const offsetX = (Math.random() - 0.5) * 10;
+            const offsetY = (Math.random() - 0.5) * 10;
+            damageDisplays.push({ x: x + offsetX, y: y + offsetY - 2, damage, color, time: Date.now() });
         }
 
         function showFormation(x, y, formation, color) {
@@ -482,7 +484,7 @@
                     return;
                 }
                 ctx.fillStyle = d.color;
-                ctx.font = '8px "Press Start 2P"';
+                ctx.font = '6px "Press Start 2P"';
                 ctx.textAlign = 'center';
                 ctx.fillText(`- ${d.damage}`, d.x, d.y);
             });
@@ -492,9 +494,9 @@
                     return;
                 }
                 ctx.fillStyle = f.color;
-                ctx.font = '12px "Press Start 2P"';
+                ctx.font = '8px "Press Start 2P"';
                 ctx.textAlign = 'center';
-                ctx.fillText(f.formation, f.x, f.y - 10);
+                ctx.fillText(f.formation, f.x, f.y - 5);
             });
             powerUpDisplays.forEach((p, i) => {
                 if (Date.now() - p.time > 2000) {
@@ -502,25 +504,24 @@
                     return;
                 }
                 ctx.fillStyle = p.color;
-                ctx.font = '14px "Press Start 2P"';
+                ctx.font = '8px "Press Start 2P"';
                 ctx.textAlign = 'center';
-                ctx.shadowColor = '#ff0';
-                ctx.shadowBlur = 10;
-                ctx.fillText(p.text, p.x, p.y - 10);
-                ctx.shadowBlur = 0;
+                ctx.fillText(p.text, p.x, p.y - 5);
             });
         }
 
-        function updatePlayer(player, index, isDemo = false) {
+        // Player update (used for both players and menu bots)
+        function updatePlayer(player, index, isMenuBot = false) {
             if (!player.alive || !player.ships[0]) return;
+            if (!isMenuBot && gameState !== 'playing' && gameState !== 'victory') return;
             const leadShip = player.ships[0];
             const { up, down, left, right, form, dash } = player.keys;
 
             let isForming = false;
             if (!player.isBot) {
-                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + 0.15, 3);
-                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - 0.15, -1.5);
-                else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
+                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + PLAYER_SPEED.acceleration, PLAYER_SPEED.max);
+                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - PLAYER_SPEED.acceleration, PLAYER_SPEED.min);
+                else if (Date.now() > player.dashEnd) leadShip.speed *= PLAYER_SPEED.deceleration;
                 if (keys[left]) leadShip.angle -= 0.1;
                 if (keys[right]) leadShip.angle += 0.1;
                 if (keys[form]) {
@@ -531,158 +532,142 @@
                     isForming = true;
                 }
                 if (keys[dash] && Date.now() - player.lastDash > 2000) {
-                    player.dashSpeed = leadShip.speed + 15;
-                    player.dashEnd = Date.now() + 250;
+                    player.dashSpeed = leadShip.speed + 4;
+                    player.dashEnd = Date.now() + 200;
                     player.lastDash = Date.now();
                     playSound(1000, 0.2, 'triangle', 0.2);
                 }
             } else {
-                if (Date.now() - player.lastTargetUpdate > 1000 || !player.currentTarget || !player.currentTarget.alive) {
-                    let closestTarget = null;
-                    let minDist = Infinity;
-                    const targetArray = isDemo ? demoBots : players;
-                    targetArray.forEach(p => {
-                        if (p.alive && p !== player && p.ships.length > 0) {
-                            const dist = Math.hypot(p.ships[0].x - leadShip.x, p.ships[0].y - leadShip.y);
-                            if (dist < minDist) {
-                                minDist = dist;
-                                closestTarget = p;
-                            }
+                let targetPlayer = null;
+                let minDistanceToPlayer = Infinity;
+                const targetArray = isMenuBot ? menuBots : players;
+
+                targetArray.forEach(p => {
+                    if (p.alive && p !== player && p.ships.length > 0) {
+                        const dist = Math.hypot(p.ships[0].x - leadShip.x, p.ships[0].y - leadShip.y);
+                        if (dist < minDistanceToPlayer) {
+                            minDistanceToPlayer = dist;
+                            targetPlayer = p;
                         }
-                    });
-                    player.currentTarget = closestTarget;
-                    player.lastTargetUpdate = Date.now();
-                }
-
-                let targetPlayer = player.currentTarget;
-                let nearestPowerUp = null;
-                let minDistanceToPlayer = targetPlayer ? Math.hypot(targetPlayer.ships[0].x - leadShip.x, targetPlayer.ships[0].y - leadShip.y) : Infinity;
-                let minDistanceToPowerUp = Infinity;
-
-                if (!isDemo) {
-                    powerUps.forEach(pu => {
-                        const dist = Math.hypot(pu.x - leadShip.x, pu.y - leadShip.y);
-                        if (dist < 300 && dist < minDistanceToPowerUp) {
-                            minDistanceToPowerUp = dist;
-                            nearestPowerUp = pu;
-                        }
-                    });
-                }
-
-                let target = null;
-                let targetDistance = Infinity;
-                if (nearestPowerUp && minDistanceToPowerUp < minDistanceToPlayer * 0.5 && player.ships.length < MAX_SHIPS_PER_PLAYER / 2) {
-                    target = nearestPowerUp;
-                    targetDistance = minDistanceToPowerUp;
-                } else if (targetPlayer) {
-                    target = targetPlayer.ships[0];
-                    targetDistance = minDistanceToPlayer;
-                }
-
-                if (target) {
-                    const angleAdjustment = { 'fortnite': 0.05, 'average': 0.1, 'fncs': 0.15 }[player.difficulty];
-                    let angleToTarget = Math.atan2(target.y - leadShip.y, target.x - leadShip.x);
-                    if (player.difficulty === 'fncs') {
-                        const leadFactor = 0.15;
-                        const targetDx = target.dx || 0;
-                        const targetDy = target.dy || 0;
-                        const predictedX = target.x + targetDx * leadFactor * targetDistance;
-                        const predictedY = target.y + targetDy * leadFactor * targetDistance;
-                        angleToTarget = Math.atan2(predictedY - leadShip.y, predictedX - leadShip.x);
                     }
-                    leadShip.angle += Math.sin(angleToTarget - leadShip.angle) * angleAdjustment;
+                });
+
+                if (targetPlayer) {
+                    const angleAdjustment = {
+                        'fortnite': 0.1,
+                        'average': 0.2,
+                        'fncs': 0.6
+                    }[player.difficulty];
+                    let angleToTarget = Math.atan2(targetPlayer.ships[0].y - leadShip.y, targetPlayer.ships[0].x - leadShip.x);
+                    const leadFactor = { 'fortnite': 0.05, 'average': 0.1, 'fncs': 0.2 }[player.difficulty];
+                    const targetDx = targetPlayer.ships[0].dx || 0;
+                    const targetDy = targetPlayer.ships[0].dy || 0;
+                    const targetDistance = minDistanceToPlayer;
+                    const predictedX = targetPlayer.ships[0].x + targetDx * leadFactor * targetDistance;
+                    const predictedY = targetPlayer.ships[0].y + targetDy * leadFactor * targetDistance;
+                    angleToTarget = Math.atan2(predictedY - leadShip.y, predictedX - leadShip.x);
+                    leadShip.angle += (angleToTarget - leadShip.angle) * angleAdjustment;
+
+                    if (targetDistance > 50) leadShip.speed = Math.min(leadShip.speed + PLAYER_SPEED.acceleration, PLAYER_SPEED.max);
+                    else if (targetDistance < 40) leadShip.speed = Math.max(leadShip.speed - PLAYER_SPEED.acceleration, PLAYER_SPEED.min);
+                    else if (Date.now() > player.dashEnd) leadShip.speed *= PLAYER_SPEED.deceleration;
 
                     let avoidanceAngle = 0;
                     for (let a of asteroids) {
-                        const dist = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
-                        if (dist < a.size + 50) {
-                            avoidanceAngle += Math.atan2(a.y - leadShip.y, a.x - leadShip.x) * -0.3;
+                        const distToAsteroid = Math.hypot(a.x - leadShip.x, a.y - leadShip.y);
+                        if (distToAsteroid < a.size + 25) {
+                            avoidanceAngle += (leadShip.x < a.x ? 0.3 : -0.3) * (player.difficulty === 'fncs' ? 2 : 1);
                         }
                     }
                     for (let o of obstacles) {
-                        const dist = Math.hypot((o.x + o.w / 2) - leadShip.x, (o.y + o.h / 2) - leadShip.y);
-                        if (dist < 100) {
-                            avoidanceAngle += Math.atan2((o.y + o.h / 2) - leadShip.y, (o.x + o.w / 2) - leadShip.x) * -0.4;
+                        const distToObstacle = Math.hypot((o.x + o.w / 2) - leadShip.x, (o.y + o.h / 2) - leadShip.y);
+                        if (distToObstacle < 30) {
+                            avoidanceAngle += (leadShip.x < o.x + o.w / 2 ? 0.4 : -0.4) * (player.difficulty === 'fncs' ? 1.5 : 1);
                         }
                     }
-                    if (leadShip.x < 50) avoidanceAngle += 0.2;
-                    if (leadShip.x > canvas.width - 50) avoidanceAngle -= 0.2;
-                    if (leadShip.y < 50) avoidanceAngle += 0.2;
-                    if (leadShip.y > canvas.height - 50) avoidanceAngle -= 0.2;
+                    for (let p of targetArray) {
+                        if (p === player || !p.alive || p.ships.length === 0) continue;
+                        for (let s of p.ships) {
+                            const distToShip = Math.hypot(s.x - leadShip.x, s.y - leadShip.y);
+                            if (distToShip < 30) {
+                                avoidanceAngle += (leadShip.x < s.x ? 0.4 : -0.4) * (player.difficulty === 'fncs' ? 2 : 1);
+                            }
+                        }
+                    }
+
+                    const edgeMargin = 10;
+                    if (leadShip.x < edgeMargin) avoidanceAngle += 0.5;
+                    else if (leadShip.x > canvas.width - edgeMargin) avoidanceAngle -= 0.5;
+                    if (leadShip.y < edgeMargin) avoidanceAngle += 0.5;
+                    else if (leadShip.y > canvas.height - edgeMargin) avoidanceAngle -= 0.5;
+                    if (leadShip.x < edgeMargin || leadShip.x > canvas.width - edgeMargin || leadShip.y < edgeMargin || leadShip.y > canvas.height - edgeMargin) {
+                        leadShip.speed = Math.max(leadShip.speed - PLAYER_SPEED.acceleration, 0);
+                    }
+
                     leadShip.angle += avoidanceAngle;
 
-                    const optimalDistance = player.difficulty === 'fncs' ? 80 : 100;
-                    if (targetDistance > optimalDistance + 20) leadShip.speed = Math.min(leadShip.speed + 0.2, 3.5);
-                    else if (targetDistance < optimalDistance - 20) leadShip.speed = Math.max(leadShip.speed - 0.2, -2);
-                    else if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
-
-                    if (Date.now() - player.lastFormationChange > 10000) {
-                        if (player.ships.length > 15 && player.formation !== 'swarm') {
-                            player.formation = 'swarm';
-                            showFormation(leadShip.x, leadShip.y, 'swarm', '#fff');
-                            isForming = true;
-                        } else if (player.ships.length < 5 && player.formation !== 'diamond') {
-                            player.formation = 'diamond';
-                            showFormation(leadShip.x, leadShip.y, 'diamond', '#fff');
-                            isForming = true;
-                        } else if (targetDistance < 50 && player.formation !== 'compact') {
-                            player.formation = 'compact';
-                            showFormation(leadShip.x, leadShip.y, 'compact', '#fff');
-                            isForming = true;
-                        }
-                        player.lastFormationChange = Date.now();
-                    }
-
-                    if (target !== nearestPowerUp && targetDistance < 120 && Date.now() - player.lastShot > (player.difficulty === 'fncs' ? 100 : 150)) {
+                    if (targetDistance < 75 && Date.now() - player.lastShot > 150 + player.ships.length * 3) {
                         player.ships.forEach(ship => {
                             if (player.bullets.length < MAX_BULLETS_PER_PLAYER) {
-                                let shootAngle = Math.atan2(target.y - ship.y, target.x - ship.x);
+                                let shootAngle = ship.angle;
                                 if (player.difficulty === 'fncs') {
-                                    shootAngle += (Math.random() - 0.5) * 0.05;
+                                    const dist = Math.hypot(targetPlayer.ships[0].x - ship.x, targetPlayer.ships[0].y - ship.y);
+                                    const predictedX = targetPlayer.ships[0].x + targetDx * leadFactor * dist;
+                                    const predictedY = targetPlayer.ships[0].y + targetDy * leadFactor * dist;
+                                    shootAngle = Math.atan2(predictedY - ship.y, predictedX - ship.x);
                                 }
                                 player.bullets.push({
-                                    x: ship.x + Math.cos(shootAngle) * 4,
-                                    y: ship.y + Math.sin(shootAngle) * 4,
-                                    dx: Math.cos(shootAngle) * 4,
-                                    dy: Math.sin(shootAngle) * 4,
+                                    x: ship.x + Math.cos(shootAngle) * 2,
+                                    y: ship.y + Math.sin(shootAngle) * 2,
+                                    dx: Math.cos(shootAngle) * 2,
+                                    dy: Math.sin(shootAngle) * 2,
                                     color: ship.color,
+                                    size: 1.5,
                                     time: Date.now(),
-                                    owner: player
+                                    shooter: player
                                 });
-                                playSound(800, 0.1, 'sawtooth', 0.15);
                             }
                         });
                         player.lastShot = Date.now();
+                        playSound(500, 0.1, 'square', 0.15);
                     }
-                    const dashChance = { 'fortnite': 0.005, 'average': 0.015, 'fncs': 0.1 }[player.difficulty];
-                    if (Math.random() < dashChance && Date.now() - player.lastDash > 2000) {
-                        player.dashSpeed = leadShip.speed + (player.difficulty === 'fncs' ? 20 : 15);
-                        player.dashEnd = Date.now() + 250;
+
+                    const dashChance = { 'fortnite': 0.01, 'average': 0.025, 'fncs': 0.075 }[player.difficulty];
+                    if (Math.random() < dashChance && Date.now() - player.lastDash > 2000 && targetDistance > 50) {
+                        player.dashSpeed = leadShip.speed + 4;
+                        player.dashEnd = Date.now() + 200;
                         player.lastDash = Date.now();
                         playSound(1000, 0.2, 'triangle', 0.2);
                     }
+
+                    const formChance = { 'fortnite': 0.02, 'average': 0.05, 'fncs': 0.15 }[player.difficulty];
+                    if (Math.random() < formChance) {
+                        player.formationChangeSpeed = leadShip.speed;
+                        player.formation = getNextFormation(player.formation);
+                        showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
+                        isForming = true;
+                    }
                 } else {
-                    if (Date.now() > player.dashEnd) leadShip.speed *= 0.95;
-                    leadShip.angle += (Math.random() - 0.5) * 0.1;
+                    if (Date.now() > player.dashEnd) leadShip.speed *= PLAYER_SPEED.deceleration;
+                    if (Math.random() < 0.1) leadShip.angle += (Math.random() - 0.5) * 0.2;
                 }
             }
 
             if (Date.now() <= player.dashEnd) {
                 leadShip.speed = player.dashSpeed;
                 particles.push({
-                    x: leadShip.x - Math.cos(leadShip.angle) * 5,
-                    y: leadShip.y - Math.sin(leadShip.angle) * 5,
-                    size: 1.5,
+                    x: leadShip.x - Math.cos(leadShip.angle) * 2.5,
+                    y: leadShip.y - Math.sin(leadShip.angle) * 2.5,
+                    size: 0.75,
                     life: 20,
                     color: '#ff0',
-                    dx: -Math.cos(leadShip.angle) * 2,
-                    dy: -Math.sin(leadShip.angle) * 2,
-                    opacity: 1
+                    dx: -Math.cos(leadShip.angle) * 0.5,
+                    dy: -Math.sin(leadShip.angle) * 0.5
                 });
             } else if (player.dashSpeed > 0) {
                 player.dashSpeed *= 0.95;
                 leadShip.speed = Math.max(leadShip.speed * 0.95, player.dashSpeed);
-                if (player.dashSpeed < 0.1) player.dashSpeed = 0;
+                if (player.dashSpeed < 0.05) player.dashSpeed = 0;
             }
 
             player.ships.forEach((ship, i) => {
@@ -692,104 +677,105 @@
                     ship.dy = Math.sin(ship.angle) * ship.speed * 1.5;
                 } else {
                     const formations = {
-                        'diamond': () => { offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 5; offsetY = i * 5; },
-                        'compact': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 7; offsetY = Math.sin(angle) * 7; },
-                        'swarm': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 15; offsetY = Math.sin(angle) * 15; },
-                        'line-h': () => { offsetX = i * 10; offsetY = 0; },
-                        'line-v': () => { offsetX = 0; offsetY = i * 10; },
-                        'circle': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 10; offsetY = Math.sin(angle) * 10; }
+                        'diamond': () => { offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 2.5; offsetY = i * 2.5; },
+                        'compact': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 3.5; offsetY = Math.sin(angle) * 3.5; },
+                        'swarm': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 7.5; offsetY = Math.sin(angle) * 7.5; },
+                        'line-h': () => { offsetX = i * 5; offsetY = 0; },
+                        'line-v': () => { offsetX = 0; offsetY = i * 5; },
+                        'circle': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 5; offsetY = Math.sin(angle) * 5; },
+                        'spiral': () => {
+                            const radius = Math.min(10, i * 1);
+                            const angle = i * 0.8;
+                            offsetX = Math.cos(angle) * radius;
+                            offsetY = Math.sin(angle) * radius;
+                        }
                     };
                     formations[player.formation]();
                     targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
                     targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
-                    const dx = targetX - ship.x;
-                    const dy = targetY - ship.y;
-                    const distance = Math.hypot(dx, dy);
-                    if (distance > 1) {
-                        ship.dx = (dx / distance) * Math.min(ship.speed, distance);
-                        ship.dy = (dy / distance) * Math.min(ship.speed, distance);
-                    } else {
-                        ship.dx = 0;
-                        ship.dy = 0;
-                    }
+                    ship.dx = (targetX - ship.x) * 0.2 * 1.5;
+                    ship.dy = (targetY - ship.y) * 0.2 * 1.5;
                     ship.angle = leadShip.angle;
-                    ship.speed = leadShip.speed;
+
+                    if (isForming) {
+                        ship.speed = player.formationChangeSpeed;
+                    } else {
+                        ship.speed = leadShip.speed;
+                    }
                 }
                 ship.dx *= 0.98;
                 ship.dy *= 0.98;
                 ship.x += ship.dx;
                 ship.y += ship.dy;
-                ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x));
-                ship.y = Math.max(2, Math.min(canvas.height - 2, ship.y));
-                if (frameCount % 2 === 0) {
-                    particles.push({
-                        x: ship.x - Math.cos(ship.angle) * 2,
-                        y: ship.y - Math.sin(ship.angle) * 2,
-                        size: 0.3,
-                        life: 8,
-                        color: ship.color,
-                        opacity: 1
-                    });
-                }
+                ship.x = Math.max(1, Math.min(canvas.width - 1, ship.x));
+                ship.y = Math.max(1, Math.min(canvas.height - 1, ship.y));
+                particles.push({
+                    x: ship.x - Math.cos(ship.angle) * 1,
+                    y: ship.y - Math.sin(ship.angle) * 1,
+                    size: 0.15,
+                    life: 8,
+                    color: ship.color
+                });
             });
 
             if (Date.now() - player.lastShot > 150 + player.ships.length * 3) {
                 player.ships.forEach(ship => {
                     if (player.bullets.length < MAX_BULLETS_PER_PLAYER) {
                         player.bullets.push({
-                            x: ship.x + Math.cos(ship.angle) * 4,
-                            y: ship.y + Math.sin(ship.angle) * 4,
-                            dx: Math.cos(ship.angle) * 4,
-                            dy: Math.sin(ship.angle) * 4,
+                            x: ship.x + Math.cos(ship.angle) * 2,
+                            y: ship.y + Math.sin(ship.angle) * 2,
+                            dx: Math.cos(ship.angle) * 2,
+                            dy: Math.sin(ship.angle) * 2,
                             color: ship.color,
+                            size: 1.5,
                             time: Date.now(),
-                            owner: player
+                            shooter: player
                         });
-                        playSound(800, 0.1, 'sawtooth', 0.15);
                     }
                 });
                 player.lastShot = Date.now();
+                playSound(500, 0.1, 'square', 0.15);
             }
 
             player.bullets = player.bullets.filter(b => {
                 b.x += b.dx * 1.5;
                 b.y += b.dy * 1.5;
                 if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) return false;
-                if (frameCount % 2 === 0) {
-                    particles.push({
-                        x: b.x - b.dx,
-                        y: b.y - b.dy,
-                        size: 0.3,
-                        life: 5,
-                        color: b.color,
-                        opacity: 1
-                    });
-                }
-                return Date.now() - b.time < 1000;
+                particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 0.15, life: 5, color: b.color });
+                return Date.now() - b.time < 1500;
             });
         }
 
         function getNextFormation(current) {
-            const formations = ['diamond', 'compact', 'swarm', 'line-h', 'line-v', 'circle'];
+            const formations = ['diamond', 'compact', 'swarm', 'line-h', 'line-v', 'circle', 'spiral'];
             const index = formations.indexOf(current);
             return formations[(index + 1) % formations.length];
         }
 
+        // Bullet drawing
         function drawBullets(player) {
             player.bullets.forEach(b => {
-                ctx.fillStyle = b.color;
-                ctx.fillRect(b.x - 1, b.y - 1, 2, 2);
+                ctx.strokeStyle = b.color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y);
+                const length = 5;
+                const endX = b.x - b.dx * length / Math.sqrt(b.dx * b.dx + b.dy * b.dy);
+                const endY = b.y - b.dy * length / Math.sqrt(b.dx * b.dx + b.dy * b.dy);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
             });
         }
 
+        // Asteroid spawning
         function spawnAsteroids() {
-            if (asteroids.length < MAX_ASTEROIDS && frameCount % 60 === 0) {
+            while (asteroids.length < MAX_ASTEROIDS) {
                 asteroids.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: 10 + Math.random() * 20,
-                    dx: (Math.random() - 0.5) * 2,
-                    dy: (Math.random() - 0.5) * 2,
+                    size: 5 + Math.random() * 10,
+                    dx: (Math.random() - 0.5) * 1,
+                    dy: (Math.random() - 0.5) * 1,
                     angle: 0,
                     spin: (Math.random() - 0.5) * 0.02,
                     hp: 500
@@ -797,24 +783,14 @@
             }
         }
 
+        // Asteroid update
         function updateAsteroids() {
             asteroids.forEach(a => {
                 a.x += a.dx;
                 a.y += a.dy;
                 a.angle += a.spin;
-                a.dx = Math.max(-3, Math.min(3, a.dx));
-                a.dy = Math.max(-3, Math.min(3, a.dy));
-                obstacles.forEach(o => {
-                    if (a.x + a.size > o.x && a.x - a.size < o.x + o.w && a.y + a.size > o.y && a.y - a.size < o.y + o.h) {
-                        const dx = a.x - (o.x + o.w / 2);
-                        const dy = a.y - (o.y + o.h / 2);
-                        const dist = Math.hypot(dx, dy);
-                        if (dist > 0) {
-                            a.dx += (dx / dist) * 0.5;
-                            a.dy += (dy / dist) * 0.5;
-                        }
-                    }
-                });
+                a.dx = Math.max(-1.5, Math.min(1.5, a.dx));
+                a.dy = Math.max(-1.5, Math.min(1.5, a.dy));
                 if (a.x - a.size < 0 || a.x + a.size > canvas.width) a.dx *= -1;
                 if (a.y - a.size < 0 || a.y + a.size > canvas.height) a.dy *= -1;
                 ctx.fillStyle = '#888';
@@ -829,17 +805,18 @@
             });
         }
 
+        // Obstacle spawning
         function spawnObstacles() {
             for (let i = 0; i < 2; i++) {
                 let x, y;
                 do {
                     x = Math.random() * canvas.width;
                     y = Math.random() * canvas.height;
-                } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 50)));
+                } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 25)));
                 obstacles.push({
                     x, y,
-                    w: 20 + Math.random() * 20,
-                    h: 20 + Math.random() * 20,
+                    w: 10 + Math.random() * 10,
+                    h: 10 + Math.random() * 10,
                     hp: 1000
                 });
             }
@@ -852,12 +829,13 @@
             });
         }
 
+        // Stars
         function spawnStars() {
             for (let i = 0; i < 300; i++) {
                 stars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: Math.random() * 0.5
+                    size: Math.random() * 0.25
                 });
             }
         }
@@ -869,13 +847,14 @@
             });
         }
 
+        // Nebula
         const nebula = [];
         function spawnNebula() {
             for (let i = 0; i < 20; i++) {
                 nebula.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: 25 + Math.random() * 50,
+                    size: 12.5 + Math.random() * 25,
                     color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.1)`
                 });
             }
@@ -888,6 +867,7 @@
             });
         }
 
+        // Particles
         function updateParticles() {
             if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
             particles.forEach((p, i) => {
@@ -896,143 +876,126 @@
                 if (p.dy) p.y += p.dy;
                 p.dx = p.dx ? p.dx * 0.95 : 0;
                 p.dy = p.dy ? p.dy * 0.95 : 0;
-                p.opacity = Math.max(0, p.life / (p.lifeMax || 40));
-                if (p.life <= 0 || p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) particles.splice(i, 1);
+                if (p.life <= 0) particles.splice(i, 1);
                 else {
-                    ctx.fillStyle = `rgba(${parseInt(p.color.slice(1, 3), 16)}, ${parseInt(p.color.slice(3, 5), 16)}, ${parseInt(p.color.slice(5, 7), 16)}, ${p.opacity})`;
+                    ctx.fillStyle = `rgba(${parseInt(p.color.slice(1, 3), 16)}, ${parseInt(p.color.slice(3, 5), 16)}, ${parseInt(p.color.slice(5, 7), 16)}, ${p.life / 40})`;
                     ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
                 }
             });
         }
 
+        // Power-ups
         function spawnPowerUps() {
-            if (gameState === 'playing' && frameCount % 30 === 0) {
-                if (Math.random() < 0.1) {
-                    const roll = Math.random();
-                    const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
-                    powerUps.push({
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height,
-                        type,
-                        radius: 12,
-                        pulse: 0
-                    });
-                    console.log('Power-up spawned at:', powerUps[powerUps.length - 1]);
-                }
-            }
-        }
-
-        function spawnPowerUpFromAsteroid(x, y) {
-            if (Math.random() < 0.3) {
+            if (Math.random() < 0.02) {
                 const roll = Math.random();
                 const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
                 powerUps.push({
-                    x,
-                    y,
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
                     type,
-                    radius: 12,
-                    pulse: 0
+                    pulse: 0,
+                    pulseDirection: 1
                 });
-                console.log('Power-up spawned from asteroid at:', { x, y });
             }
         }
 
         function updatePowerUps() {
             powerUps.forEach((pu, i) => {
-                pu.pulse = (pu.pulse + 0.1) % (Math.PI * 2);
-                const pulseSize = pu.radius + Math.sin(pu.pulse) * 3;
-                ctx.fillStyle = '#ff0';
-                ctx.beginPath();
-                ctx.arc(pu.x, pu.y, pulseSize, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 14px "Press Start 2P"';
-                ctx.textAlign = 'center';
-                ctx.shadowColor = '#ff0';
-                ctx.shadowBlur = 5;
-                ctx.fillText(pu.type, pu.x, pu.y + 5);
-                ctx.shadowBlur = 0;
+                pu.pulse += pu.pulseDirection * 0.1;
+                if (pu.pulse >= 1) pu.pulseDirection = -1;
+                if (pu.pulse <= 0) pu.pulseDirection = 1;
+                const radius = 5 + pu.pulse * 1.5;
 
-                let collected = false;
-                for (let pi = 0; pi < players.length && !collected; pi++) {
-                    const p = players[pi];
-                    if (!p.alive) continue;
-                    for (let si = 0; si < p.ships.length && !collected; si++) {
-                        const s = p.ships[si];
-                        if (Math.hypot(s.x - pu.x, s.y - pu.y) < pulseSize && p.ships.length < MAX_SHIPS_PER_PLAYER) {
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.5)';
+                ctx.beginPath();
+                ctx.arc(pu.x, pu.y, radius + 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                const gradient = ctx.createRadialGradient(pu.x, pu.y, 0, pu.x, pu.y, radius);
+                gradient.addColorStop(0, '#ff0');
+                gradient.addColorStop(1, '#ffa500');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(pu.x, pu.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (Math.random() < 0.3) {
+                    particles.push({
+                        x: pu.x + (Math.random() - 0.5) * radius * 2,
+                        y: pu.y + (Math.random() - 0.5) * radius * 2,
+                        size: 1,
+                        life: 20,
+                        color: '#fff',
+                        dx: (Math.random() - 0.5) * 1,
+                        dy: (Math.random() - 0.5) * 1
+                    });
+                }
+
+                ctx.fillStyle = '#000';
+                ctx.font = '8px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText(pu.type, pu.x, pu.y + 2);
+
+                players.forEach(p => {
+                    p.ships.forEach(s => {
+                        if (Math.hypot(s.x - pu.x, s.y - pu.y) < radius && p.ships.length < MAX_SHIPS_PER_PLAYER) {
                             const count = Math.min(parseInt(pu.type.slice(1)), MAX_SHIPS_PER_PLAYER - p.ships.length);
                             for (let j = 0; j < count; j++) {
-                                p.ships.push({
-                                    x: s.x,
-                                    y: s.y,
-                                    angle: s.angle,
-                                    speed: 0,
-                                    hp: 100,
-                                    color: s.color,
-                                    dx: 0,
-                                    dy: 0
-                                });
+                                p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 100, color: s.color, dx: 0, dy: 0 });
+                                playSound(800, 0.2, 'triangle', 0.1);
                             }
                             showPowerUp(pu.x, pu.y, count, '#0f0');
                             powerUps.splice(i, 1);
                             playSound(600, 0.3, 'sine', 0.2);
-                            console.log(`Power-up collected by Player ${pi + 1}`);
-                            collected = true;
-                            break;
                         }
-                    }
-                }
+                    });
+                });
             });
         }
 
+        // Enhanced explosion
         function explosion(x, y, count, baseColor = '#ff0', size = 2, isFinal = false) {
-            const colors = ['#ff0', '#f00', '#fff', '#ff0', '#f00'];
-            for (let i = 0; i < Math.min(count, MAX_PARTICLES - particles.length); i++) {
+            const colors = ['#ff0', '#f00', '#0f0', '#00f', '#fff'];
+            for (let i = 0; i < Math.min(count * 2, MAX_PARTICLES - particles.length); i++) {
                 const color = colors[Math.floor(Math.random() * colors.length)];
                 const particleSize = size + Math.random() * 1.5;
                 particles.push({
                     x, y,
                     size: particleSize,
-                    life: 40,
-                    lifeMax: 40,
+                    life: 60,
                     color,
                     dx: (Math.random() - 0.5) * 6,
-                    dy: (Math.random() - 0.5) * 6,
-                    opacity: 1
+                    dy: (Math.random() - 0.5) * 6
                 });
             }
             if (isFinal) {
-                for (let i = 0; i < Math.min(count / 2, MAX_PARTICLES - particles.length); i++) {
+                for (let i = 0; i < Math.min(count, MAX_PARTICLES - particles.length); i++) {
                     const color = colors[Math.floor(Math.random() * colors.length)];
                     particles.push({
                         x, y,
-                        size: 1 + Math.random(),
-                        life: 60,
-                        lifeMax: 60,
+                        size: 1 + Math.random() * 1,
+                        life: 90,
                         color,
                         dx: (Math.random() - 0.5) * 3,
-                        dy: (Math.random() - 0.5) * 3,
-                        opacity: 1
+                        dy: (Math.random() - 0.5) * 3
                     });
                 }
             }
             playSound(80, 0.5, 'sine', 0.2);
         }
 
+        // Collision logic
         function checkCollisions() {
             Object.keys(grid).forEach(key => delete grid[key]);
-            const activePlayers = players.filter(p => p.alive);
-            activePlayers.forEach(p => {
-                p.ships.forEach(s => {
-                    const cell = getGridCell(s.x, s.y);
-                    grid[cell] = grid[cell] || [];
-                    grid[cell].push(s);
-                });
-                p.bullets.forEach(b => {
-                    const cell = getGridCell(b.x, b.y);
-                    grid[cell] = grid[cell] || [];
-                    grid[cell].push(b);
-                });
+            players.forEach(p => {
+                if (p.ships && p.ships.length > 0) {
+                    p.ships.forEach(s => {
+                        const cell = getGridCell(s.x, s.y);
+                        grid[cell] = grid[cell] || [];
+                        grid[cell].push(s);
+                        console.log(`Ship at (${s.x}, ${s.y}) in cell ${cell}`);
+                    });
+                }
             });
             asteroids.forEach(a => {
                 const cell = getGridCell(a.x, a.y);
@@ -1045,71 +1008,226 @@
                 grid[cell].push(o);
             });
 
-            for (let pi = 0; pi < activePlayers.length; pi++) {
-                const p = activePlayers[pi];
+            // Check bullet collisions with ships
+            for (let pi = 0; pi < players.length; pi++) {
+                const p = players[pi];
+                if (!p.ships || p.ships.length === 0) continue;
+                for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
+                    const b = p.bullets[bi];
+                    const cell = getGridCell(b.x, b.y);
+                    console.log(`Bullet at (${b.x}, ${b.y}) in cell ${cell}, shooter: ${p.isBot ? 'Bot' : 'Player'} ${pi}`);
+                    const nearby = grid[cell] || [];
+                    const adjacentCells = [
+                        cell,
+                        getGridCell(b.x + GRID_SIZE, b.y),
+                        getGridCell(b.x - GRID_SIZE, b.y),
+                        getGridCell(b.x, b.y + GRID_SIZE),
+                        getGridCell(b.x, b.y - GRID_SIZE),
+                        getGridCell(b.x + GRID_SIZE, b.y + GRID_SIZE),
+                        getGridCell(b.x + GRID_SIZE, b.y - GRID_SIZE),
+                        getGridCell(b.x - GRID_SIZE, b.y + GRID_SIZE),
+                        getGridCell(b.x - GRID_SIZE, b.y - GRID_SIZE)
+                    ].filter(c => grid[c]);
+
+                    const entities = [...new Set([].concat(...adjacentCells.map(c => grid[c])))];
+                    entities.forEach(entity => {
+                        if (entity && entity.hp && entity.angle && 'color' in entity) {
+                            const s = entity;
+                            const targetPlayer = players.find(pl => pl.ships.includes(s));
+                            if (targetPlayer && b.shooter !== targetPlayer) {
+                                const dist = Math.hypot(s.x - b.x, s.y - b.y);
+                                if (dist < 6) {
+                                    s.hp -= 30;
+                                    s.dx -= b.dx * 0.05;
+                                    s.dy -= b.dy * 0.05;
+                                    showDamage(s.x, s.y, 30, s.color);
+                                    explosion(b.x, b.y, 5, s.color);
+                                    console.log(`Bullet hit at (${b.x}, ${b.y}) on Ship ${pi}:${players.findIndex(pl => pl.ships.includes(s))}, HP: ${s.hp}, Distance: ${dist}, Shooter: ${b.shooter.isBot ? 'Bot' : 'Player'} ${players.indexOf(b.shooter)}, Target: ${targetPlayer.isBot ? 'Bot' : 'Player'} ${players.indexOf(targetPlayer)}`);
+                                    if (s.hp <= 0) {
+                                        const ownerPlayer = targetPlayer;
+                                        if (ownerPlayer) {
+                                            const si = ownerPlayer.ships.indexOf(s);
+                                            if (si > -1) ownerPlayer.ships.splice(si, 1);
+                                            explosion(s.x, s.y, 40, s.color);
+                                        }
+                                    }
+                                    p.bullets.splice(bi, 1);
+                                    return;
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Ship-to-ship collisions
+            for (let pi = 0; pi < players.length; pi++) {
+                const p = players[pi];
+                if (!p.ships || p.ships.length === 0) continue;
+
                 for (let si = p.ships.length - 1; si >= 0; si--) {
                     const s = p.ships[si];
                     const cell = getGridCell(s.x, s.y);
                     const nearby = grid[cell] || [];
                     const adjacentCells = [
-                        cell, getGridCell(s.x + GRID_SIZE, s.y), getGridCell(s.x - GRID_SIZE, s.y),
-                        getGridCell(s.x, s.y + GRID_SIZE), getGridCell(s.x, s.y - GRID_SIZE)
+                        cell,
+                        getGridCell(s.x + GRID_SIZE, s.y),
+                        getGridCell(s.x - GRID_SIZE, s.y),
+                        getGridCell(s.x, s.y + GRID_SIZE),
+                        getGridCell(s.x, s.y - GRID_SIZE),
+                        getGridCell(s.x + GRID_SIZE, s.y + GRID_SIZE),
+                        getGridCell(s.x + GRID_SIZE, s.y - GRID_SIZE),
+                        getGridCell(s.x - GRID_SIZE, s.y + GRID_SIZE),
+                        getGridCell(s.x - GRID_SIZE, s.y - GRID_SIZE)
                     ].filter(c => grid[c]);
 
-                    [...new Set([].concat(...adjacentCells.map(c => grid[c])))].forEach(entity => {
-                        if (entity === s) return;
+                    const entities = [...new Set([].concat(...adjacentCells.map(c => grid[c])))];
+                    entities.forEach(entity => {
+                        if (entity && entity.hp && entity.angle && entity !== s) {
+                            const os = entity;
+                            const op = players.find(pl => pl.ships.includes(os));
+                            if (!op || op === p || !op.alive) return;
 
-                        if (entity.hp && entity.size) { // Asteroid
-                            const a = entity;
-                            const dist = Math.hypot(s.x - a.x, s.y - a.y);
-                            if (dist < a.size + 3) {
-                                s.hp -= 5;
-                                showDamage(s.x, s.y, 5, s.color);
+                            const dist = Math.hypot(s.x - os.x, s.y - os.y);
+                            const shipSize = Math.max(1, 10 - p.ships.length * 0.01);
+                            if (dist < shipSize) {
+                                const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
+                                const damage = Math.floor(speed * 4);
+                                s.hp -= damage;
+                                os.hp -= damage;
+                                showDamage(s.x, s.y, damage, s.color);
+                                showDamage(os.x, os.y, damage, os.color);
+                                explosion(s.x, s.y, 10, s.color);
+                                console.log(`Ship ${pi}:${si} collided with ship ${players.indexOf(op)}:${op.ships.indexOf(os)}, damage: ${damage}`);
+
+                                const dx = s.x - os.x;
+                                const dy = s.y - os.y;
+                                const distActual = Math.hypot(dx, dy) || 1;
+                                const pushForce = 0.1;
+                                s.dx += (dx / distActual) * pushForce;
+                                s.dy += (dy / distActual) * pushForce;
+                                os.dx -= (dx / distActual) * pushForce;
+                                os.dy -= (dy / distActual) * pushForce;
+
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
-                                    explosion(s.x, s.y, 20, s.color);
+                                    explosion(s.x, s.y, 40, s.color);
+                                }
+                                if (os.hp <= 0) {
+                                    const osi = op.ships.indexOf(os);
+                                    if (osi > -1) op.ships.splice(osi, 1);
+                                    explosion(os.x, os.y, 40, os.color);
+                                }
+                                playSound(100, 0.5, 'sine', 0.3);
+                                return;
+                            }
+                        }
+                    });
+
+                    if (p.ships.length === 0 && p.alive) {
+                        p.alive = false;
+                        console.log(`Player ${pi} died, clearing ${p.bullets.length} bullets`);
+                        p.bullets = []; // Clear bullets when player dies
+                        eliminations.push({ text: `${p.isBot ? 'BOT' : 'PLAYER'} ${pi + 1} ELIMINATED`, time: Date.now(), opacity: 1 });
+                        const deathX = p.ships[0]?.x || canvas.width / 2;
+                        const deathY = p.ships[0]?.y || canvas.height / 2;
+                        const deathColor = p.ships[0]?.color || '#fff';
+                        const aliveCount = players.filter(p => p.alive).length;
+                        if (aliveCount === 1) {
+                            explosion(deathX, deathY, 1200, deathColor, 4, true);
+                        } else {
+                            explosion(deathX, deathY, 400, deathColor, 3);
+                        }
+                        playSound(200, 1.0, 'sine', 0.3);
+                    }
+                }
+            }
+
+            // Asteroid and obstacle collisions
+            for (let pi = 0; pi < players.length; pi++) {
+                const p = players[pi];
+                for (let si = p.ships.length - 1; si >= 0; si--) {
+                    const s = p.ships[si];
+                    const cell = getGridCell(s.x, s.y);
+                    const nearby = grid[cell] || [];
+                    const adjacentCells = [
+                        cell,
+                        getGridCell(s.x + GRID_SIZE, s.y),
+                        getGridCell(s.x - GRID_SIZE, s.y),
+                        getGridCell(s.x, s.y + GRID_SIZE),
+                        getGridCell(s.x, s.y - GRID_SIZE),
+                        getGridCell(s.x + GRID_SIZE, s.y + GRID_SIZE),
+                        getGridCell(s.x + GRID_SIZE, s.y - GRID_SIZE),
+                        getGridCell(s.x - GRID_SIZE, s.y + GRID_SIZE),
+                        getGridCell(s.x - GRID_SIZE, s.y - GRID_SIZE)
+                    ].filter(c => grid[c]);
+
+                    const entities = [...new Set([].concat(...adjacentCells.map(c => grid[c])))];
+                    entities.forEach(entity => {
+                        if (entity.hp && entity.size) {
+                            const a = entity;
+                            const dist = Math.hypot(s.x - a.x, s.y - a.y);
+                            if (dist < a.size + 1.5) {
+                                s.hp -= 5;
+                                showDamage(s.x, s.y, 5, s.color);
+
+                                const dx = s.x - a.x;
+                                const dy = s.y - a.y;
+                                const distActual = Math.hypot(dx, dy) || 1;
+                                const overlap = (a.size + 1.5) - distActual;
+                                if (overlap > 0) {
+                                    s.x += (dx / distActual) * overlap * 0.5;
+                                    s.y += (dy / distActual) * overlap * 0.5;
+                                    s.dx += (dx / distActual) * 0.05;
+                                    s.dy += (dy / distActual) * 0.05;
+                                }
+
+                                if (s.hp <= 0) {
+                                    p.ships.splice(si, 1);
+                                    explosion(s.x, s.y, 40, s.color);
                                 }
                                 a.hp -= 10;
                                 showDamage(a.x, a.y, 10, '#888');
                                 if (a.hp <= 0) {
-                                    if (a.size > 10) {
+                                    if (a.size > 5) {
                                         const splitCount = Math.min(3, Math.floor(Math.sqrt(s.dx * s.dx + s.dy * s.dy) / 2) + 1);
                                         for (let i = 0; i < splitCount; i++) {
                                             asteroids.push({
                                                 x: a.x,
                                                 y: a.y,
-                                                size: Math.max(10, a.size / splitCount),
-                                                dx: a.dx + (Math.random() - 0.5) * 1,
-                                                dy: a.dy + (Math.random() - 0.5) * 1,
+                                                size: Math.max(5, a.size / splitCount),
+                                                dx: a.dx + (Math.random() - 0.5) * 0.5,
+                                                dy: a.dy + (Math.random() - 0.5) * 0.5,
                                                 angle: 0,
                                                 spin: (Math.random() - 0.5) * 0.02,
                                                 hp: 500
                                             });
                                         }
                                     }
-                                    spawnPowerUpFromAsteroid(a.x, a.y);
                                     const index = asteroids.indexOf(a);
                                     if (index > -1) asteroids.splice(index, 1);
-                                    explosion(a.x, a.y, 30);
+                                    explosion(a.x, a.y, 60);
                                     playSound(300, 0.3, 'sine', 0.2);
                                 }
+                                return;
                             }
-                        } else if (entity.w && entity.h) { // Obstacle
+                        } else if (entity.w && entity.h) {
                             const o = entity;
-                            const shipSize = 15;
-                            if (s.x + shipSize > o.x && s.x - shipSize < o.x + o.w && s.y + shipSize > o.y && s.y - shipSize < o.y + o.h) {
-                                s.hp -= 5;
-                                showDamage(s.x, s.y, 5, s.color);
+                            if (s.x > o.x && s.x < o.x + o.w && s.y > o.y && s.y < o.y + o.h) {
+                                s.hp -= 15;
+                                showDamage(s.x, s.y, 15, s.color);
+
+                                const closestEdgeX = s.x < o.x + o.w / 2 ? o.x : o.x + o.w;
+                                const closestEdgeY = s.y < o.y + o.h / 2 ? o.y : o.y + o.h;
+                                const dx = s.x - closestEdgeX;
+                                const dy = s.y - closestEdgeY;
+                                const dist = Math.hypot(dx, dy) || 1;
+                                s.x += (dx / dist) * 0.1;
+                                s.y += (dy / dist) * 0.1;
+
                                 if (s.hp <= 0) {
                                     p.ships.splice(si, 1);
-                                    explosion(s.x, s.y, 20, s.color);
-                                }
-                                const dx = s.x - (o.x + o.w / 2);
-                                const dy = s.y - (o.y + o.h / 2);
-                                const dist = Math.hypot(dx, dy);
-                                if (dist > 0) {
-                                    s.dx += (dx / dist) * 0.5;
-                                    s.dy += (dy / dist) * 0.5;
+                                    explosion(s.x, s.y, 40, s.color);
                                 }
                                 o.hp -= 20;
                                 showDamage(o.x + o.w / 2, o.y, 20, '#555');
@@ -1117,119 +1235,64 @@
                                     const index = obstacles.indexOf(o);
                                     if (index > -1) obstacles.splice(index, 1);
                                 }
-                            }
-                        } else if (entity.dx && entity.dy && entity.owner !== p) { // Bullet from another player
-                            const b = entity;
-                            const dist = Math.hypot(s.x - b.x, s.y - b.y);
-                            if (dist < 8) {
-                                s.hp -= 30;
-                                s.dx -= b.dx * 0.1;
-                                s.dy -= b.dy * 0.1;
-                                showDamage(s.x, s.y, 30, s.color);
-                                if (s.hp <= 0) {
-                                    p.ships.splice(si, 1);
-                                    explosion(s.x, s.y, 20, s.color);
-                                }
-                                const bulletOwner = b.owner;
-                                if (bulletOwner) {
-                                    bulletOwner.bullets = bulletOwner.bullets.filter(bullet => bullet !== b);
-                                }
-                            }
-                        } else if (entity.hp && entity.angle && entity !== s) { // Other ship
-                            const os = entity;
-                            const op = activePlayers.find(p => p.ships.includes(os));
-                            if (!op || op === p || !op.alive) return;
-                            const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            const shipSize = 15;
-                            const collided = dist < 15 || (
-                                s.x + shipSize > os.x - shipSize &&
-                                s.x - shipSize < os.x + shipSize &&
-                                s.y + shipSize > os.y - shipSize &&
-                                s.y - shipSize < os.y + shipSize
-                            );
-                            if (collided) {
-                                const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
-                                const damage = Math.floor(speed * 4);
-                                s.hp -= damage;
-                                os.hp -= damage;
-                                showDamage(s.x, s.y, damage, s.color);
-                                showDamage(os.x, os.y, damage, os.color);
-                                if (s.hp <= 0) {
-                                    p.ships.splice(si, 1);
-                                    explosion(s.x, s.y, 20, s.color);
-                                }
-                                if (os.hp <= 0) {
-                                    const osi = op.ships.indexOf(os);
-                                    if (osi > -1) op.ships.splice(osi, 1);
-                                    explosion(os.x, os.y, 20, os.color);
-                                }
-                                playSound(100, 0.5, 'sine', 0.3);
+                                return;
                             }
                         }
                     });
-
-                    if (p.ships.length === 0) {
-                        p.alive = false;
-                        eliminations.push({ text: `${p.isBot ? 'BOT' : 'PLAYER'} ${pi + 1} ELIMINATED`, time: Date.now(), opacity: 1 });
-                        const deathX = s.x || canvas.width / 2;
-                        const deathY = s.y || canvas.height / 2;
-                        const deathColor = s.color || '#fff';
-                        const aliveCount = activePlayers.length - 1;
-                        if (aliveCount === 1) {
-                            explosion(deathX, deathY, 600, deathColor, 4, true);
-                        } else {
-                            explosion(deathX, deathY, 200, deathColor, 3);
-                        }
-                        playSound(200, 1.0, 'sine', 0.3);
-                    }
                 }
             }
 
-            for (let pi = 0; pi < activePlayers.length; pi++) {
-                const p = activePlayers[pi];
+            // Bullet collisions with asteroids and obstacles
+            for (let pi = 0; pi < players.length; pi++) {
+                const p = players[pi];
                 for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
                     const b = p.bullets[bi];
                     const cell = getGridCell(b.x, b.y);
                     const nearby = grid[cell] || [];
                     const adjacentCells = [
-                        cell, getGridCell(b.x + GRID_SIZE, b.y), getGridCell(b.x - GRID_SIZE, b.y),
-                        getGridCell(b.x, b.y + GRID_SIZE), getGridCell(b.x, b.y - GRID_SIZE)
+                        cell,
+                        getGridCell(b.x + GRID_SIZE, b.y),
+                        getGridCell(b.x - GRID_SIZE, b.y),
+                        getGridCell(b.x, b.y + GRID_SIZE),
+                        getGridCell(b.x, b.y - GRID_SIZE),
+                        getGridCell(b.x + GRID_SIZE, b.y + GRID_SIZE),
+                        getGridCell(b.x + GRID_SIZE, b.y - GRID_SIZE),
+                        getGridCell(b.x - GRID_SIZE, b.y + GRID_SIZE),
+                        getGridCell(b.x - GRID_SIZE, b.y - GRID_SIZE)
                     ].filter(c => grid[c]);
 
-                    [...new Set([].concat(...adjacentCells.map(c => grid[c])))].forEach(entity => {
-                        if (entity === b || (entity.hp && entity.angle && activePlayers.find(p => p.ships.includes(entity)) === p)) return;
-
-                        if (entity.hp && entity.size) { // Asteroid
+                    const entities = [...new Set([].concat(...adjacentCells.map(c => grid[c])))];
+                    entities.forEach(entity => {
+                        if (entity.hp && entity.size) {
                             const a = entity;
-                            const dist = Math.hypot(b.x - a.x, b.y - a.y);
-                            if (dist < a.size) {
+                            if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
                                 a.hp -= 20;
                                 showDamage(a.x, a.y, 20, '#888');
                                 if (a.hp <= 0) {
-                                    if (a.size > 10) {
+                                    if (a.size > 5) {
                                         const splitCount = Math.min(3, Math.floor(Math.sqrt(b.dx * b.dx + b.dy * b.dy) / 2) + 1);
                                         for (let i = 0; i < splitCount; i++) {
                                             asteroids.push({
                                                 x: a.x,
                                                 y: a.y,
-                                                size: Math.max(10, a.size / splitCount),
-                                                dx: a.dx + (Math.random() - 0.5) * 1,
-                                                dy: a.dy + (Math.random() - 0.5) * 1,
+                                                size: Math.max(5, a.size / splitCount),
+                                                dx: a.dx + (Math.random() - 0.5) * 0.5,
+                                                dy: a.dy + (Math.random() - 0.5) * 0.5,
                                                 angle: 0,
                                                 spin: (Math.random() - 0.5) * 0.02,
                                                 hp: 500
                                             });
                                         }
                                     }
-                                    spawnPowerUpFromAsteroid(a.x, a.y);
                                     const index = asteroids.indexOf(a);
                                     if (index > -1) asteroids.splice(index, 1);
-                                    explosion(a.x, a.y, 30);
+                                    explosion(a.x, a.y, 60);
                                     playSound(300, 0.3, 'sine', 0.2);
                                 }
                                 p.bullets.splice(bi, 1);
+                                return;
                             }
-                        } else if (entity.w && entity.h) { // Obstacle
+                        } else if (entity.w && entity.h) {
                             const o = entity;
                             if (b.x > o.x && b.x < o.x + o.w && b.y > o.y && b.y < o.y + o.h) {
                                 o.hp -= 20;
@@ -1239,57 +1302,42 @@
                                     if (index > -1) obstacles.splice(index, 1);
                                 }
                                 p.bullets.splice(bi, 1);
+                                return;
                             }
                         }
                     });
                 }
             }
+            console.log('Post-collision state:', players.map(p => ({ alive: p.alive, ships: p.ships.length, hp: p.ships[0]?.hp || 0 })));
         }
 
-        function drawVictoryScreen() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#fff';
-            ctx.font = '30px "Press Start 2P"';
-            ctx.textAlign = 'center';
-            ctx.fillText('#1 VICTORY ROYALE', canvas.width / 2, canvas.height / 2 - 20);
-            const alivePlayers = players.filter(p => p.alive);
-            if (alivePlayers.length === 1) {
-                const winner = alivePlayers[0];
-                const winnerIndex = players.indexOf(winner) + 1;
-                ctx.font = '16px "Press Start 2P"';
-                ctx.fillText(`${winner.isBot ? 'BOT' : 'PLAYER'} ${winnerIndex} WINS`, canvas.width / 2, canvas.height / 2 + 20);
-            }
-            ctx.fillText('PRESS R TO RESTART', canvas.width / 2, canvas.height / 2 + 60);
-            if (gameState === 'victory' && frameCount % 60 === 0) {
-                playSound(400, 1.0, 'sine', 0.3);
-            }
-        }
-
+        // UI with simplified HP display
         function drawUI() {
             uiPanel.innerHTML = '';
-            const baseFontSize = 10;
-            const fontSize = Math.max(6, baseFontSize - Math.max(0, players.length - 10) * 0.5);
+            const baseFontSize = 12;
+            const fontSize = Math.max(8, baseFontSize - Math.max(0, players.length - 10) * 0.5);
+            uiPanel.querySelectorAll('div').forEach(div => div.style.fontSize = `${fontSize}px`);
+
             players.forEach((p, i) => {
-                if (!p.alive) return;
                 const totalHP = p.ships.reduce((sum, ship) => sum + (ship.hp || 0), 0);
                 const div = document.createElement('div');
                 div.innerHTML = `
                     <p>${p.isBot ? 'Bot' : 'Player'} ${i + 1}</p>
                     <p>HP: ${totalHP}</p>
                     <p>Ships: ${p.ships.length}</p>
-                    <div style="width: 100%; background: #333; border: 1px solid #fff;">
-                        <div style="width: ${Math.min(100, totalHP / 2)}%; height: 8px; background: ${p.color};"></div>
-                    </div>
                 `;
                 div.style.fontSize = `${fontSize}px`;
                 uiPanel.appendChild(div);
             });
 
-            const alivePlayers = players.filter(p => p.alive);
+            const alivePlayers = players.filter(p => p.alive && p.ships && p.ships.length > 0);
             if (alivePlayers.length === 1 && gameState === 'playing') {
                 gameState = 'victory';
-                drawVictoryScreen();
+                const winner = alivePlayers[0];
+                const winnerIndex = players.indexOf(winner) + 1;
+                winnerText.textContent = `${winner.isBot ? 'BOT' : 'PLAYER'} ${winnerIndex} WINS!`;
+                victoryScreen.style.display = 'flex';
+                playSound(1000, 1.0, 'sine', 0.3);
             }
 
             eliminations = eliminations.filter(e => Date.now() - e.time < 5000);
@@ -1297,19 +1345,29 @@
                 const elapsed = Date.now() - e.time;
                 e.opacity = Math.max(0, 1 - elapsed / 5000);
                 ctx.fillStyle = `rgba(255, 255, 255, ${e.opacity})`;
-                ctx.font = '12px "Press Start 2P"';
+                ctx.font = '8px "Press Start 2P"';
                 ctx.textAlign = 'center';
-                ctx.fillText(e.text, canvas.width / 2, canvas.height / 2 - 40 + i * 15);
+                ctx.fillText(e.text, canvas.width / 2, canvas.height / 2 - 20 + i * 7.5);
             });
-            if (paused) {
-                ctx.fillStyle = '#fff';
-                ctx.font = '20px "Press Start 2P"';
-                ctx.textAlign = 'center';
-                ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
-            }
             drawDamageFormationPowerUp();
         }
 
+        // Countdown display
+        function drawCountdown() {
+            if (gameState !== 'countdown') return;
+            const elapsed = (Date.now() - countdownStart) / 1000;
+            countdownValue = Math.max(0, Math.ceil(3 - elapsed));
+            ctx.fillStyle = '#fff';
+            ctx.font = '48px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText(countdownValue === 0 ? 'GO!' : countdownValue, canvas.width / 2, canvas.height / 2);
+            if (countdownValue === 0) {
+                gameState = 'playing';
+                playSound(1000, 0.3, 'sine', 0.3);
+            }
+        }
+
+        // Game loop
         function gameLoop() {
             ctx.save();
             ctx.fillStyle = '#111';
@@ -1317,78 +1375,53 @@
             drawNebula();
             drawStars();
 
+            spawnAsteroids();
+            updateAsteroids();
+            drawObstacles();
+            updateParticles();
+
             if (gameState === 'menu') {
-                if (demoBots.length === 0) spawnDemoBots();
-                const totalEntities = demoBots.reduce((sum, p) => sum + (p.alive ? p.ships.length : 0), 0);
-                demoBots.forEach((p, i) => {
-                    if (p.alive) {
-                        updatePlayer(p, i, true);
-                        p.ships.forEach((s, j) => drawShip(s, totalEntities, j === 0, false));
-                        drawBullets(p);
-                    }
+                menuBots.forEach((bot, i) => {
+                    updatePlayer(bot, i, true);
+                    bot.ships.forEach((s, j) => drawShip(s, menuBots.reduce((sum, p) => sum + p.ships.length, 0), j === 0, false));
+                    drawBullets(bot);
                 });
-                checkCollisions();
-                updateParticles();
-            } else if (gameState === 'playing' && !paused) {
-                spawnAsteroids();
+            } else if (gameState === 'playing' || gameState === 'victory' || gameState === 'countdown') {
                 spawnPowerUps();
-                const totalEntities = players.reduce((sum, p) => sum + (p.alive ? p.ships.length : 0), 0);
-                players.forEach((p, i) => {
-                    if (p.alive) {
-                        p.index = i;
-                        updatePlayer(p, i);
-                        p.ships.forEach((s, j) => drawShip(s, totalEntities, j === 0, !p.isBot));
-                        drawBullets(p);
-                    }
-                });
-                updateAsteroids();
-                drawObstacles();
-                updateParticles();
                 updatePowerUps();
-                checkCollisions();
-            } else if (gameState === 'victory') {
-                const totalEntities = players.reduce((sum, p) => sum + (p.alive ? p.ships.length : 0), 0);
+                const totalEntities = players.reduce((sum, p) => sum + p.ships.length, 0);
                 players.forEach((p, i) => {
-                    if (p.alive) {
-                        p.ships.forEach((s, j) => drawShip(s, totalEntities, j === 0, !p.isBot));
-                        drawBullets(p);
-                    }
+                    p.index = i;
+                    updatePlayer(p, i);
+                    p.ships.forEach((s, j) => drawShip(s, totalEntities, j === 0, !p.isBot));
+                    drawBullets(p);
                 });
-                updateParticles();
-                drawVictoryScreen();
+                checkCollisions();
+                drawCountdown();
             }
 
             drawUI();
             frameCount++;
-
-            if (gameState === 'victory' && keys['r']) {
-                location.reload();
-            }
             ctx.restore();
             requestAnimationFrame(gameLoop);
         }
 
+        // Event listeners
         window.addEventListener('keydown', (e) => {
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && gameState === 'playing') {
-                e.preventDefault();
-            }
             keys[e.key] = true;
-            if (e.key === 'p' && gameState === 'playing') {
-                paused = !paused;
-            }
         });
-        window.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
-        });
+        window.addEventListener('keyup', (e) => keys[e.key] = false);
 
         function showHowToPlay() {
-            howToPlayModal.style.display = 'block';
+            howToPlayModal.classList.add('show');
         }
 
         function hideHowToPlay() {
-            howToPlayModal.style.display = 'none';
+            howToPlayModal.classList.remove('show');
         }
 
+        // Initialize menu bots on load
+        initMenuBots();
         gameLoop();
     </script>
 </body>
