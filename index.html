@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TopDownSpace: Swarm Wars</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6598513151197899"
-     crossorigin="anonymous"></script>
-    
-
+    <title>TopDownSpace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link id="favicon" rel="icon" type="image/png" href="https://topdownspace.github.io/favicon-32x32.png">
     <style>
         html, body {
             margin: 0;
@@ -17,99 +13,96 @@
             height: 100%;
             width: 100%;
             overflow: hidden;
-            background: #000;
-            font-family: 'Press Start 2P', monospace;
+            background: linear-gradient(to bottom, #0a0a23, #1a1a4d);
+            font-family: 'Orbitron', sans-serif;
             color: #fff;
         }
         #gameContainer {
-            width: 80%;
-            height: 90%;
+            width: 85%;
+            height: 95%;
             position: absolute;
-            top: 5%;
-            left: 10%;
+            top: 2.5%;
+            left: 7.5%;
             display: flex;
-            border: 1px solid #fff;
+            background: radial-gradient(circle, rgba(0, 0, 50, 0.8), rgba(0, 0, 20, 1));
+            border: 2px solid #00ccff;
+            box-shadow: 0 0 20px rgba(0, 204, 255, 0.5);
+            border-radius: 10px;
         }
         canvas {
-            border: 1px solid #fff;
-            image-rendering: pixelated;
+            border: 1px solid #00ccff;
+            image-rendering: optimizeSpeed;
             flex-grow: 1;
+            background: transparent;
         }
-        #menu, #botMenu, #difficultyMenu, #howToPlayModal {
+        #menu, #botMenu, #difficultyMenu {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             text-align: center;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(10, 10, 50, 0.9);
             padding: 20px;
-            border: 2px solid #fff;
-            box-shadow: 0 0 10px #fff;
-            animation: glow 1.5s infinite alternate;
+            border: 2px solid #00ccff;
+            box-shadow: 0 0 20px #00ccff;
             z-index: 20;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            animation: pulse 2s infinite;
         }
-        @keyframes glow {
-            0% { box-shadow: 0 0 5px #fff; }
-            100% { box-shadow: 0 0 15px #fff; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px #00ccff; }
+            50% { box-shadow: 0 0 30px #00ccff; }
+            100% { box-shadow: 0 0 10px #00ccff; }
         }
         h1 {
-            font-size: 32px;
-            margin: 0 0 20px 0;
-            text-shadow: 0 0 7px #0ff;
-            animation: flicker 0.1s infinite alternate;
+            font-size: 48px;
+            margin: 0 0 30px 0;
+            text-shadow: 0 0 15px #00ccff, 0 0 25px #00ffcc;
+            animation: glowText 1.5s infinite alternate;
         }
-        @keyframes flicker {
-            0% { opacity: 0.9; }
-            100% { opacity: 1; }
+        @keyframes glowText {
+            0% { text-shadow: 0 0 10px #00ccff; }
+            100% { text-shadow: 0 0 20px #00ffcc; }
         }
         button {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 10px;
-            padding: 7px 15px;
-            margin: 7px 5px;
-            background: #333;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            padding: 10px 20px;
+            margin: 10px;
+            background: linear-gradient(45deg, #00ccff, #0077b6);
             color: #fff;
-            border: 1px solid #fff;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.3s;
-            border-radius: 2px;
-            width: 30%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+            width: 200px;
         }
         button:hover {
-            background: #555;
-            box-shadow: 0 0 10px #0ff;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 204, 255, 0.8);
         }
         #uiPanel {
-            width: 100px;
+            width: 150px;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 5px;
-            border-left: 1px solid #fff;
-            box-shadow: 0 0 5px #fff;
+            background: rgba(0, 0, 50, 0.9);
+            padding: 10px;
+            border-left: 2px solid #00ccff;
+            box-shadow: -5px 0 15px rgba(0, 204, 255, 0.3);
             z-index: 10;
             overflow-y: auto;
             display: none;
-        }
-        #uiPanel div {
-            margin-bottom: 5px;
-            padding: 2px;
-            border-bottom: 1px solid #fff;
             font-size: 12px;
         }
-        #howToPlayModal {
-            display: none;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            max-height: 80%;
-            overflow-y: auto;
-        }
-        #howToPlayModal.show {
-            display: flex;
+        #uiPanel div {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-bottom: 1px solid rgba(0, 204, 255, 0.5);
+            text-shadow: 0 0 5px #00ccff;
         }
         #victoryScreen {
             position: absolute;
@@ -117,7 +110,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
+            background: linear-gradient(to bottom, rgba(0, 0, 50, 0.9), transparent);
             display: none;
             flex-direction: column;
             justify-content: center;
@@ -126,1199 +119,1324 @@
             animation: victoryGlow 1s infinite alternate;
         }
         @keyframes victoryGlow {
-            0% { text-shadow: 0 0 5px #ff0; }
-            100% { text-shadow: 0 0 15px #f00; }
+            0% { text-shadow: 0 0 10px #ffcc00; }
+            100% { text-shadow: 0 0 20px #ff3333; }
         }
         #victoryScreen h1 {
-            font-size: 24px;
-            color: #ff0;
-            text-shadow: 0 0 7px #f00;
-            animation: victoryPulse 0.5s infinite alternate;
-        }
-        @keyframes victoryPulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
+            font-size: 48px;
+            margin-bottom: 20px;
         }
         #victoryScreen p {
-            font-size: 12px;
-            color: #0ff;
-            margin: 5px 0;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ffcc00;
         }
         #victoryScreen button {
-            width: 20%;
-            font-size: 8px;
+            background: linear-gradient(45deg, #ffcc00, #ff3333);
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
         }
-        @keyframes shake {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(-2px, 2px); }
-            50% { transform: translate(2px, -2px); }
-            75% { transform: translate(-2px, 2px); }
-            100% { transform: translate(0, 0); }
+        #victoryScreen button:hover {
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.8);
         }
-        .shake {
-            animation: shake 0.2s;
+        #faviconOptions {
+            display: none;
+            flex-direction: column;
         }
     </style>
 </head>
+<script>
+    // DOM elements
+    let gameContainer, canvas, ctx, menu, botMenu, difficultyMenu, victoryScreen, winnerText, uiPanel;
+
+    // Game state and constants
+    let playerCount = 0;
+    let lastTime = performance.now();
+    let botCount = 0;
+    let gameState = 'menu';
+    let eliminations = [];
+    let frameCount = 0;
+    let countdownStart = 0;
+    let countdownValue = 3;
+    const MAX_PARTICLES = 2000;
+    const MAX_SHIPS_PER_PLAYER = 100; // Increased from 50 to 100
+    const PLAYER_SPEED = { max: 1.5, min: -0.9, acceleration: 0.08, deceleration: 0.94 };
+    const MIN_DISTANCE = 100;
+    const ASTEROID_SPAWN_DISTANCE = 100;
+    const sidebarWidth = 150;
+
+    // Game objects
+    const players = [];
+    const menuBots = [];
+    const asteroids = [];
+    const obstacles = [];
+    const particles = [];
+    const powerUps = [];
+    const stars = [];
+    const keys = {};
+    const damageDisplays = [];
+    let formationDisplays = [];
+    const powerUpDisplays = [];
+    const MAX_ASTEROIDS = 15;
+    let botMessages = [];
+
+    // New Tab toggle state
+    let isNewTabMode = false;
+
+    // Audio
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(frequency, duration, type = 'sine', volume = 0.1) {
+        const osc = audioCtx.createOscillator();
+        osc.type = type;
+        osc.frequency.value = frequency;
+        const gain = audioCtx.createGain();
+        gain.gain.value = volume;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    // Favicon and title handling
+    function toggleNewTab() {
+        isNewTabMode = !isNewTabMode;
+        const faviconOptions = document.getElementById('faviconOptions');
+        const toggleButton = document.getElementById('toggleNewTabButton');
+        const favicon = document.getElementById('favicon');
+        if (isNewTabMode) {
+            document.title = 'New Tab';
+            faviconOptions.style.display = 'flex';
+            toggleButton.textContent = 'Toggle New Tab Off';
+            setFavicon('light');
+        } else {
+            document.title = 'TopDownSpace';
+            faviconOptions.style.display = 'none';
+            toggleButton.textContent = 'Toggle New Tab On';
+            favicon.href = 'https://topdownspace.github.io/favicon-32x32.png';
+        }
+    }
+
+    function setFavicon(mode) {
+        const favicon = document.getElementById('favicon');
+        if (mode === 'light') favicon.href = 'chromenewtab32x32.png';
+        else if (mode === 'dark') favicon.href = 'darkchromenewtab32x32.png';
+    }
+
+    const botSpeech = {
+        aggressive: {
+            lowHP: ["Shields critical!", "Taking heavy fire!", "Systems failing!"],
+            chasing: ["Target locked!", "Engaging hostile!", "You’re mine!"],
+            formation: ["Assault pattern alpha!", "Strike formation!", "Combat array!"],
+            powerUp: ["Reinforcements acquired!", "Power surge!", "Fleet boosted!"],
+            retreating: ["Falling back!", "Evasive maneuvers!", "Regrouping!"]
+        },
+        defensive: {
+            lowHP: ["Hull breach!", "Shields down!", "Critical damage!"],
+            chasing: ["Maintaining distance!", "Tracking target!", "Stay in range!"],
+            formation: ["Defensive grid!", "Shield wall!", "Fortify positions!"],
+            powerUp: ["Reserves online!", "Support incoming!", "Fleet stabilized!"],
+            retreating: ["Withdrawing!", "Retreat protocol!", "Disengaging!"]
+        },
+        dashy: {
+            lowHP: ["Engines failing!", "Speed compromised!", "Damage critical!"],
+            chasing: ["Closing fast!", "High-speed pursuit!", "Target in sights!"],
+            formation: ["Rapid deploy!", "Swift formation!", "Speed array!"],
+            powerUp: ["Boost engaged!", "Velocity spiked!", "Fleet accelerated!"],
+            retreating: ["Evasive dash!", "Full throttle retreat!", "Out of here!"]
+        },
+        formation: {
+            lowHP: ["Structure collapsing!", "Fleet integrity low!", "Formation breaking!"],
+            chasing: ["Tactical pursuit!", "Coordinated strike!", "Target enveloped!"],
+            formation: ["Realigning fleet!", "Formation shift!", "Strategic pattern!"],
+            powerUp: ["Squadron reinforced!", "Fleet expanded!", "Tactical boost!"],
+            retreating: ["Regroup order!", "Formation retreat!", "Pulling back!"]
+        }
+    };
+
+    function adjustBrightness(hex, brightness) {
+        const r = Math.min(255, parseInt(hex.slice(1, 3), 16) * brightness);
+        const g = Math.min(255, parseInt(hex.slice(3, 5), 16) * brightness);
+        const b = Math.min(255, parseInt(hex.slice(5, 7), 16) * brightness);
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+
+    function showBotMenu(players) {
+        playerCount = players;
+        menu.style.display = 'none';
+        botMenu.style.display = 'flex';
+    }
+
+    function showDifficultyMenu(bots) {
+        botCount = bots;
+        botMenu.style.display = 'none';
+        if (botCount === 0) startGame(0, null);
+        else difficultyMenu.style.display = 'flex';
+    }
+
+    function goBack() {
+        if (difficultyMenu.style.display !== 'none') {
+            difficultyMenu.style.display = 'none';
+            botMenu.style.display = 'flex';
+        } else if (botMenu.style.display !== 'none') {
+            botMenu.style.display = 'none';
+            menu.style.display = 'flex';
+        }
+    }
+
+    function initMenuBots() {
+        menuBots.length = 0;
+        const positions = [];
+        const getSafePosition = () => {
+            let x, y;
+            do {
+                x = Math.random() * (canvas.width - 25) + 12.5;
+                y = Math.random() * (canvas.height - 25) + 12.5;
+            } while (positions.some(pos => Math.hypot(pos.x - x, pos.y - y) < MIN_DISTANCE));
+            positions.push({ x, y });
+            return { x, y };
+        };
+
+        const botStyles = {
+            'aggressive': { style: 'aggressive', baseColor: '#ff3333' },
+            'defensive': { style: 'defensive', baseColor: '#33ccff' },
+            'dashy': { style: 'dashy', baseColor: '#33ff33' },
+            'formation': { style: 'formation', baseColor: '#ffcc00' }
+        };
+        for (let i = 0; i < 8; i++) {
+            const pos = getSafePosition();
+            const styleKeys = Object.keys(botStyles);
+            const randomStyle = styleKeys[Math.floor(Math.random() * styleKeys.length)];
+            const { style, baseColor } = botStyles[randomStyle];
+            const brightness = Math.max(0.85, Math.min(1.0, 0.85 + (Math.random() * 0.15)));
+            const traitColor = adjustBrightness(baseColor, brightness);
+            menuBots.push({
+                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 1000, dx: 0, dy: 0 }],
+                keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
+                bullets: [],
+                alive: true,
+                formation: 'spiral',
+                lastShot: 0,
+                lastDash: 0,
+                dashEnd: 0,
+                dashSpeed: 0,
+                isBot: true,
+                difficulty: 'standard',
+                style: style,
+                traitColor: traitColor,
+                lastMessageTime: 0,
+                botState: 'patrolling',
+                target: null,
+                lastDecision: 0
+            });
+        }
+    }
+
+    function startGame(bots, difficulty) {
+        botCount = bots;
+        players.length = 0;
+        menuBots.length = 0;
+        asteroids.length = 0;
+        obstacles.length = 0;
+        particles.length = 0;
+        powerUps.length = 0;
+        damageDisplays.length = 0;
+        formationDisplays.length = 0;
+        powerUpDisplays.length = 0;
+        botMessages.length = 0;
+
+        const positions = [];
+        const getSafePosition = () => {
+            let x, y;
+            do {
+                x = Math.random() * (canvas.width - 25) + 12.5;
+                y = Math.random() * (canvas.height - 25) + 12.5;
+            } while (positions.some(pos => Math.hypot(pos.x - x, pos.y - y) < MIN_DISTANCE));
+            positions.push({ x, y });
+            return { x, y };
+        };
+
+        const humanConfigs = [
+            { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#ff3333' },
+            { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#33ff33' },
+            { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#33ccff' }
+        ];
+        for (let i = 0; i < playerCount; i++) {
+            const pos = getSafePosition();
+            const traitColor = humanConfigs[i].color;
+            players.push({
+                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 1000, dx: 0, dy: 0 }],
+                keys: humanConfigs[i].keys,
+                bullets: [],
+                alive: true,
+                formation: 'spiral',
+                lastShot: 0,
+                lastDash: 0,
+                dashEnd: 0,
+                dashSpeed: 0,
+                isBot: false,
+                difficulty: 'player',
+                traitColor: traitColor,
+                lastMessageTime: 0
+            });
+        }
+
+        const botStyles = {
+            'aggressive': { style: 'aggressive', baseColor: '#ff3333' },
+            'defensive': { style: 'defensive', baseColor: '#33ccff' },
+            'dashy': { style: 'dashy', baseColor: '#33ff33' },
+            'formation': { style: 'formation', baseColor: '#ffcc00' }
+        };
+        const difficultyBrightness = { 'novice': 0.8, 'standard': 0.85, 'elite': 0.9, 'ace': 1.0 };
+        const styleKeys = Object.keys(botStyles);
+        const botTraits = [];
+
+        const baseCount = Math.floor(botCount / styleKeys.length);
+        const extraBots = botCount % styleKeys.length;
+        const shuffledStyles = [...styleKeys].sort(() => Math.random() - 0.5);
+        shuffledStyles.forEach(style => {
+            for (let i = 0; i < baseCount; i++) botTraits.push(style);
+        });
+        for (let i = 0; i < extraBots; i++) botTraits.push(shuffledStyles[i]);
+        for (let i = botTraits.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [botTraits[i], botTraits[j]] = [botTraits[j], botTraits[i]];
+        }
+
+        for (let i = 0; i < botCount; i++) {
+            const pos = getSafePosition();
+            const botDifficulty = difficulty || 'standard';
+            const style = botTraits[i];
+            const { baseColor } = botStyles[style];
+            const brightness = difficultyBrightness[botDifficulty];
+            const traitColor = adjustBrightness(baseColor, brightness);
+            players.push({
+                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 1000, dx: 0, dy: 0 }],
+                keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
+                bullets: [],
+                alive: true,
+                formation: 'spiral',
+                lastShot: 0,
+                lastDash: 0,
+                dashEnd: 0,
+                dashSpeed: 0,
+                isBot: true,
+                difficulty: botDifficulty,
+                style: style,
+                traitColor: traitColor,
+                lastMessageTime: 0,
+                botState: 'patrolling',
+                target: null,
+                lastDecision: 0
+            });
+        }
+
+        gameState = 'countdown';
+        countdownStart = Date.now();
+        countdownValue = 3;
+        menu.style.display = 'none';
+        botMenu.style.display = 'none';
+        difficultyMenu.style.display = 'none';
+        victoryScreen.style.display = 'none';
+        uiPanel.style.display = 'block';
+        spawnObstacles();
+        spawnStars();
+        spawnNebula();
+        spawnAsteroids();
+        frameCount = 0;
+    }
+
+    function restartGame() {
+        gameState = 'menu';
+        victoryScreen.style.display = 'none';
+        menu.style.display = 'flex';
+        uiPanel.style.display = 'none';
+        eliminations = [];
+        players.length = 0;
+        asteroids.length = 0;
+        obstacles.length = 0;
+        particles.length = 0;
+        powerUps.length = 0;
+        botMessages.length = 0;
+        initMenuBots();
+        frameCount = 0;
+    }
+
+    function drawShip(ship, totalEntities, isLead, isPlayer, player) {
+        ctx.save();
+        ctx.translate(ship.x, ship.y);
+        ctx.rotate(ship.angle);
+        const size = Math.max(2, 12 - totalEntities * 0.02);
+        ctx.beginPath();
+        ctx.moveTo(size, 0);
+        ctx.lineTo(-size * 0.6, size * 0.6);
+        ctx.lineTo(-size * 0.4, 0);
+        ctx.lineTo(-size * 0.6, -size * 0.6);
+        ctx.closePath();
+        ctx.fillStyle = player.traitColor;
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        if (ship.speed > 0 && Math.random() > 0.5) {
+            ctx.beginPath();
+            ctx.moveTo(-size * 0.6, 0);
+            ctx.lineTo(-size * 0.8, 0);
+            ctx.strokeStyle = '#ffcc00';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        if (isLead && isPlayer && !player.isBot) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(ship.x, ship.y - size - 5, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#00ffcc';
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    function showDamage(x, y, damage, color) {
+        const offsetX = (Math.random() - 0.5) * 15;
+        const offsetY = (Math.random() - 0.5) * 15;
+        damageDisplays.push({ x: x + offsetX, y: y + offsetY - 5, damage, color, time: Date.now() });
+    }
+
+    function showFormation(x, y, formation, color) {
+        formationDisplays = [{ x, y, formation, color, time: Date.now() }];
+    }
+
+    function showPowerUp(x, y, count, color) {
+        powerUpDisplays.push({ x, y, text: `+${count} Units`, color, time: Date.now() });
+    }
+
+    function showBotMessage(player, type) {
+        if (Date.now() - player.lastMessageTime < 1000 || !player.ships[0]) return; // Reduced from 1500ms to 1000ms
+        const messages = botSpeech[player.style][type];
+        if (messages) {
+            botMessages.push({
+                x: player.ships[0].x,
+                y: player.ships[0].y - 15,
+                text: messages[Math.floor(Math.random() * messages.length)],
+                life: 90,
+                color: player.traitColor
+            });
+            player.lastMessageTime = Date.now();
+        }
+    }
+
+    function drawDamageFormationPowerUp() {
+        damageDisplays.forEach((d, i) => {
+            if (Date.now() - d.time > 600) damageDisplays.splice(i, 1);
+            else {
+                ctx.fillStyle = d.color;
+                ctx.font = '8px Orbitron';
+                ctx.textAlign = 'center';
+                ctx.fillText(`-${d.damage}`, d.x, d.y);
+            }
+        });
+        formationDisplays.forEach((f, i) => {
+            if (Date.now() - f.time > 2500) formationDisplays.splice(i, 1);
+            else {
+                ctx.fillStyle = f.color;
+                ctx.font = '10px Orbitron';
+                ctx.textAlign = 'center';
+                ctx.fillText(f.formation, f.x, f.y - 10);
+            }
+        });
+        powerUpDisplays.forEach((p, i) => {
+            if (Date.now() - p.time > 2500) powerUpDisplays.splice(i, 1);
+            else {
+                ctx.fillStyle = p.color;
+                ctx.font = '10px Orbitron';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.text, p.x, p.y - 10);
+            }
+        });
+        botMessages.forEach((m, i) => {
+            if (m.life-- <= 0) botMessages.splice(i, 1);
+            else {
+                ctx.fillStyle = m.color;
+                ctx.font = '8px Orbitron';
+                ctx.textAlign = 'center';
+                ctx.fillText(m.text, m.x, m.y);
+            }
+        });
+    }
+
+    function drawBullets(player) {
+        player.bullets.forEach(b => {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+            ctx.fillStyle = player.traitColor;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+        });
+    }
+
+    function getTotalHP(player) {
+        return player.ships.reduce((sum, s) => sum + s.hp, 0);
+    }
+
+    function isLowHealth(player) {
+        const totalHP = getTotalHP(player);
+        const maxHP = player.ships.length * 1000;
+        return totalHP / maxHP < 0.35;
+    }
+
+    function findNearestEnemy(player) {
+        let nearest = null;
+        let minDist = Infinity;
+        players.forEach(p => {
+            if (p !== player && p.alive && p.ships.length > 0) {
+                const dist = Math.hypot(p.ships[0].x - player.ships[0].x, p.ships[0].y - player.ships[0].y);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = p;
+                }
+            }
+        });
+        return { player: nearest, distance: minDist };
+    }
+
+    function predictPosition(target, bulletSpeed) {
+        if (!target || !target.ships || !target.ships[0]) return { x: 0, y: 0 };
+        const timeToImpact = Math.hypot(target.ships[0].x - target.ships[0].dx, target.ships[0].y - target.ships[0].dy) / bulletSpeed;
+        return {
+            x: target.ships[0].x + target.ships[0].dx * timeToImpact,
+            y: target.ships[0].y + target.ships[0].dy * timeToImpact
+        };
+    }
+
+    function updatePlayer(player, index, isMenuBot = false, deltaTime) {
+        if (!player.alive || !player.ships.length) return;
+        if (!isMenuBot && gameState !== 'playing') return;
+        const leadShip = player.ships[0];
+        const { up, down, left, right, form, dash } = player.keys;
+
+        if (!player.isBot) {
+            if (keys[up]) leadShip.speed = Math.min(leadShip.speed + PLAYER_SPEED.acceleration, PLAYER_SPEED.max);
+            else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - PLAYER_SPEED.acceleration, PLAYER_SPEED.min);
+            else if (Date.now() > player.dashEnd) leadShip.speed *= PLAYER_SPEED.deceleration;
+            if (keys[left]) leadShip.angle -= 0.15 * deltaTime * 60;
+            if (keys[right]) leadShip.angle += 0.15 * deltaTime * 60;
+            if (keys[form]) {
+                keys[form] = false;
+                player.formation = getNextFormation(player.formation);
+                showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
+            }
+            if (keys[dash] && Date.now() - player.lastDash > 1800) {
+                player.dashSpeed = leadShip.speed + 4.5;
+                player.dashEnd = Date.now() + 250;
+                player.lastDash = Date.now();
+                playSound(1200, 0.25, 'triangle', 0.25);
+            }
+            if (Date.now() - player.lastShot > 120 * (1 + player.ships.length * 0.015)) { // Adjusted for 100 ships
+                const bulletSpeed = 2.5;
+                player.ships.forEach(ship => {
+                    const shootAngle = ship.angle;
+                    player.bullets.push({
+                        x: ship.x + Math.cos(shootAngle) * 3,
+                        y: ship.y + Math.sin(shootAngle) * 3,
+                        dx: Math.cos(shootAngle) * bulletSpeed,
+                        dy: Math.sin(shootAngle) * bulletSpeed,
+                        color: player.traitColor,
+                        size: 2,
+                        time: Date.now(),
+                        shooter: player
+                    });
+                });
+                player.lastShot = Date.now();
+                playSound(800, 0.1, 'sine', 0.15);
+            }
+        } else {
+            const difficultySettings = {
+                'novice': { turnSpeed: 0.05, aimError: 0.2, reactionTime: 400, awarenessRange: 300 },
+                'standard': { turnSpeed: 0.1, aimError: 0.1, reactionTime: 250, awarenessRange: 350 },
+                'elite': { turnSpeed: 0.15, aimError: 0.05, reactionTime: 150, awarenessRange: 400 },
+                'ace': { turnSpeed: 0.2, aimError: 0.02, reactionTime: 80, awarenessRange: 450 }
+            };
+            const settings = difficultySettings[player.difficulty] || difficultySettings['standard'];
+            const styleParams = {
+                aggressive: { chaseRange: 450, retreatThreshold: 0.25, shootFreq: 150 }, // Increased chaseRange, reduced shootFreq
+                defensive: { chaseRange: 350, retreatThreshold: 0.45, shootFreq: 200 },
+                dashy: { chaseRange: 500, retreatThreshold: 0.3, shootFreq: 180 },
+                formation: { chaseRange: 400, retreatThreshold: 0.35, shootFreq: 175 }
+            };
+            const style = styleParams[player.style];
+
+            if (Date.now() - player.lastDecision > settings.reactionTime) {
+                const { player: nearestEnemy, distance } = findNearestEnemy(player);
+                const isThreatened = players.some(p => p !== player && p.bullets.some(b => Math.hypot(b.x - leadShip.x, b.y - leadShip.y) < 60));
+                const lowHealth = isLowHealth(player);
+
+                if (lowHealth) {
+                    player.botState = 'retreating';
+                    showBotMessage(player, 'retreating');
+                } else if (isThreatened) {
+                    player.botState = 'evading';
+                    showBotMessage(player, 'retreating');
+                } else if (nearestEnemy && distance < style.chaseRange) {
+                    player.botState = 'chasing';
+                    player.target = nearestEnemy;
+                    showBotMessage(player, 'chasing');
+                } else {
+                    player.botState = 'patrolling';
+                    player.target = null;
+                    if (Math.random() < 0.3) showBotMessage(player, 'formation'); // Increased from 0.2 to 0.3
+                }
+                player.lastDecision = Date.now();
+            }
+
+            if (player.target && (!player.target.alive || !player.target.ships || player.target.ships.length === 0)) {
+                player.target = null;
+                player.botState = 'patrolling';
+            }
+
+            let targetX, targetY;
+            if (player.botState === 'chasing' && player.target && player.target.ships && player.target.ships.length > 0) {
+                const predicted = predictPosition(player.target, 2.5);
+                targetX = predicted.x;
+                targetY = predicted.y;
+            } else if (player.botState === 'retreating') {
+                targetX = canvas.width / 2 + (Math.random() - 0.5) * 400;
+                targetY = canvas.height / 2 + (Math.random() - 0.5) * 400;
+            } else if (player.botState === 'evading') {
+                const threat = players.find(p => p !== player && p.bullets.some(b => Math.hypot(b.x - leadShip.x, b.y - leadShip.y) < 60));
+                if (threat && threat.ships && threat.ships.length > 0) {
+                    const dx = leadShip.x - threat.ships[0].x;
+                    const dy = leadShip.y - threat.ships[0].y;
+                    targetX = leadShip.x + dx * 4;
+                    targetY = leadShip.y + dy * 4;
+                } else {
+                    targetX = leadShip.x;
+                    targetY = leadShip.y;
+                }
+            } else { // patrolling
+                if (!player.target || Math.hypot(leadShip.x - player.target.x, leadShip.y - player.target.y) < 30) {
+                    player.target = { x: Math.random() * canvas.width, y: Math.random() * canvas.height };
+                }
+                targetX = player.target.x + (Math.random() - 0.5) * 20;
+                targetY = player.target.y + (Math.random() - 0.5) * 20;
+            }
+
+            // Asteroid avoidance
+            let avoidX = 0, avoidY = 0;
+            asteroids.forEach(a => {
+                const dist = Math.hypot(leadShip.x - a.x, leadShip.y - a.y);
+                if (dist < a.size + 50) {
+                    const dx = leadShip.x - a.x;
+                    const dy = leadShip.y - a.y;
+                    const force = (50 - dist) / 50;
+                    avoidX += dx * force * 0.1;
+                    avoidY += dy * force * 0.1;
+                }
+            });
+            targetX += avoidX;
+            targetY += avoidY;
+
+            const desiredAngle = Math.atan2(targetY - leadShip.y, targetX - leadShip.x);
+            const angleDiff = (desiredAngle - leadShip.angle + Math.PI) % (2 * Math.PI) - Math.PI;
+            leadShip.angle += Math.max(-settings.turnSpeed, Math.min(settings.turnSpeed, angleDiff)) * deltaTime * 60;
+            leadShip.speed = Math.min(leadShip.speed + PLAYER_SPEED.acceleration, PLAYER_SPEED.max * (player.botState === 'chasing' ? 1.8 : (player.botState === 'evading' || player.botState === 'retreating' ? 1.6 : 1.4)));
+
+            if (Date.now() - player.lastShot > style.shootFreq) {
+                const distToTarget = player.target && player.target.ships && player.target.ships.length > 0 ? Math.hypot(targetX - leadShip.x, targetY - leadShip.y) : Infinity;
+                if ((player.botState === 'chasing' && distToTarget < settings.awarenessRange) || 
+                    (player.botState === 'evading' && distToTarget < 150) || // Increased from 120
+                    (player.botState === 'retreating' && Math.random() < 0.5) || // Increased from 0.4
+                    (player.botState === 'patrolling' && Math.random() < 0.2)) { // Increased from 0.1
+                    if (Math.abs(angleDiff) < 0.7) { // Widened from 0.5 to 0.7
+                        const bulletSpeed = 2.5;
+                        const shootAngle = leadShip.angle + (Math.random() - 0.5) * settings.aimError;
+                        player.ships.forEach(ship => {
+                            player.bullets.push({
+                                x: ship.x + Math.cos(shootAngle) * 3,
+                                y: ship.y + Math.sin(shootAngle) * 3,
+                                dx: Math.cos(shootAngle) * bulletSpeed,
+                                dy: Math.sin(shootAngle) * bulletSpeed,
+                                color: player.traitColor,
+                                size: 2,
+                                time: Date.now(),
+                                shooter: player
+                            });
+                        });
+                        player.lastShot = Date.now();
+                        playSound(800, 0.1, 'sine', 0.15);
+                        if (Math.random() < 0.5) showBotMessage(player, 'chasing'); // Increased from 0.3 to 0.5
+                    }
+                }
+            }
+        }
+
+        if (Date.now() <= player.dashEnd) {
+            leadShip.speed = player.dashSpeed;
+            particles.push({
+                x: leadShip.x - Math.cos(leadShip.angle) * 3,
+                y: leadShip.y - Math.sin(leadShip.angle) * 3,
+                size: 1,
+                life: 25,
+                color: '#ffcc00',
+                dx: -Math.cos(leadShip.angle) * 0.6,
+                dy: -Math.sin(leadShip.angle) * 0.6
+            });
+        } else if (player.dashSpeed > 0) {
+            player.dashSpeed *= 0.94;
+            leadShip.speed = Math.max(leadShip.speed * 0.94, player.dashSpeed);
+            if (player.dashSpeed < 0.05) player.dashSpeed = 0;
+        }
+
+        player.ships.forEach((ship, i) => {
+            let targetX, targetY, offsetX, offsetY;
+            if (i === 0) {
+                ship.dx = Math.cos(ship.angle) * ship.speed * 1.8 * deltaTime * 60;
+                ship.dy = Math.sin(ship.angle) * ship.speed * 1.8 * deltaTime * 60;
+            } else {
+                const formations = {
+                    'diamond': () => { offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 3; offsetY = i * 3; },
+                    'compact': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 4; offsetY = Math.sin(angle) * 4; },
+                    'swarm': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 9; offsetY = Math.sin(angle) * 9; },
+                    'line-h': () => { offsetX = i * 6; offsetY = 0; },
+                    'line-v': () => { offsetX = 0; offsetY = i * 6; },
+                    'circle': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 6; offsetY = Math.sin(angle) * 6; },
+                    'spiral': () => { const radius = Math.min(12, i * 1.2); const angle = i * 0.9; offsetX = Math.cos(angle) * radius; offsetY = Math.sin(angle) * radius; }
+                };
+                formations[player.formation]();
+                const noiseX = (Math.random() - 0.5) * 2.5;
+                const noiseY = (Math.random() - 0.5) * 2.5;
+                targetX = leadShip.x - Math.cos(leadShip.angle) * (offsetY + noiseY) - Math.sin(leadShip.angle) * (offsetX + noiseX);
+                targetY = leadShip.y - Math.sin(leadShip.angle) * (offsetY + noiseY) + Math.cos(leadShip.angle) * (offsetX + noiseX);
+                ship.dx = (targetX - ship.x) * 0.25 * 1.8 * deltaTime * 60;
+                ship.dy = (targetY - ship.y) * 0.25 * 1.8 * deltaTime * 60;
+                ship.angle = leadShip.angle;
+            }
+            ship.dx *= Math.pow(0.97, deltaTime * 60);
+            ship.dy *= Math.pow(0.97, deltaTime * 60);
+            ship.x += ship.dx;
+            ship.y += ship.dy;
+            ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x));
+            ship.y = Math.max(2, Math.min(canvas.height - 2, ship.y));
+            particles.push({ x: ship.x - Math.cos(ship.angle) * 1.5, y: ship.y - Math.sin(ship.angle) * 1.5, size: 0.2, life: 10, color: player.traitColor });
+        });
+
+        player.bullets.forEach(b => {
+            b.x += b.dx * 1.8 * deltaTime * 60;
+            b.y += b.dy * 1.8 * deltaTime * 60;
+            particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 0.2, life: 6, color: b.color });
+        });
+        player.bullets = player.bullets.filter(b => {
+            const outOfBounds = b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height;
+            const expired = Date.now() - b.time > 1800;
+            return !outOfBounds && !expired;
+        });
+    }
+
+    function getNextFormation(current) {
+        const formations = ['diamond', 'compact', 'swarm', 'line-h', 'line-v', 'circle', 'spiral'];
+        const index = formations.indexOf(current);
+        return formations[(index + 1) % formations.length];
+    }
+
+    function spawnAsteroids() {
+        while (asteroids.length < MAX_ASTEROIDS) {
+            let x, y;
+            let tooClose;
+            do {
+                x = Math.random() * canvas.width;
+                y = Math.random() * canvas.height;
+                tooClose = players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < ASTEROID_SPAWN_DISTANCE));
+            } while (tooClose);
+            asteroids.push({
+                x, y,
+                size: 8 + Math.random() * 12,
+                dx: (Math.random() - 0.5) * 1.2,
+                dy: (Math.random() - 0.5) * 1.2,
+                angle: 0,
+                spin: (Math.random() - 0.5) * 0.025,
+                hp: 1200
+            });
+        }
+    }
+
+    function updateAsteroids(deltaTime) {
+        asteroids.forEach(a => {
+            if (gameState === 'playing') {
+                a.x += a.dx * deltaTime * 60;
+                a.y += a.dy * deltaTime * 60;
+                a.dx = Math.max(-1.8, Math.min(1.8, a.dx));
+                a.dy = Math.max(-1.8, Math.min(1.8, a.dy));
+                if (a.x - a.size < 0 || a.x + a.size > canvas.width) a.dx *= -1;
+                if (a.y - a.size < 0 || a.y + a.size > canvas.height) a.dy *= -1;
+
+                // Asteroid-obstacle collision
+                obstacles.forEach(o => {
+                    if (a.x + a.size > o.x && a.x - a.size < o.x + o.w &&
+                        a.y + a.size > o.y && a.y - a.size < o.y + o.h) {
+                        const dx = a.x - (o.x + o.w / 2);
+                        const dy = a.y - (o.y + o.h / 2);
+                        if (Math.abs(dx) > Math.abs(dy)) a.dx *= -1;
+                        else a.dy *= -1;
+                    }
+                });
+            }
+            a.angle += a.spin * deltaTime * 60;
+            ctx.fillStyle = '#4d4d4d';
+            ctx.beginPath();
+            for (let j = 0; j < 12; j++) {
+                const angle = a.angle + (Math.PI * 2 * j) / 12;
+                const r = a.size * (0.85 + Math.random() * 0.25);
+                ctx[j === 0 ? 'moveTo' : 'lineTo'](a.x + Math.cos(angle) * r, a.y + Math.sin(angle) * r);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#999999';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+    }
+
+    function spawnObstacles() {
+        for (let i = 0; i < 3; i++) {
+            let x, y;
+            do {
+                x = Math.random() * canvas.width;
+                y = Math.random() * canvas.height;
+            } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 30)));
+            obstacles.push({
+                x, y,
+                w: 15 + Math.random() * 15,
+                h: 15 + Math.random() * 15,
+                hp: 1500
+            });
+        }
+    }
+
+    function drawObstacles() {
+        obstacles.forEach(o => {
+            ctx.fillStyle = '#333366';
+            ctx.fillRect(o.x, o.y, o.w, o.h);
+            ctx.strokeStyle = '#00ccff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(o.x, o.y, o.w, o.h);
+        });
+    }
+
+    function spawnStars() {
+        for (let i = 0; i < 500; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 0.5 + 0.1,
+                brightness: Math.random()
+            });
+        }
+    }
+
+    function drawStars() {
+        stars.forEach(s => {
+            ctx.fillStyle = `rgba(255, 255, 255, ${s.brightness})`;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    const nebula = [];
+    function spawnNebula() {
+        for (let i = 0; i < 25; i++) {
+            nebula.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: 20 + Math.random() * 40,
+                color: `rgba(${Math.random() * 100 + 50}, ${Math.random() * 100 + 50}, ${Math.random() * 200 + 50}, 0.15)`
+            });
+        }
+    }
+
+    function drawNebula() {
+        nebula.forEach(n => {
+            const gradient = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.size);
+            gradient.addColorStop(0, n.color);
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    function updateParticles(deltaTime) {
+        if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
+        particles.forEach((p, i) => {
+            p.life -= deltaTime * 60;
+            if (p.dx) p.x += p.dx * deltaTime * 60;
+            if (p.dy) p.y += p.dy * deltaTime * 60;
+            p.dx = p.dx ? p.dx * Math.pow(0.94, deltaTime * 60) : 0;
+            p.dy = p.dy ? p.dy * Math.pow(0.94, deltaTime * 60) : 0;
+            if (p.life <= 0) particles.splice(i, 1);
+            else {
+                ctx.fillStyle = `rgba(${parseInt(p.color.slice(1, 3), 16)}, ${parseInt(p.color.slice(3, 5), 16)}, ${parseInt(p.color.slice(5, 7), 16)}, ${p.life / 50})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+    }
+
+    function spawnPowerUps() {
+        const totalPlayers = players.filter(p => p.alive).length;
+        const baseProbability = 0.012;
+        const spawnProbability = baseProbability * (1 + (totalPlayers - 1) * 0.15);
+        if (Math.random() < spawnProbability) {
+            const roll = Math.random();
+            const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : '+10';
+            powerUps.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                type,
+                pulse: 0,
+                pulseDirection: 1
+            });
+        }
+    }
+
+    function updatePowerUps() {
+        powerUps.forEach((pu, i) => {
+            pu.pulse += pu.pulseDirection * 0.12;
+            if (pu.pulse >= 1) pu.pulseDirection = -1;
+            if (pu.pulse <= 0) pu.pulseDirection = 1;
+            const radius = 12 + pu.pulse * 4;
+
+            ctx.fillStyle = 'rgba(0, 255, 204, 0.3)';
+            ctx.beginPath();
+            ctx.arc(pu.x, pu.y, radius + 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            const gradient = ctx.createRadialGradient(pu.x, pu.y, 0, pu.x, pu.y, radius);
+            gradient.addColorStop(0, '#00ffcc');
+            gradient.addColorStop(1, '#0066ff');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(pu.x, pu.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (Math.random() < 0.4) {
+                particles.push({
+                    x: pu.x + (Math.random() - 0.5) * radius * 2,
+                    y: pu.y + (Math.random() - 0.5) * radius * 2,
+                    size: 1.2,
+                    life: 25,
+                    color: '#00ffcc',
+                    dx: (Math.random() - 0.5) * 1.2,
+                    dy: (Math.random() - 0.5) * 1.2
+                });
+            }
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '10px Orbitron';
+            ctx.textAlign = 'center';
+            ctx.fillText(pu.type, pu.x, pu.y + 3);
+
+            players.forEach(p => {
+                p.ships.forEach(s => {
+                    if (Math.hypot(s.x - pu.x, s.y - pu.y) < radius + 6 && p.ships.length < MAX_SHIPS_PER_PLAYER) {
+                        const count = Math.min(parseInt(pu.type.slice(1)), MAX_SHIPS_PER_PLAYER - p.ships.length);
+                        for (let j = 0; j < count; j++) {
+                            p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 300, dx: 0, dy: 0 });
+                        }
+                        showPowerUp(pu.x, pu.y, count, '#00ffcc');
+                        if (p.isBot) showBotMessage(p, 'powerUp');
+                        powerUps.splice(i, 1);
+                        playSound(700, 0.35, 'sine', 0.25);
+                    }
+                });
+            });
+        });
+    }
+
+    function explosion(x, y, count, baseColor = '#ffcc00', size = 1.5, isFinal = false) {
+        const colors = ['#ffffff', '#ffffcc', '#ffcc00'];
+        for (let i = 0; i < Math.min(count * 1.5, MAX_PARTICLES - particles.length); i++) {
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const particleSize = size + Math.random() * 0.5;
+            particles.push({
+                x, y,
+                size: particleSize,
+                life: 20,
+                color,
+                dx: (Math.random() - 0.5) * 10,
+                dy: (Math.random() - 0.5) * 10
+            });
+        }
+        if (isFinal) {
+            for (let i = 0; i < Math.min(count, MAX_PARTICLES - particles.length); i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push({
+                    x, y,
+                    size: 1 + Math.random() * 0.5,
+                    life: 25,
+                    color,
+                    dx: (Math.random() - 0.5) * 12,
+                    dy: (Math.random() - 0.5) * 12
+                });
+            }
+        }
+        playSound(100, 0.6, 'sine', 0.25);
+    }
+
+    function checkCollisions() {
+        players.forEach(p => {
+            if (!p.ships.length) {
+                p.bullets = [];
+                return;
+            }
+            for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
+                const b = p.bullets[bi];
+                players.forEach(targetPlayer => {
+                    if (targetPlayer !== p && targetPlayer.alive) {
+                        for (let si = targetPlayer.ships.length - 1; si >= 0; si--) {
+                            const s = targetPlayer.ships[si];
+                            const dist = Math.hypot(s.x - b.x, s.y - b.y);
+                            if (dist < 8) {
+                                s.hp -= 40;
+                                s.dx -= b.dx * 0.06;
+                                s.dy -= b.dy * 0.06;
+                                showDamage(s.x, s.y, 40, targetPlayer.traitColor);
+                                explosion(b.x, b.y, 6, targetPlayer.traitColor);
+                                if (s.hp <= 0) {
+                                    targetPlayer.ships.splice(si, 1);
+                                    explosion(s.x, s.y, 50, targetPlayer.traitColor);
+                                }
+                                p.bullets.splice(bi, 1);
+                                return;
+                            }
+                        }
+                    }
+                });
+
+                if (p.bullets[bi]) {
+                    asteroids.forEach((a, ai) => {
+                        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+                        if (dist < a.size) {
+                            a.hp -= 40;
+                            showDamage(a.x, a.y, 40, '#fff');
+                            explosion(b.x, b.y, 6, '#999999');
+                            if (a.hp <= 0) {
+                                asteroids.splice(ai, 1);
+                                explosion(a.x, a.y, 50, '#999999');
+                                if (a.size > 6) {
+                                    for (let i = 0; i < 2; i++) {
+                                        asteroids.push({
+                                            x: a.x + (Math.random() - 0.5) * a.size,
+                                            y: a.y + (Math.random() - 0.5) * a.size,
+                                            size: a.size / 2,
+                                            dx: (Math.random() - 0.5) * 1.8,
+                                            dy: (Math.random() - 0.5) * 1.8,
+                                            angle: 0,
+                                            spin: (Math.random() - 0.5) * 0.025,
+                                            hp: 600
+                                        });
+                                    }
+                                }
+                            }
+                            p.bullets.splice(bi, 1);
+                            return;
+                        }
+                    });
+                }
+            }
+        });
+
+        for (let pi = 0; pi < players.length; pi++) {
+            const p = players[pi];
+            if (!p.ships.length) continue;
+
+            for (let si = p.ships.length - 1; si >= 0; si--) {
+                const s = p.ships[si];
+                for (let opi = 0; opi < players.length; opi++) {
+                    if (opi === pi) continue;
+                    const op = players[opi];
+                    if (!op.alive) continue;
+
+                    for (let osi = op.ships.length - 1; osi >= 0; osi--) {
+                        const os = op.ships[osi];
+                        const dist = Math.hypot(s.x - os.x, s.y - os.y);
+                        const shipSize = Math.max(2, 12 - p.ships.length * 0.02);
+                        if (dist < shipSize) {
+                            const damage = Math.max(12, Math.floor((Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy)) * 5));
+                            s.hp -= damage;
+                            os.hp -= damage;
+                            showDamage(s.x, s.y, damage, p.traitColor);
+                            showDamage(os.x, os.y, damage, op.traitColor);
+                            explosion(s.x, s.y, 12, p.traitColor);
+
+                            const dx = s.x - os.x;
+                            const dy = s.y - os.y;
+                            const distActual = Math.hypot(dx, dy) || 1;
+                            const pushForce = 0.12;
+                            s.dx += (dx / distActual) * pushForce;
+                            s.dy += (dy / distActual) * pushForce;
+                            os.dx -= (dx / distActual) * pushForce;
+                            os.dy -= (dy / distActual) * pushForce;
+
+                            if (s.hp <= 0) {
+                                p.ships.splice(si, 1);
+                                explosion(s.x, s.y, 50, p.traitColor);
+                            }
+                            if (os.hp <= 0) {
+                                op.ships.splice(osi, 1);
+                                explosion(os.x, os.y, 50, op.traitColor);
+                            }
+                            playSound(120, 0.6, 'sine', 0.3);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        asteroids.forEach((a, ai) => {
+            players.forEach(p => {
+                if (!p.ships.length || !p.alive) return;
+                for (let si = p.ships.length - 1; si >= 0; si--) {
+                    const s = p.ships[si];
+                    const dist = Math.hypot(a.x - s.x, a.y - s.y);
+                    if (dist < a.size + Math.max(2, 12 - p.ships.length * 0.02)) {
+                        const damage = 12;
+                        s.hp -= damage;
+                        a.hp -= damage;
+                        showDamage(s.x, s.y, damage, p.traitColor);
+                        showDamage(a.x, a.y, damage, '#fff');
+                        explosion(s.x, s.y, 18, p.traitColor);
+
+                        const dx = s.x - a.x;
+                        const dy = s.y - a.y;
+                        const distActual = Math.hypot(dx, dy) || 1;
+                        const pushForce = 0.18;
+                        s.dx += (dx / distActual) * pushForce;
+                        s.dy += (dy / distActual) * pushForce;
+
+                        if (s.hp <= 0) {
+                            p.ships.splice(si, 1);
+                            explosion(s.x, s.y, 50, p.traitColor);
+                        }
+                        if (a.hp <= 0) {
+                            asteroids.splice(ai, 1);
+                            explosion(a.x, a.y, 50, '#999999');
+                            if (a.size > 6) {
+                                for (let i = 0; i < 2; i++) {
+                                    asteroids.push({
+                                        x: a.x + (Math.random() - 0.5) * a.size,
+                                        y: a.y + (Math.random() - 0.5) * a.size,
+                                        size: a.size / 2,
+                                        dx: (Math.random() - 0.5) * 1.8,
+                                        dy: (Math.random() - 0.5) * 1.8,
+                                        angle: 0,
+                                        spin: (Math.random() - 0.5) * 0.025,
+                                        hp: 600
+                                    });
+                                }
+                            }
+                        }
+                        playSound(140, 0.6, 'sine', 0.3);
+                        break;
+                    }
+                }
+            });
+        });
+
+        obstacles.forEach(o => {
+            players.forEach(p => {
+                if (!p.ships.length || !p.alive) return;
+                for (let si = p.ships.length - 1; si >= 0; si--) {
+                    const s = p.ships[si];
+                    const shipSize = Math.max(2, 12 - p.ships.length * 0.02);
+                    if (s.x + shipSize > o.x && s.x - shipSize < o.x + o.w &&
+                        s.y + shipSize > o.y && s.y - shipSize < o.y + o.h) {
+                        // Collision without damage
+                        const dx = s.x - (o.x + o.w / 2);
+                        const dy = s.y - (o.y + o.h / 2);
+                        const dist = Math.hypot(dx, dy) || 1;
+                        const pushForce = 0.15;
+                        s.dx += (dx / dist) * pushForce;
+                        s.dy += (dy / dist) * pushForce;
+                        playSound(120, 0.6, 'sine', 0.3);
+                    }
+                }
+            });
+        });
+
+        players.forEach(p => {
+            if (!p.ships.length && p.alive) {
+                p.alive = false;
+                p.bullets = [];
+                eliminations.push({ name: p.isBot ? `AI ${players.indexOf(p) + 1}` : `Pilot ${players.indexOf(p) + 1}`, time: Date.now() });
+                explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 200, p.traitColor, 1.5, true);
+            }
+        });
+    }
+
+    function gameLoop(currentTime) {
+        const deltaTime = Math.min(0.1, (currentTime - lastTime) / 1000);
+        lastTime = currentTime;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        frameCount++;
+
+        drawNebula();
+        drawStars();
+        drawObstacles();
+
+        if (gameState === 'menu') {
+            menuBots.forEach((bot, i) => updatePlayer(bot, i, true, deltaTime));
+            checkCollisions();
+            menuBots.forEach((bot, i) => {
+                if (!bot.ships.length) {
+                    const pos = { x: Math.random() * (canvas.width - 25) + 12.5, y: Math.random() * (canvas.height - 25) + 12.5 };
+                    bot.ships.push({ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 1000, dx: 0, dy: 0 });
+                    bot.alive = true;
+                }
+                bot.ships.forEach((s, si) => drawShip(s, bot.ships.length, si === 0, false, bot));
+                drawBullets(bot);
+            });
+        } else if (gameState === 'countdown' || gameState === 'playing') {
+            if (gameState === 'countdown') {
+                const elapsed = Date.now() - countdownStart;
+                countdownValue = Math.max(0, Math.ceil(3 - elapsed / 1000));
+                if (elapsed > 4000) gameState = 'playing';
+            }
+
+            players.forEach((p, i) => updatePlayer(p, i, false, deltaTime));
+            spawnPowerUps();
+            updatePowerUps();
+            updateAsteroids(deltaTime);
+            checkCollisions();
+
+            players.forEach((p, i) => {
+                if (p.alive && p.ships.length > 0) {
+                    p.ships.forEach((s, si) => drawShip(s, p.ships.length, si === 0, !p.isBot, p));
+                    drawBullets(p);
+                }
+            });
+
+            updateParticles(deltaTime);
+            drawDamageFormationPowerUp();
+
+            if (gameState === 'countdown') {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '48px Orbitron';
+                ctx.textAlign = 'center';
+                ctx.fillText(countdownValue > 0 ? countdownValue : 'GO!', canvas.width / 2, canvas.height / 2);
+            }
+
+            const alivePlayers = players.filter(p => p.alive && p.ships.length > 0);
+            if (alivePlayers.length <= 1 && gameState === 'playing') {
+                gameState = 'victory';
+                victoryScreen.style.display = 'flex';
+                if (alivePlayers.length === 1) {
+                    winnerText.textContent = `${alivePlayers[0].isBot ? 'AI' : 'Pilot'} ${players.indexOf(alivePlayers[0]) + 1} Wins!`;
+                } else {
+                    winnerText.textContent = 'No Winner!';
+                }
+            }
+
+            uiPanel.innerHTML = '';
+            players.forEach((p, i) => {
+                if (p.alive && p.ships.length > 0) {
+                    const totalHP = getTotalHP(p);
+                    const maxHP = p.ships.length * 1000;
+                    const hpPercent = (totalHP / maxHP * 100).toFixed(1);
+                    const div = document.createElement('div');
+                    div.style.color = p.traitColor;
+                    div.textContent = `${p.isBot ? 'AI' : 'Pilot'} ${i + 1}: ${p.ships.length} ships, HP ${hpPercent}%`;
+                    uiPanel.appendChild(div);
+                }
+            });
+            eliminations.forEach((e, i) => {
+                if (Date.now() - e.time < 5000) {
+                    const div = document.createElement('div');
+                    div.style.color = '#ff3333';
+                    div.textContent = `${e.name} eliminated`;
+                    uiPanel.appendChild(div);
+                } else {
+                    eliminations.splice(i, 1);
+                }
+            });
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    window.onload = () => {
+        gameContainer = document.getElementById('gameContainer');
+        canvas = document.getElementById('gameCanvas');
+        ctx = canvas.getContext('2d');
+        menu = document.getElementById('menu');
+        botMenu = document.getElementById('botMenu');
+        difficultyMenu = document.getElementById('difficultyMenu');
+        victoryScreen = document.getElementById('victoryScreen');
+        winnerText = document.getElementById('winnerText');
+        uiPanel = document.getElementById('uiPanel');
+
+        const squareSize = Math.min(gameContainer.clientWidth - sidebarWidth, gameContainer.clientHeight);
+        canvas.width = squareSize;
+        canvas.height = squareSize;
+
+        document.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if (gameState === 'victory') restartGame();
+        });
+        document.addEventListener('keyup', e => keys[e.key] = false);
+
+        initMenuBots();
+        requestAnimationFrame(gameLoop);
+    };
+</script>
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="uiPanel"></div>
     </div>
     <div id="menu">
-        <h1>SWARM WARS</h1>
-        <p style="font-size: 10px; margin: 10px 0;">Select Number of Players</p>
+        <h1>TopDownSpace .github.io</h1>
         <button onclick="showBotMenu(1)">1 Player</button>
         <button onclick="showBotMenu(2)">2 Players</button>
         <button onclick="showBotMenu(3)">3 Players</button>
-        <button onclick="showHowToPlay()">How to Play</button>
-        <button onclick="location.reload()" style="margin-top: 20px;">Back</button>
+        <button onclick="window.location.href='https://topdownspace.github.io/how-to-play.html'">How to Play</button>
+        <button id="toggleNewTabButton" onclick="toggleNewTab()">Toggle New Tab On</button>
+        <div id="faviconOptions">
+            <button onclick="setFavicon('light')">Light Favicon</button>
+            <button onclick="setFavicon('dark')">Dark Favicon</button>
+        </div>
     </div>
     <div id="botMenu" style="display: none;">
-        <h1>CONFIGURE BOTS</h1>
-        <p style="font-size: 10px; margin: 10px 0;">Select Number of Bots (0-50)</p>
+        <h1>Select Bot Count</h1>
         <button onclick="showDifficultyMenu(0)">0 Bots</button>
         <button onclick="showDifficultyMenu(1)">1 Bot</button>
         <button onclick="showDifficultyMenu(2)">2 Bots</button>
         <button onclick="showDifficultyMenu(3)">3 Bots</button>
+        <button onclick="showDifficultyMenu(4)">4 Bots</button>
         <button onclick="showDifficultyMenu(5)">5 Bots</button>
-        <button onclick="showDifficultyMenu(10)">10 Bots</button>
-        <button onclick="showDifficultyMenu(15)">15 Bots</button>
-        <button onclick="showDifficultyMenu(20)">20 Bots</button>
-        <button onclick="showDifficultyMenu(50)">50 Bots</button>
+        <button onclick="showDifficultyMenu(6)">6 Bots</button>
+        <button onclick="showDifficultyMenu(7)">7 Bots</button>
+        <button onclick="showDifficultyMenu(8)">8 Bots</button>
         <button onclick="goBack()">Back</button>
     </div>
     <div id="difficultyMenu" style="display: none;">
-        <h1>SELECT BOT DIFFICULTY</h1>
-        <p style="font-size: 10px; margin: 10px 0;">Choose Difficulty Level</p>
-        <button onclick="startGame(botCount, 'fortnite')">Fortnite Bot (Easy)</button>
-        <button onclick="startGame(botCount, 'average')">Average Gamer (Medium)</button>
-        <button onclick="startGame(botCount, 'fncs')">FNCS Champion (Hard)</button>
-        <button onclick="startGame(botCount, 'ashton')">Ashton Hunt (Extreme)</button>
+        <h1>Select Bot Difficulty</h1>
+        <button onclick="startGame(botCount, 'novice')">Novice</button>
+        <button onclick="startGame(botCount, 'standard')">Standard</button>
+        <button onclick="startGame(botCount, 'elite')">Elite</button>
+        <button onclick="startGame(botCount, 'ace')">Ace</button>
         <button onclick="goBack()">Back</button>
     </div>
-    <div id="howToPlayModal">
-        <h1>HOW TO PLAY</h1>
-        <p style="font-size: 9px; margin: 10px 0; line-height: 1.5; background: rgba(255, 255, 255, 0.1); padding: 10px;">
-            - <strong>Move:</strong> Use WASD (Player 1), Arrow Keys (Player 2), or IJKL (Player 3).<br>
-            - <strong>Formation:</strong> Press E, Shift, or O to cycle formations.<br>
-            - <strong>Dash:</strong> Press Q, /, or U (2s cooldown).<br>
-            - <strong>Shooting:</strong> Automatic based on ship count.<br>
-            - <strong>Power-Ups:</strong> Collect +2 to +20 ships.<br>
-            - <strong>Avoid:</strong> Steer clear of asteroids and obstacles.<br>
-            - <strong>Win:</strong> Be the last survivor!<br>
-            <button onclick="hideHowToPlay()">Close</button>
-        </p>
-    </div>
     <div id="victoryScreen">
-        <h1>👑 VICTORY ROYALE! 👑</h1>
-        <p id="winnerText"></p>
-        <button onclick="restartGame()">Play Again</button>
+        <h1 id="winnerText"></h1>
+        <p>Press any key to return to menu</p>
+        <button onclick="restartGame()">Restart</button>
     </div>
-    <script>
-        let playerCount = 0;
-        let botCount = 0;
-        let gameState = 'menu';
-        let eliminations = [];
-        let frameCount = 0;
-        let countdownStart = 0;
-        let countdownValue = 3;
-        const MAX_PARTICLES = 1200;
-        const MAX_SHIPS_PER_PLAYER = 100;
-        const PLAYER_SPEED = { max: 1.5, min: -0.75, acceleration: 0.075, deceleration: 0.95 };
-        const MIN_DISTANCE = 75;
-        const ASTEROID_SPAWN_DISTANCE = 75;
-
-        const gameContainer = document.getElementById('gameContainer');
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const menu = document.getElementById('menu');
-        const botMenu = document.getElementById('botMenu');
-        const difficultyMenu = document.getElementById('difficultyMenu');
-        const howToPlayModal = document.getElementById('howToPlayModal');
-        const victoryScreen = document.getElementById('victoryScreen');
-        const winnerText = document.getElementById('winnerText');
-        const uiPanel = document.getElementById('uiPanel');
-
-        const sidebarWidth = 100;
-        const squareSize = Math.min(gameContainer.clientWidth - sidebarWidth, gameContainer.clientHeight);
-        canvas.width = squareSize;
-        canvas.height = squareSize;
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(frequency, duration, type = 'square', volume = 0.1) {
-            const osc = audioCtx.createOscillator();
-            osc.type = type;
-            osc.frequency.value = frequency;
-            const gain = audioCtx.createGain();
-            gain.gain.value = volume;
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        const players = [];
-        const menuBots = [];
-        const asteroids = [];
-        const obstacles = [];
-        const particles = [];
-        const powerUps = [];
-        const stars = [];
-        const keys = {};
-        const damageDisplays = [];
-        let formationDisplays = [];
-        const powerUpDisplays = [];
-        const MAX_ASTEROIDS = 10;
-        const GRID_SIZE = 20;
-        const grid = {};
-        let botMessages = [];
-
-        const botSpeech = {
-            aggressive: {
-                lowHP: ["I'm toast!", "Going down swinging!", "This ain't over!", "Oof, that stings!"],
-                chasing: ["You're dead meat!", "Run all you want!", "Got you in my sights!", "Here I come!"],
-                formation: ["Smash time!", "Wrecking crew!", "Full-on chaos!", "Bam, lineup!"],
-                powerUp: ["More ammo, baby!", "Jackpot!", "Locked and loaded!", "Boom, extra juice!"]
-            },
-            defensive: {
-                lowHP: ["I'm outta here!", "Somebody cover me!", "This is bad!", "Ouch, too close!"],
-                chasing: ["Back off, dude!", "Just watching you!", "Stay away!", "Not today!"],
-                formation: ["Wall up!", "Hold the fort!", "Safe zone!", "Turtle mode!"],
-                powerUp: ["Saved my bacon!", "More buddies!", "Backup’s here!", "Sweet relief!"]
-            },
-            dashy: {
-                lowHP: ["Gotta bolt!", "Catch me if you can!", "Zoom, outta trouble!", "Legging it!"],
-                chasing: ["Too slow, pal!", "Racing you down!", "Zip zap!", "On your tail!"],
-                formation: ["Speed squad!", "Dash dance!", "Quick shuffle!", "Blur of glory!"],
-                powerUp: ["Faster, yeah!", "Speed king!", "Turbo time!", "Zoom boost!"]
-            },
-            formation: {
-                lowHP: ["Plan’s crumbling!", "Stick together!", "Uh-oh, breaking!", "Help the swarm!"],
-                chasing: ["Line ‘em up!", "Perfect trap!", "Gotcha covered!", "Sneaky move!"],
-                formation: ["Shape shift!", "Tactic switch!", "Clever, huh?", "Form funky!"],
-                powerUp: ["Swarm’s bigger!", "More brains!", "Unit boost!", "Tactic win!"]
-            }
-        };
-
-        function adjustBrightness(hex, brightness) {
-            const r = Math.min(255, parseInt(hex.slice(1, 3), 16) * brightness);
-            const g = Math.min(255, parseInt(hex.slice(3, 5), 16) * brightness);
-            const b = Math.min(255, parseInt(hex.slice(5, 7), 16) * brightness);
-            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-        }
-
-        function getGridCell(x, y) {
-            return `${Math.floor(x / GRID_SIZE)},${Math.floor(y / GRID_SIZE)}`;
-        }
-
-        function showBotMenu(players) {
-            playerCount = players;
-            menu.style.display = 'none';
-            botMenu.style.display = 'flex';
-        }
-
-        function showDifficultyMenu(bots) {
-            botCount = bots;
-            botMenu.style.display = 'none';
-            if (botCount === 0) startGame(0, null);
-            else difficultyMenu.style.display = 'flex';
-        }
-
-        function goBack() {
-            if (difficultyMenu.style.display !== 'none') {
-                difficultyMenu.style.display = 'none';
-                botMenu.style.display = 'flex';
-            } else if (botMenu.style.display !== 'none') {
-                botMenu.style.display = 'none';
-                menu.style.display = 'flex';
-            }
-        }
-
-        function initMenuBots() {
-            menuBots.length = 0;
-            const positions = [];
-            const getSafePosition = () => {
-                let x, y;
-                do {
-                    x = Math.random() * (canvas.width - 25) + 12.5;
-                    y = Math.random() * (canvas.height - 25) + 12.5;
-                } while (positions.some(pos => Math.hypot(pos.x - x, pos.y - y) < MIN_DISTANCE));
-                positions.push({ x, y });
-                return { x, y };
-            };
-
-            const botStyles = {
-                'aggressive': { style: 'aggressive', baseColor: '#ff0000' },
-                'defensive': { style: 'defensive', baseColor: '#0000ff' },
-                'dashy': { style: 'dashy', baseColor: '#00ff00' },
-                'formation': { style: 'formation', baseColor: '#ffa500' }
-            };
-            for (let i = 0; i < 10; i++) {
-                const pos = getSafePosition();
-                const styleKeys = Object.keys(botStyles);
-                const randomStyle = styleKeys[Math.floor(Math.random() * styleKeys.length)];
-                const { style, baseColor } = botStyles[randomStyle];
-                const brightness = Math.max(0.3, Math.min(1.0, 0.6 + (Math.random() * 0.6 - 0.3))); // Average brightness
-                const color = adjustBrightness(baseColor, brightness);
-                menuBots.push({
-                    ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: Infinity, color, dx: (Math.random() - 0.5) * 0.25, dy: (Math.random() - 0.5) * 0.25 }],
-                    keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
-                    bullets: [],
-                    alive: true,
-                    formation: 'spiral',
-                    lastShot: 0,
-                    lastDash: 0,
-                    dashEnd: 0,
-                    dashSpeed: 0,
-                    formationChangeSpeed: 0,
-                    isBot: true,
-                    difficulty: 'average',
-                    style: style,
-                    brightness: brightness,
-                    lastMessageTime: 0
-                });
-            }
-        }
-
-        function startGame(bots, difficulty) {
-            botCount = bots;
-            players.length = 0;
-            menuBots.length = 0;
-            asteroids.length = 0;
-            obstacles.length = 0;
-            particles.length = 0;
-            powerUps.length = 0;
-            damageDisplays.length = 0;
-            formationDisplays.length = 0;
-            powerUpDisplays.length = 0;
-            botMessages.length = 0;
-            Object.keys(grid).forEach(key => delete grid[key]);
-
-            const positions = [];
-            const getSafePosition = () => {
-                let x, y;
-                do {
-                    x = Math.random() * (canvas.width - 25) + 12.5;
-                    y = Math.random() * (canvas.height - 25) + 12.5;
-                } while (positions.some(pos => Math.hypot(pos.x - x, pos.y - y) < MIN_DISTANCE));
-                positions.push({ x, y });
-                return { x, y };
-            };
-
-            const humanConfigs = [
-                { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#f00' },
-                { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#0f0' },
-                { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#00f' }
-            ];
-            for (let i = 0; i < playerCount; i++) {
-                const pos = getSafePosition();
-                players.push({
-                    ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 200, color: humanConfigs[i].color, dx: (Math.random() - 0.5) * 0.25, dy: (Math.random() - 0.5) * 0.25 }],
-                    keys: humanConfigs[i].keys,
-                    bullets: [],
-                    alive: true,
-                    formation: 'spiral',
-                    lastShot: 0,
-                    lastDash: 0,
-                    dashEnd: 0,
-                    dashSpeed: 0,
-                    formationChangeSpeed: 0,
-                    isBot: false,
-                    difficulty: 'player',
-                    lastMessageTime: 0
-                });
-            }
-
-            const botStyles = {
-                'aggressive': { style: 'aggressive', baseColor: '#ff0000' },
-                'defensive': { style: 'defensive', baseColor: '#0000ff' },
-                'dashy': { style: 'dashy', baseColor: '#00ff00' },
-                'formation': { style: 'formation', baseColor: '#ffa500' }
-            };
-            const difficultyBrightness = { 'fortnite': 0.4, 'average': 0.6, 'fncs': 0.8, 'ashton': 1.0 };
-            for (let i = 0; i < botCount; i++) {
-                const pos = getSafePosition();
-                const botDifficulty = difficulty || 'average';
-                const styleKeys = Object.keys(botStyles);
-                const randomStyle = styleKeys[Math.floor(Math.random() * styleKeys.length)];
-                const { style, baseColor } = botStyles[randomStyle];
-                const brightness = Math.max(0.3, Math.min(1.0, difficultyBrightness[botDifficulty] + (Math.random() * 0.6 - 0.3)));
-                const color = adjustBrightness(baseColor, brightness);
-                players.push({
-                    ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 200, color, dx: (Math.random() - 0.5) * 0.25, dy: (Math.random() - 0.5) * 0.25 }],
-                    keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
-                    bullets: [],
-                    alive: true,
-                    formation: 'spiral',
-                    lastShot: 0,
-                    lastDash: 0,
-                    dashEnd: 0,
-                    dashSpeed: 0,
-                    formationChangeSpeed: 0,
-                    isBot: true,
-                    difficulty: botDifficulty,
-                    style: style,
-                    brightness: brightness,
-                    lastMessageTime: 0
-                });
-            }
-
-            gameState = 'countdown';
-            countdownStart = Date.now();
-            countdownValue = 3;
-            menu.style.display = 'none';
-            botMenu.style.display = 'none';
-            difficultyMenu.style.display = 'none';
-            victoryScreen.style.display = 'none';
-            uiPanel.style.display = 'block';
-            spawnObstacles();
-            spawnStars();
-            spawnNebula();
-            spawnAsteroids();
-            frameCount = 0;
-        }
-
-        function restartGame() {
-            gameState = 'menu';
-            victoryScreen.style.display = 'none';
-            menu.style.display = 'flex';
-            uiPanel.style.display = 'none';
-            eliminations = [];
-            players.length = 0;
-            asteroids.length = 0;
-            obstacles.length = 0;
-            particles.length = 0;
-            powerUps.length = 0;
-            botMessages.length = 0;
-            initMenuBots();
-            frameCount = 0;
-        }
-
-        function drawShip(ship, totalEntities, isLead, isPlayer) {
-            ctx.save();
-            ctx.translate(ship.x, ship.y);
-            ctx.rotate(ship.angle);
-            const size = Math.max(1, 10 - totalEntities * 0.01);
-            ctx.fillStyle = ship.color;
-            ctx.beginPath();
-            ctx.moveTo(size, 0);
-            ctx.lineTo(-size / 2, size / 2);
-            ctx.lineTo(-size / 2, -size / 2);
-            ctx.closePath();
-            ctx.fill();
-            if (ship.speed > 0 && Math.random() > 0.5) {
-                ctx.fillStyle = '#ff0';
-                ctx.fillRect(-size / 2 - 1, -size / 4, 1, size / 2);
-            }
-            ctx.restore();
-            if (isLead && isPlayer) {
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.moveTo(ship.x - 5, ship.y - size - 5);
-                ctx.lineTo(ship.x, ship.y - size - 10);
-                ctx.lineTo(ship.x + 5, ship.y - size - 5);
-                ctx.fill();
-            }
-        }
-
-        function showDamage(x, y, damage, color) {
-            const offsetX = (Math.random() - 0.5) * 10;
-            const offsetY = (Math.random() - 0.5) * 10;
-            damageDisplays.push({ x: x + offsetX, y: y + offsetY - 2, damage, color, time: Date.now() });
-        }
-
-        function showFormation(x, y, formation, color) {
-            formationDisplays = [{ x, y, formation, color, time: Date.now() }];
-        }
-
-        function showPowerUp(x, y, count, color) {
-            powerUpDisplays.push({ x, y, text: `+${count} Ships!`, color, time: Date.now() });
-        }
-
-        function showBotMessage(player, message) {
-            if (Date.now() - player.lastMessageTime > 5000) { // 5-second cooldown
-                botMessages.push({ x: player.ships[0].x, y: player.ships[0].y - 15, text: message, color: player.ships[0].color, time: Date.now() });
-                player.lastMessageTime = Date.now();
-            }
-        }
-
-        function drawDamageFormationPowerUp() {
-            damageDisplays.forEach((d, i) => {
-                if (Date.now() - d.time > 500) damageDisplays.splice(i, 1);
-                else {
-                    ctx.fillStyle = d.color;
-                    ctx.font = '6px "Press Start 2P"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`- ${d.damage}`, d.x, d.y);
-                }
-            });
-            formationDisplays.forEach((f, i) => {
-                if (Date.now() - f.time > 2000) formationDisplays.splice(i, 1);
-                else {
-                    ctx.fillStyle = f.color;
-                    ctx.font = '8px "Press Start 2P"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(f.formation, f.x, f.y - 5);
-                }
-            });
-            powerUpDisplays.forEach((p, i) => {
-                if (Date.now() - p.time > 2000) powerUpDisplays.splice(i, 1);
-                else {
-                    ctx.fillStyle = p.color;
-                    ctx.font = '8px "Press Start 2P"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(p.text, p.x, p.y - 5);
-                }
-            });
-            botMessages.forEach((m, i) => {
-                if (Date.now() - m.time > 2000) botMessages.splice(i, 1);
-                else {
-                    ctx.fillStyle = m.color;
-                    ctx.font = '6px "Press Start 2P"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(m.text, m.x, m.y);
-                }
-            });
-        }
-
-        function drawBullets(player) {
-            player.bullets.forEach(b => {
-                ctx.strokeStyle = b.color;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(b.x, b.y);
-                const length = 5;
-                const endX = b.x - b.dx * length / Math.sqrt(b.dx * b.dx + b.dy * b.dy);
-                const endY = b.y - b.dy * length / Math.sqrt(b.dx * b.dx + b.dy * b.dy);
-                ctx.lineTo(endX, endY);
-                ctx.stroke();
-            });
-        }
-
-        function updatePlayer(player, index, isMenuBot = false) {
-            if (!player.alive || !player.ships[0]) return;
-            if (!isMenuBot && gameState !== 'playing' && gameState !== 'victory') return;
-            const leadShip = player.ships[0];
-            const { up, down, left, right, form, dash } = player.keys;
-
-            let isForming = false;
-            if (!player.isBot) {
-                if (keys[up]) leadShip.speed = Math.min(leadShip.speed + PLAYER_SPEED.acceleration, PLAYER_SPEED.max);
-                else if (keys[down]) leadShip.speed = Math.max(leadShip.speed - PLAYER_SPEED.acceleration, PLAYER_SPEED.min);
-                else if (Date.now() > player.dashEnd) leadShip.speed *= PLAYER_SPEED.deceleration;
-                if (keys[left]) leadShip.angle -= 0.1;
-                if (keys[right]) leadShip.angle += 0.1;
-                if (keys[form]) {
-                    keys[form] = false;
-                    player.formationChangeSpeed = leadShip.speed;
-                    player.formation = getNextFormation(player.formation);
-                    showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
-                    isForming = true;
-                }
-                if (keys[dash] && Date.now() - player.lastDash > 2000) {
-                    player.dashSpeed = leadShip.speed + 4;
-                    player.dashEnd = Date.now() + 200;
-                    player.lastDash = Date.now();
-                    playSound(1000, 0.2, 'triangle', 0.2);
-                }
-            } else {
-                let targetPlayer = null;
-                let minDistanceToPlayer = Infinity;
-                const targetArray = isMenuBot ? menuBots : players;
-
-                targetArray.forEach(p => {
-                    if (p.alive && p !== player && p.ships.length > 0) {
-                        const dist = Math.hypot(p.ships[0].x - leadShip.x, p.ships[0].y - leadShip.y);
-                        if (dist < minDistanceToPlayer) {
-                            minDistanceToPlayer = dist;
-                            targetPlayer = p;
-                        }
-                    }
-                });
-
-                if (targetPlayer) {
-                    const difficultySettings = {
-                        'fortnite': { angleAdj: 0.1, lead: 0.05, dashChance: 0.01, formChance: 0.02 },
-                        'average': { angleAdj: 0.2, lead: 0.1, dashChance: 0.025, formChance: 0.05 },
-                        'fncs': { angleAdj: 0.6, lead: 0.2, dashChance: 0.075, formChance: 0.15 },
-                        'ashton': { angleAdj: 1.0, lead: 0.3, dashChance: 0.1, formChance: 0.25 }
-                    };
-                    const settings = difficultySettings[player.difficulty] || difficultySettings['average'];
-                    let angleToTarget = Math.atan2(targetPlayer.ships[0].y - leadShip.y, targetPlayer.ships[0].x - leadShip.x);
-                    leadShip.angle += (angleToTarget - leadShip.angle) * settings.angleAdj;
-
-                    const targetDistance = minDistanceToPlayer;
-                    if (targetDistance > 50) leadShip.speed = Math.min(leadShip.speed + PLAYER_SPEED.acceleration, PLAYER_SPEED.max);
-                    else if (targetDistance < 40) leadShip.speed = Math.max(leadShip.speed - PLAYER_SPEED.acceleration, PLAYER_SPEED.min);
-                    else if (Date.now() > player.dashEnd) leadShip.speed *= PLAYER_SPEED.deceleration;
-
-                    // Bot talking scenarios
-                    if (player.isBot && !isMenuBot && Math.random() < 0.05) {
-                        const trait = player.style;
-                        if (leadShip.hp < 50) showBotMessage(player, botSpeech[trait].lowHP[Math.floor(Math.random() * botSpeech[trait].lowHP.length)]);
-                        else if (targetDistance < 50) showBotMessage(player, botSpeech[trait].chasing[Math.floor(Math.random() * botSpeech[trait].chasing.length)]);
-                        else if (isForming) showBotMessage(player, botSpeech[trait].formation[Math.floor(Math.random() * botSpeech[trait].formation.length)]);
-                    }
-
-                    if (targetDistance < 75 && Date.now() - player.lastShot > 150 + player.ships.length * 3) {
-                        player.ships.forEach(ship => {
-                            player.bullets.push({
-                                x: ship.x + Math.cos(ship.angle) * 2,
-                                y: ship.y + Math.sin(ship.angle) * 2,
-                                dx: Math.cos(ship.angle) * 2,
-                                dy: Math.sin(ship.angle) * 2,
-                                color: ship.color,
-                                size: 1.5,
-                                time: Date.now(),
-                                shooter: player
-                            });
-                        });
-                        player.lastShot = Date.now();
-                        // Removed: playSound(500, 0.1, 'square', 0.15);
-                    }
-
-                    if (Math.random() < settings.dashChance && Date.now() - player.lastDash > 2000 && targetDistance > 50) {
-                        player.dashSpeed = leadShip.speed + 4;
-                        player.dashEnd = Date.now() + 200;
-                        player.lastDash = Date.now();
-                        playSound(1000, 0.2, 'triangle', 0.2);
-                    }
-
-                    if (Math.random() < settings.formChance) {
-                        player.formationChangeSpeed = leadShip.speed;
-                        player.formation = getNextFormation(player.formation);
-                        showFormation(leadShip.x, leadShip.y, player.formation, '#fff');
-                        isForming = true;
-                    }
-                }
-            }
-
-            if (Date.now() <= player.dashEnd) {
-                leadShip.speed = player.dashSpeed;
-                particles.push({
-                    x: leadShip.x - Math.cos(leadShip.angle) * 2.5,
-                    y: leadShip.y - Math.sin(leadShip.angle) * 2.5,
-                    size: 0.75,
-                    life: 20,
-                    color: '#ff0',
-                    dx: -Math.cos(leadShip.angle) * 0.5,
-                    dy: -Math.sin(leadShip.angle) * 0.5
-                });
-            } else if (player.dashSpeed > 0) {
-                player.dashSpeed *= 0.95;
-                leadShip.speed = Math.max(leadShip.speed * 0.95, player.dashSpeed);
-                if (player.dashSpeed < 0.05) player.dashSpeed = 0;
-            }
-
-            player.ships.forEach((ship, i) => {
-                let targetX, targetY, offsetX, offsetY;
-                if (i === 0) {
-                    ship.dx = Math.cos(ship.angle) * ship.speed * 1.5;
-                    ship.dy = Math.sin(ship.angle) * ship.speed * 1.5;
-                } else {
-                    const formations = {
-                        'diamond': () => { offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 2.5; offsetY = i * 2.5; },
-                        'compact': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 3.5; offsetY = Math.sin(angle) * 3.5; },
-                        'swarm': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 7.5; offsetY = Math.sin(angle) * 7.5; },
-                        'line-h': () => { offsetX = i * 5; offsetY = 0; },
-                        'line-v': () => { offsetX = 0; offsetY = i * 5; },
-                        'circle': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 5; offsetY = Math.sin(angle) * 5; },
-                        'spiral': () => { const radius = Math.min(10, i * 1); const angle = i * 0.8; offsetX = Math.cos(angle) * radius; offsetY = Math.sin(angle) * radius; }
-                    };
-                    formations[player.formation]();
-                    targetX = leadShip.x - Math.cos(leadShip.angle) * offsetY - Math.sin(leadShip.angle) * offsetX;
-                    targetY = leadShip.y - Math.sin(leadShip.angle) * offsetY + Math.cos(leadShip.angle) * offsetX;
-                    ship.dx = (targetX - ship.x) * 0.2 * 1.5;
-                    ship.dy = (targetY - ship.y) * 0.2 * 1.5;
-                    ship.angle = leadShip.angle;
-                    if (isForming) ship.speed = player.formationChangeSpeed;
-                    else ship.speed = leadShip.speed;
-                }
-                ship.dx *= 0.98;
-                ship.dy *= 0.98;
-                ship.x += ship.dx;
-                ship.y += ship.dy;
-                ship.x = Math.max(1, Math.min(canvas.width - 1, ship.x));
-                ship.y = Math.max(1, Math.min(canvas.height - 1, ship.y));
-                particles.push({ x: ship.x - Math.cos(ship.angle) * 1, y: ship.y - Math.sin(ship.angle) * 1, size: 0.15, life: 8, color: ship.color });
-            });
-
-            if (!player.isBot && Date.now() - player.lastShot > 150 + player.ships.length * 3) {
-                player.ships.forEach(ship => {
-                    player.bullets.push({
-                        x: ship.x + Math.cos(ship.angle) * 2,
-                        y: ship.y + Math.sin(ship.angle) * 2,
-                        dx: Math.cos(ship.angle) * 2,
-                        dy: Math.sin(ship.angle) * 2,
-                        color: ship.color,
-                        size: 1.5,
-                        time: Date.now(),
-                        shooter: player
-                    });
-                });
-                player.lastShot = Date.now();
-                // Removed: playSound(500, 0.1, 'square', 0.15);
-            }
-
-            // Fix frozen bullet glitch: Ensure bullets always update and expire
-            player.bullets.forEach(b => {
-                b.x += b.dx * 1.5;
-                b.y += b.dy * 1.5;
-                particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 0.15, life: 5, color: b.color });
-            });
-            player.bullets = player.bullets.filter(b => {
-                const outOfBounds = b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height;
-                const expired = Date.now() - b.time > 1500;
-                return !outOfBounds && !expired;
-            });
-        }
-
-        function getNextFormation(current) {
-            const formations = ['diamond', 'compact', 'swarm', 'line-h', 'line-v', 'circle', 'spiral'];
-            const index = formations.indexOf(current);
-            return formations[(index + 1) % formations.length];
-        }
-
-        function spawnAsteroids() {
-            while (asteroids.length < MAX_ASTEROIDS) {
-                let x, y;
-                let tooClose;
-                do {
-                    x = Math.random() * canvas.width;
-                    y = Math.random() * canvas.height;
-                    tooClose = players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < ASTEROID_SPAWN_DISTANCE));
-                } while (tooClose);
-                asteroids.push({
-                    x, y,
-                    size: 5 + Math.random() * 10,
-                    dx: (Math.random() - 0.5) * 1,
-                    dy: (Math.random() - 0.5) * 1,
-                    angle: 0,
-                    spin: (Math.random() - 0.5) * 0.02,
-                    hp: 500
-                });
-            }
-        }
-
-        function updateAsteroids() {
-            asteroids.forEach(a => {
-                if (gameState === 'playing') {
-                    a.x += a.dx;
-                    a.y += a.dy;
-                    a.dx = Math.max(-1.5, Math.min(1.5, a.dx));
-                    a.dy = Math.max(-1.5, Math.min(1.5, a.dy));
-                    if (a.x - a.size < 0 || a.x + a.size > canvas.width) a.dx *= -1;
-                    if (a.y - a.size < 0 || a.y + a.size > canvas.height) a.dy *= -1;
-                }
-                a.angle += a.spin;
-                ctx.fillStyle = '#888';
-                ctx.beginPath();
-                for (let j = 0; j < 10; j++) {
-                    const angle = a.angle + (Math.PI * 2 * j) / 10;
-                    const r = a.size * (0.8 + Math.random() * 0.2);
-                    ctx[j === 0 ? 'moveTo' : 'lineTo'](a.x + Math.cos(angle) * r, a.y + Math.sin(angle) * r);
-                }
-                ctx.closePath();
-                ctx.fill();
-            });
-        }
-
-        function spawnObstacles() {
-            for (let i = 0; i < 2; i++) {
-                let x, y;
-                do {
-                    x = Math.random() * canvas.width;
-                    y = Math.random() * canvas.height;
-                } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 25)));
-                obstacles.push({
-                    x, y,
-                    w: 10 + Math.random() * 10,
-                    h: 10 + Math.random() * 10,
-                    hp: 1000
-                });
-            }
-        }
-
-        function drawObstacles() {
-            obstacles.forEach(o => {
-                ctx.fillStyle = '#555';
-                ctx.fillRect(o.x, o.y, o.w, o.h);
-            });
-        }
-
-        function spawnStars() {
-            for (let i = 0; i < 300; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 0.25
-                });
-            }
-        }
-
-        function drawStars() {
-            stars.forEach(s => {
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(s.x, s.y, s.size, s.size);
-            });
-        }
-
-        const nebula = [];
-        function spawnNebula() {
-            for (let i = 0; i < 20; i++) {
-                nebula.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: 12.5 + Math.random() * 25,
-                    color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.1)`
-                });
-            }
-        }
-
-        function drawNebula() {
-            nebula.forEach(n => {
-                ctx.fillStyle = n.color;
-                ctx.fillRect(n.x - n.size / 2, n.y - n.size / 2, n.size, n.size);
-            });
-        }
-
-        function updateParticles() {
-            if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
-            particles.forEach((p, i) => {
-                p.life--;
-                if (p.dx) p.x += p.dx;
-                if (p.dy) p.y += p.dy;
-                p.dx = p.dx ? p.dx * 0.95 : 0;
-                p.dy = p.dy ? p.dy * 0.95 : 0;
-                if (p.life <= 0) particles.splice(i, 1);
-                else {
-                    ctx.fillStyle = `rgba(${parseInt(p.color.slice(1, 3), 16)}, ${parseInt(p.color.slice(3, 5), 16)}, ${parseInt(p.color.slice(5, 7), 16)}, ${p.life / 40})`;
-                    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-                }
-            });
-        }
-
-        function spawnPowerUps() {
-            if (Math.random() < 0.02) {
-                const roll = Math.random();
-                const type = roll < 0.2 ? '+2' : roll < 0.4 ? '+4' : roll < 0.6 ? '+6' : roll < 0.8 ? '+8' : roll < 0.95 ? '+10' : '+20';
-                powerUps.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    type,
-                    pulse: 0,
-                    pulseDirection: 1
-                });
-            }
-        }
-
-        function updatePowerUps() {
-            powerUps.forEach((pu, i) => {
-                pu.pulse += pu.pulseDirection * 0.1;
-                if (pu.pulse >= 1) pu.pulseDirection = -1;
-                if (pu.pulse <= 0) pu.pulseDirection = 1;
-                const radius = 10 + pu.pulse * 3; // Larger power-ups from previous update
-
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.5)';
-                ctx.beginPath();
-                ctx.arc(pu.x, pu.y, radius + 5, 0, Math.PI * 2);
-                ctx.fill();
-
-                const gradient = ctx.createRadialGradient(pu.x, pu.y, 0, pu.x, pu.y, radius);
-                gradient.addColorStop(0, '#ff0');
-                gradient.addColorStop(1, '#ffa500');
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(pu.x, pu.y, radius, 0, Math.PI * 2);
-                ctx.fill();
-
-                if (Math.random() < 0.3) {
-                    particles.push({
-                        x: pu.x + (Math.random() - 0.5) * radius * 2,
-                        y: pu.y + (Math.random() - 0.5) * radius * 2,
-                        size: 1,
-                        life: 20,
-                        color: '#fff',
-                        dx: (Math.random() - 0.5) * 1,
-                        dy: (Math.random() - 0.5) * 1
-                    });
-                }
-
-                ctx.fillStyle = '#000';
-                ctx.font = '8px "Press Start 2P"';
-                ctx.textAlign = 'center';
-                ctx.fillText(pu.type, pu.x, pu.y + 2);
-
-                players.forEach(p => {
-                    p.ships.forEach(s => {
-                        if (Math.hypot(s.x - pu.x, s.y - pu.y) < radius + 5 && p.ships.length < MAX_SHIPS_PER_PLAYER) {
-                            const count = Math.min(parseInt(pu.type.slice(1)), MAX_SHIPS_PER_PLAYER - p.ships.length);
-                            for (let j = 0; j < count; j++) {
-                                p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 100, color: s.color, dx: 0, dy: 0 });
-                                playSound(800, 0.2, 'triangle', 0.1);
-                            }
-                            showPowerUp(pu.x, pu.y, count, '#0f0');
-                            if (p.isBot) showBotMessage(p, botSpeech[p.style].powerUp[Math.floor(Math.random() * botSpeech[p.style].powerUp.length)]);
-                            powerUps.splice(i, 1);
-                            playSound(600, 0.3, 'sine', 0.2);
-                        }
-                    });
-                });
-            });
-        }
-
-        function explosion(x, y, count, baseColor = '#ff0', size = 2, isFinal = false) {
-            const colors = ['#ff0', '#f00', '#0f0', '#00f', '#fff'];
-            for (let i = 0; i < Math.min(count * 2, MAX_PARTICLES - particles.length); i++) {
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const particleSize = size + Math.random() * 1.5;
-                particles.push({
-                    x, y,
-                    size: particleSize,
-                    life: 60,
-                    color,
-                    dx: (Math.random() - 0.5) * 6,
-                    dy: (Math.random() - 0.5) * 6
-                });
-            }
-            if (isFinal) {
-                for (let i = 0; i < Math.min(count, MAX_PARTICLES - particles.length); i++) {
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    particles.push({
-                        x, y,
-                        size: 1 + Math.random() * 1,
-                        life: 90,
-                        color,
-                        dx: (Math.random() - 0.5) * 3,
-                        dy: (Math.random() - 0.5) * 3
-                    });
-                }
-            }
-            playSound(80, 0.5, 'sine', 0.2);
-        }
-
-        function checkCollisions() {
-            Object.keys(grid).forEach(key => delete grid[key]);
-            players.forEach(p => {
-                if (p.ships && p.ships.length > 0) {
-                    p.ships.forEach(s => {
-                        const cell = getGridCell(s.x, s.y);
-                        grid[cell] = grid[cell] || [];
-                        grid[cell].push(s);
-                    });
-                }
-            });
-            asteroids.forEach(a => {
-                const cell = getGridCell(a.x, a.y);
-                grid[cell] = grid[cell] || [];
-                grid[cell].push(a);
-            });
-            obstacles.forEach(o => {
-                const cell = getGridCell(o.x + o.w / 2, o.y + o.h / 2);
-                grid[cell] = grid[cell] || [];
-                grid[cell].push(o);
-            });
-
-            for (let pi = 0; pi < players.length; pi++) {
-                const p = players[pi];
-                if (!p.ships || p.ships.length === 0) continue;
-                for (let bi = p.bullets.length - 1; bi >= 0; bi--) {
-                    const b = p.bullets[bi];
-                    const cell = getGridCell(b.x, b.y);
-                    const nearby = grid[cell] || [];
-                    const adjacentCells = [
-                        cell,
-                        getGridCell(b.x + GRID_SIZE, b.y),
-                        getGridCell(b.x - GRID_SIZE, b.y),
-                        getGridCell(b.x, b.y + GRID_SIZE),
-                        getGridCell(b.x, b.y - GRID_SIZE),
-                        getGridCell(b.x + GRID_SIZE, b.y + GRID_SIZE),
-                        getGridCell(b.x + GRID_SIZE, b.y - GRID_SIZE),
-                        getGridCell(b.x - GRID_SIZE, b.y + GRID_SIZE),
-                        getGridCell(b.x - GRID_SIZE, b.y - GRID_SIZE)
-                    ].filter(c => grid[c]);
-
-                    const entities = [...new Set([].concat(...adjacentCells.map(c => grid[c])))];
-                    entities.forEach(entity => {
-                        if (entity && entity.hp && entity.angle && 'color' in entity) {
-                            const s = entity;
-                            const targetPlayer = players.find(pl => pl.ships.includes(s));
-                            if (targetPlayer && b.shooter !== targetPlayer) {
-                                const dist = Math.hypot(s.x - b.x, s.y - b.y);
-                                if (dist < 6) {
-                                    s.hp -= 30;
-                                    s.dx -= b.dx * 0.05;
-                                    s.dy -= b.dy * 0.05;
-                                    showDamage(s.x, s.y, 30, s.color);
-                                    explosion(b.x, b.y, 5, s.color);
-                                    if (s.hp <= 0) {
-                                        const ownerPlayer = targetPlayer;
-                                        if (ownerPlayer) {
-                                            const si = ownerPlayer.ships.indexOf(s);
-                                            if (si > -1) ownerPlayer.ships.splice(si, 1);
-                                            explosion(s.x, s.y, 40, s.color);
-                                        }
-                                    }
-                                    p.bullets.splice(bi, 1);
-                                    return;
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-
-            for (let pi = 0; pi < players.length; pi++) {
-                const p = players[pi];
-                if (!p.ships || p.ships.length === 0) continue;
-
-                for (let si = p.ships.length - 1; si >= 0; si--) {
-                    const s = p.ships[si];
-                    const cell = getGridCell(s.x, s.y);
-                    const nearby = grid[cell] || [];
-                    const adjacentCells = [
-                        cell,
-                        getGridCell(s.x + GRID_SIZE, s.y),
-                        getGridCell(s.x - GRID_SIZE, s.y),
-                        getGridCell(s.x, s.y + GRID_SIZE),
-                        getGridCell(s.x, s.y - GRID_SIZE),
-                        getGridCell(s.x + GRID_SIZE, s.y + GRID_SIZE),
-                        getGridCell(s.x + GRID_SIZE, s.y - GRID_SIZE),
-                        getGridCell(s.x - GRID_SIZE, s.y + GRID_SIZE),
-                        getGridCell(s.x - GRID_SIZE, s.y - GRID_SIZE)
-                    ].filter(c => grid[c]);
-
-                    const entities = [...new Set([].concat(...adjacentCells.map(c => grid[c])))];
-                    entities.forEach(entity => {
-                        if (entity && entity.hp && entity.angle && entity !== s) {
-                            const os = entity;
-                            const op = players.find(pl => pl.ships.includes(os));
-                            if (!op || op === p || !op.alive) return;
-
-                            const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                            const shipSize = Math.max(1, 10 - p.ships.length * 0.01);
-                            if (dist < shipSize) {
-                                const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy);
-                                const damage = Math.floor(speed * 4);
-                                s.hp -= damage;
-                                os.hp -= damage;
-                                showDamage(s.x, s.y, damage, s.color);
-                                showDamage(os.x, os.y, damage, os.color);
-                                explosion(s.x, s.y, 10, s.color);
-
-                                const dx = s.x - os.x;
-                                const dy = s.y - os.y;
-                                const distActual = Math.hypot(dx, dy) || 1;
-                                const pushForce = 0.1;
-                                s.dx += (dx / distActual) * pushForce;
-                                s.dy += (dy / distActual) * pushForce;
-                                os.dx -= (dx / distActual) * pushForce;
-                                os.dy -= (dy / distActual) * pushForce;
-
-                                if (s.hp <= 0) {
-                                    p.ships.splice(si, 1);
-                                    explosion(s.x, s.y, 40, s.color);
-                                }
-                                if (os.hp <= 0) {
-                                    const osi = op.ships.indexOf(os);
-                                    if (osi > -1) op.ships.splice(osi, 1);
-                                    explosion(os.x, os.y, 40, os.color);
-                                }
-                                playSound(100, 0.5, 'sine', 0.3);
-                                return;
-                            }
-                        }
-                    });
-                }
-            }
-
-            asteroids.forEach((a, ai) => {
-                players.forEach(p => {
-                    if (!p.ships || !p.alive) return;
-                    p.ships.forEach((s, si) => {
-                        const dist = Math.hypot(a.x - s.x, a.y - s.y);
-                        if (dist < a.size + Math.max(1, 10 - p.ships.length * 0.01)) {
-                            const speed = Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(a.dx * a.dx + a.dy * a.dy);
-                            const damage = Math.floor(speed * 8);
-                            s.hp -= damage;
-                            a.hp -= damage;
-                            showDamage(s.x, s.y, damage, s.color);
-                            showDamage(a.x, a.y, damage, '#fff');
-                            explosion(s.x, s.y, 15, s.color);
-
-                            const dx = s.x - a.x;
-                            const dy = s.y - a.y;
-                            const distActual = Math.hypot(dx, dy) || 1;
-                            const pushForce = 0.15;
-                            s.dx += (dx / distActual) * pushForce;
-                            s.dy += (dy / distActual) * pushForce;
-
-                            if (s.hp <= 0) {
-                                p.ships.splice(si, 1);
-                                explosion(s.x, s.y, 40, s.color);
-                            }
-                            if (a.hp <= 0) {
-                                asteroids.splice(ai, 1);
-                                explosion(a.x, a.y, 40, '#888');
-                                if (a.size > 5) {
-                                    for (let i = 0; i < 2; i++) {
-                                        asteroids.push({
-                                            x: a.x + (Math.random() - 0.5) * a.size,
-                                            y: a.y + (Math.random() - 0.5) * a.size,
-                                            size: a.size / 2,
-                                            dx: (Math.random() - 0.5) * 1.5,
-                                            dy: (Math.random() - 0.5) * 1.5,
-                                            angle: 0,
-                                            spin: (Math.random() - 0.5) * 0.02,
-                                            hp: 250
-                                        });
-                                    }
-                                }
-                            }
-                            playSound(120, 0.5, 'sine', 0.3);
-                            return;
-                        }
-                    });
-                });
-            });
-
-            obstacles.forEach(o => {
-                players.forEach(p => {
-                    if (!p.ships || !p.alive) return;
-                    p.ships.forEach((s, si) => {
-                        const shipSize = Math.max(1, 10 - p.ships.length * 0.01);
-                        if (s.x + shipSize > o.x && s.x - shipSize < o.x + o.w &&
-                            s.y + shipSize > o.y && s.y - shipSize < o.y + o.h) {
-                            const damage = Math.floor(Math.sqrt(s.dx * s.dx + s.dy * s.dy) * 4);
-                            s.hp -= damage;
-                            o.hp -= damage;
-                            showDamage(s.x, s.y, damage, s.color);
-                            explosion(s.x, s.y, 15, s.color);
-
-                            const dx = s.x - (o.x + o.w / 2);
-                            const dy = s.y - (o.y + o.h / 2);
-                            const dist = Math.hypot(dx, dy) || 1;
-                            s.dx += (dx / dist) * 0.1;
-                            s.dy += (dy / dist) * 0.1;
-
-                            if (s.hp <= 0) {
-                                p.ships.splice(si, 1);
-                                explosion(s.x, s.y, 40, s.color);
-                            }
-                            playSound(100, 0.5, 'sine', 0.3);
-                        }
-                    });
-                });
-            });
-
-            players.forEach(p => {
-                if (!p.ships || p.ships.length === 0 && p.alive) {
-                    p.alive = false;
-                    eliminations.push({ name: p.isBot ? `Bot ${players.indexOf(p) + 1}` : `Player ${players.indexOf(p) + 1}`, time: Date.now() });
-                    explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 150, p.ships[0]?.color || '#fff', 2, true);
-                }
-            });
-        }
-
-        function gameLoop() {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            frameCount++;
-
-            drawNebula();
-            drawStars();
-
-            if (gameState === 'menu') {
-                menuBots.forEach((bot, i) => updatePlayer(bot, i, true));
-                menuBots.forEach((bot, i) => bot.ships.forEach((s, si) => drawShip(s, bot.ships.length, si === 0, false)));
-            } else if (gameState === 'countdown') {
-                const elapsed = Date.now() - countdownStart;
-                countdownValue = Math.max(0, Math.ceil(3 - elapsed / 1000));
-                ctx.fillStyle = '#fff';
-                ctx.font = '32px "Press Start 2P"';
-                ctx.textAlign = 'center';
-                ctx.fillText(countdownValue || 'GO!', canvas.width / 2, canvas.height / 2);
-                if (elapsed > 3500) gameState = 'playing';
-            } else if (gameState === 'playing') {
-                players.forEach((p, i) => updatePlayer(p, i));
-                spawnPowerUps();
-                updatePowerUps();
-                updateAsteroids();
-                checkCollisions();
-
-                drawObstacles();
-                players.forEach((p, i) => {
-                    p.ships.forEach((s, si) => drawShip(s, p.ships.length, si === 0, !p.isBot));
-                    drawBullets(p);
-                });
-                updateParticles();
-                drawDamageFormationPowerUp();
-
-                const alivePlayers = players.filter(p => p.alive);
-                if (alivePlayers.length <= 1 && players.length > 1) {
-                    gameState = 'victory';
-                    const winner = alivePlayers[0];
-                    winnerText.textContent = winner ? `${winner.isBot ? 'Bot' : 'Player'} ${players.indexOf(winner) + 1} Wins!` : 'Tie!';
-                    victoryScreen.style.display = 'flex';
-                    playSound(440, 0.5, 'sine', 0.3);
-                    playSound(880, 0.5, 'sine', 0.3);
-                    explosion(canvas.width / 2, canvas.height / 2, 300, '#ff0', 2, true);
-                }
-            }
-
-            // Add topdownspace.github.io thumbnail in bottom right
-            ctx.fillStyle = '#fff';
-            ctx.font = '6px "Press Start 2P"';
-            ctx.textAlign = 'right';
-            ctx.fillText('topdownspace.github.io', canvas.width - 5, canvas.height - 5);
-
-            drawUI();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function drawUI() {
-            uiPanel.innerHTML = '';
-            const sortedPlayers = players.slice().sort((a, b) => {
-                const aHP = a.ships.reduce((sum, s) => sum + (s.hp || 0), 0);
-                const bHP = b.ships.reduce((sum, s) => sum + (s.hp || 0), 0);
-                return bHP - aHP;
-            });
-
-            sortedPlayers.forEach((p, i) => {
-                if (!p.ships) return;
-                const totalHP = p.ships.reduce((sum, s) => sum + (s.hp || 0), 0);
-                const div = document.createElement('div');
-                div.style.color = p.ships[0]?.color || '#fff';
-                div.textContent = `${p.isBot ? 'Bot' : 'P'}${i + 1}: ${Math.round(totalHP)}HP (${p.ships.length})`;
-                if (totalHP <= 100) div.classList.add('shake');
-                uiPanel.appendChild(div);
-            });
-
-            eliminations.forEach((e, i) => {
-                if (Date.now() - e.time < 5000) {
-                    const div = document.createElement('div');
-                    div.style.color = '#f00';
-                    div.textContent = `${e.name} Eliminated!`;
-                    uiPanel.appendChild(div);
-                } else eliminations.splice(i, 1);
-            });
-        }
-
-        function showHowToPlay() {
-            howToPlayModal.classList.add('show');
-        }
-
-        function hideHowToPlay() {
-            howToPlayModal.classList.remove('show');
-        }
-
-        window.addEventListener('keydown', e => keys[e.key] = true);
-        window.addEventListener('keyup', e => keys[e.key] = false);
-
-        initMenuBots();
-        requestAnimationFrame(gameLoop);
-    </script>
 </body>
 </html>
