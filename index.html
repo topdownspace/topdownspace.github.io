@@ -6,6 +6,9 @@
     <title>TopDownSpace</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <link id="favicon" rel="icon" type="image/png" href="https://topdownspace.github.io/favicon-32x32.png">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6598513151197899"
+     crossorigin="anonymous"></script>
+
     <style>
         html, body {
             margin: 0;
@@ -35,7 +38,7 @@
             flex-grow: 1;
             background: transparent;
         }
-        #menu, #botMenu, #difficultyMenu {
+        #menu, #botMenu, #difficultyMenu, #moduleMenu {
             position: absolute;
             top: 0;
             left: 0;
@@ -119,12 +122,17 @@
             animation: victoryGlow 1s infinite alternate;
         }
         @keyframes victoryGlow {
-            0% { text-shadow: 0 0 10px #ffcc00; }
-            100% { text-shadow: 0 0 20px #ff3333; }
+            0% { text-shadow: 0 0 10px #ffcc00; transform: scale(1); }
+            100% { text-shadow: 0 0 20px #ff3333; transform: scale(1.05); }
         }
         #victoryScreen h1 {
             font-size: 48px;
             margin-bottom: 20px;
+            animation: spin 2s infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         #victoryScreen p {
             font-size: 18px;
@@ -142,11 +150,30 @@
             display: none;
             flex-direction: column;
         }
+        #moduleChecklist {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background: rgba(0, 0, 50, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.5);
+        }
+        #moduleChecklist label {
+            margin: 5px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        #moduleChecklist input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
     </style>
 </head>
 <script>
     // DOM elements
-    let gameContainer, canvas, ctx, menu, botMenu, difficultyMenu, victoryScreen, winnerText, uiPanel;
+    let gameContainer, canvas, ctx, menu, botMenu, difficultyMenu, moduleMenu, victoryScreen, winnerText, uiPanel;
 
     // Game state and constants
     let playerCount = 0;
@@ -158,7 +185,7 @@
     let countdownStart = 0;
     let countdownValue = 3;
     const MAX_PARTICLES = 2000;
-    const MAX_SHIPS_PER_PLAYER = 100; // Increased from 50 to 100
+    let MAX_SHIPS_PER_PLAYER = 100;
     const PLAYER_SPEED = { max: 1.5, min: -0.9, acceleration: 0.08, deceleration: 0.94 };
     const MIN_DISTANCE = 100;
     const ASTEROID_SPAWN_DISTANCE = 100;
@@ -176,8 +203,30 @@
     const damageDisplays = [];
     let formationDisplays = [];
     const powerUpDisplays = [];
-    const MAX_ASTEROIDS = 15;
+    let MAX_ASTEROIDS = 15;
     let botMessages = [];
+    let selectedDifficulty = null;
+
+    // Module settings
+    let modules = {
+        noAsteroids: false,
+        doubleAsteroids: false,
+        doubleHealth: false,
+        oneShot: false,
+        doublePowerUps: false,
+        maxShips1000: false,
+        chromebookMode: false,
+        pixelMode: false,
+        smallMode: false,
+        threeLives: false
+    };
+
+    // Load modules from localStorage
+    function loadModules() {
+        const savedModules = localStorage.getItem('gameModules');
+        if (savedModules) modules = JSON.parse(savedModules);
+    }
+    loadModules();
 
     // New Tab toggle state
     let isNewTabMode = false;
@@ -222,6 +271,7 @@
         else if (mode === 'dark') favicon.href = 'darkchromenewtab32x32.png';
     }
 
+    // Bot speech
     const botSpeech = {
         aggressive: {
             lowHP: ["Shields critical!", "Taking heavy fire!", "Systems failing!"],
@@ -259,7 +309,10 @@
         const b = Math.min(255, parseInt(hex.slice(5, 7), 16) * brightness);
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
+</script>
 
+<script>
+    // Menu navigation
     function showBotMenu(players) {
         playerCount = players;
         menu.style.display = 'none';
@@ -269,12 +322,44 @@
     function showDifficultyMenu(bots) {
         botCount = bots;
         botMenu.style.display = 'none';
-        if (botCount === 0) startGame(0, null);
-        else difficultyMenu.style.display = 'flex';
+        difficultyMenu.style.display = 'flex';
+    }
+
+    function showModuleMenu(difficulty) {
+        selectedDifficulty = difficulty;
+        difficultyMenu.style.display = 'none';
+        moduleMenu.style.display = 'flex';
+        const checklist = document.getElementById('moduleChecklist');
+        checklist.innerHTML = '';
+        const moduleOptions = [
+            { id: 'noAsteroids', label: 'No Asteroids' },
+            { id: 'doubleAsteroids', label: 'Double Asteroids' },
+            { id: 'doubleHealth', label: 'Double Health' },
+            { id: 'oneShot', label: 'One Shot' },
+            { id: 'doublePowerUps', label: 'Double Power-Ups' },
+            { id: 'maxShips1000', label: 'Max Ships 1000' },
+            { id: 'chromebookMode', label: 'Chromebook Mode' },
+            { id: 'pixelMode', label: 'Pixel Mode' },
+            { id: 'smallMode', label: 'Small Mode' },
+            { id: 'threeLives', label: '3 Lives' }
+        ];
+        moduleOptions.forEach(opt => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = opt.id;
+            checkbox.checked = modules[opt.id];
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(opt.label));
+            checklist.appendChild(label);
+        });
     }
 
     function goBack() {
-        if (difficultyMenu.style.display !== 'none') {
+        if (moduleMenu.style.display !== 'none') {
+            moduleMenu.style.display = 'none';
+            difficultyMenu.style.display = 'flex';
+        } else if (difficultyMenu.style.display !== 'none') {
             difficultyMenu.style.display = 'none';
             botMenu.style.display = 'flex';
         } else if (botMenu.style.display !== 'none') {
@@ -307,10 +392,10 @@
             const styleKeys = Object.keys(botStyles);
             const randomStyle = styleKeys[Math.floor(Math.random() * styleKeys.length)];
             const { style, baseColor } = botStyles[randomStyle];
-            const brightness = Math.max(0.85, Math.min(1.0, 0.85 + (Math.random() * 0.15)));
+            const brightness = Math.random() * 0.3 + 0.7; // Varied colors for all difficulties
             const traitColor = adjustBrightness(baseColor, brightness);
             menuBots.push({
-                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 1000, dx: 0, dy: 0 }],
+                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 }],
                 keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
                 bullets: [],
                 alive: true,
@@ -331,8 +416,25 @@
         }
     }
 
-    function startGame(bots, difficulty) {
+    function startGame(bots, withModules) {
         botCount = bots;
+        if (withModules) {
+            modules.noAsteroids = document.getElementById('noAsteroids').checked;
+            modules.doubleAsteroids = document.getElementById('doubleAsteroids').checked;
+            modules.doubleHealth = document.getElementById('doubleHealth').checked;
+            modules.oneShot = document.getElementById('oneShot').checked;
+            modules.doublePowerUps = document.getElementById('doublePowerUps').checked;
+            modules.maxShips1000 = document.getElementById('maxShips1000').checked;
+            modules.chromebookMode = document.getElementById('chromebookMode').checked;
+            modules.pixelMode = document.getElementById('pixelMode').checked;
+            modules.smallMode = document.getElementById('smallMode').checked;
+            modules.threeLives = document.getElementById('threeLives').checked;
+            localStorage.setItem('gameModules', JSON.stringify(modules));
+        }
+
+        MAX_SHIPS_PER_PLAYER = modules.maxShips1000 ? 1000 : 100;
+        MAX_ASTEROIDS = modules.noAsteroids ? 0 : (modules.doubleAsteroids ? 30 : 15);
+
         players.length = 0;
         menuBots.length = 0;
         asteroids.length = 0;
@@ -364,7 +466,7 @@
             const pos = getSafePosition();
             const traitColor = humanConfigs[i].color;
             players.push({
-                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 1000, dx: 0, dy: 0 }],
+                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 }],
                 keys: humanConfigs[i].keys,
                 bullets: [],
                 alive: true,
@@ -376,7 +478,8 @@
                 isBot: false,
                 difficulty: 'player',
                 traitColor: traitColor,
-                lastMessageTime: 0
+                lastMessageTime: 0,
+                lives: modules.threeLives ? 3 : 1
             });
         }
 
@@ -386,7 +489,6 @@
             'dashy': { style: 'dashy', baseColor: '#33ff33' },
             'formation': { style: 'formation', baseColor: '#ffcc00' }
         };
-        const difficultyBrightness = { 'novice': 0.8, 'standard': 0.85, 'elite': 0.9, 'ace': 1.0 };
         const styleKeys = Object.keys(botStyles);
         const botTraits = [];
 
@@ -404,13 +506,12 @@
 
         for (let i = 0; i < botCount; i++) {
             const pos = getSafePosition();
-            const botDifficulty = difficulty || 'standard';
             const style = botTraits[i];
             const { baseColor } = botStyles[style];
-            const brightness = difficultyBrightness[botDifficulty];
+            const brightness = Math.random() * 0.3 + 0.7; // Varied colors for all difficulties
             const traitColor = adjustBrightness(baseColor, brightness);
             players.push({
-                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 1000, dx: 0, dy: 0 }],
+                ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 }],
                 keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
                 bullets: [],
                 alive: true,
@@ -420,13 +521,14 @@
                 dashEnd: 0,
                 dashSpeed: 0,
                 isBot: true,
-                difficulty: botDifficulty,
+                difficulty: selectedDifficulty || 'standard',
                 style: style,
                 traitColor: traitColor,
                 lastMessageTime: 0,
                 botState: 'patrolling',
                 target: null,
-                lastDecision: 0
+                lastDecision: 0,
+                lives: modules.threeLives ? 3 : 1
             });
         }
 
@@ -436,6 +538,7 @@
         menu.style.display = 'none';
         botMenu.style.display = 'none';
         difficultyMenu.style.display = 'none';
+        moduleMenu.style.display = 'none';
         victoryScreen.style.display = 'none';
         uiPanel.style.display = 'block';
         spawnObstacles();
@@ -443,6 +546,8 @@
         spawnNebula();
         spawnAsteroids();
         frameCount = 0;
+        if (modules.pixelMode) canvas.style.imageRendering = 'pixelated';
+        if (modules.chromebookMode) MAX_PARTICLES = 500; // Reduce particle load
     }
 
     function restartGame() {
@@ -461,11 +566,12 @@
         frameCount = 0;
     }
 
+    // Drawing and utility functions
     function drawShip(ship, totalEntities, isLead, isPlayer, player) {
         ctx.save();
         ctx.translate(ship.x, ship.y);
         ctx.rotate(ship.angle);
-        const size = Math.max(2, 12 - totalEntities * 0.02);
+        const size = modules.smallMode ? Math.max(1, 6 - totalEntities * 0.01) : Math.max(2, 12 - totalEntities * 0.02);
         ctx.beginPath();
         ctx.moveTo(size, 0);
         ctx.lineTo(-size * 0.6, size * 0.6);
@@ -512,7 +618,7 @@
     }
 
     function showBotMessage(player, type) {
-        if (Date.now() - player.lastMessageTime < 1000 || !player.ships[0]) return; // Reduced from 1500ms to 1000ms
+        if (Date.now() - player.lastMessageTime < 1000 || !player.ships[0]) return;
         const messages = botSpeech[player.style][type];
         if (messages) {
             botMessages.push({
@@ -531,7 +637,7 @@
             if (Date.now() - d.time > 600) damageDisplays.splice(i, 1);
             else {
                 ctx.fillStyle = d.color;
-                ctx.font = '8px Orbitron';
+                ctx.font = modules.smallMode ? '6px Orbitron' : '8px Orbitron';
                 ctx.textAlign = 'center';
                 ctx.fillText(`-${d.damage}`, d.x, d.y);
             }
@@ -540,7 +646,7 @@
             if (Date.now() - f.time > 2500) formationDisplays.splice(i, 1);
             else {
                 ctx.fillStyle = f.color;
-                ctx.font = '10px Orbitron';
+                ctx.font = modules.smallMode ? '8px Orbitron' : '10px Orbitron';
                 ctx.textAlign = 'center';
                 ctx.fillText(f.formation, f.x, f.y - 10);
             }
@@ -549,7 +655,7 @@
             if (Date.now() - p.time > 2500) powerUpDisplays.splice(i, 1);
             else {
                 ctx.fillStyle = p.color;
-                ctx.font = '10px Orbitron';
+                ctx.font = modules.smallMode ? '8px Orbitron' : '10px Orbitron';
                 ctx.textAlign = 'center';
                 ctx.fillText(p.text, p.x, p.y - 10);
             }
@@ -558,7 +664,7 @@
             if (m.life-- <= 0) botMessages.splice(i, 1);
             else {
                 ctx.fillStyle = m.color;
-                ctx.font = '8px Orbitron';
+                ctx.font = modules.smallMode ? '6px Orbitron' : '8px Orbitron';
                 ctx.textAlign = 'center';
                 ctx.fillText(m.text, m.x, m.y);
             }
@@ -583,7 +689,7 @@
 
     function isLowHealth(player) {
         const totalHP = getTotalHP(player);
-        const maxHP = player.ships.length * 1000;
+        const maxHP = player.ships.length * (modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000));
         return totalHP / maxHP < 0.35;
     }
 
@@ -602,8 +708,21 @@
         return { player: nearest, distance: minDist };
     }
 
+    function findNearestPowerUp(player) {
+        let nearest = null;
+        let minDist = Infinity;
+        powerUps.forEach(pu => {
+            const dist = Math.hypot(pu.x - player.ships[0].x, pu.y - player.ships[0].y);
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = pu;
+            }
+        });
+        return { powerUp: nearest, distance: minDist };
+    }
+
     function predictPosition(target, bulletSpeed) {
-        if (!target || !target.ships || !target.ships[0]) return { x: 0, y: 0 };
+        if (!target || !target.ships || !target.ships[0]) return { x: canvas.width / 2, y: canvas.height / 2 };
         const timeToImpact = Math.hypot(target.ships[0].x - target.ships[0].dx, target.ships[0].y - target.ships[0].dy) / bulletSpeed;
         return {
             x: target.ships[0].x + target.ships[0].dx * timeToImpact,
@@ -611,6 +730,7 @@
         };
     }
 
+    // Player and Bot update logic
     function updatePlayer(player, index, isMenuBot = false, deltaTime) {
         if (!player.alive || !player.ships.length) return;
         if (!isMenuBot && gameState !== 'playing') return;
@@ -634,7 +754,7 @@
                 player.lastDash = Date.now();
                 playSound(1200, 0.25, 'triangle', 0.25);
             }
-            if (Date.now() - player.lastShot > 120 * (1 + player.ships.length * 0.015)) { // Adjusted for 100 ships
+            if (Date.now() - player.lastShot > 120 * (1 + player.ships.length * 0.015)) {
                 const bulletSpeed = 2.5;
                 player.ships.forEach(ship => {
                     const shootAngle = ship.angle;
@@ -644,34 +764,38 @@
                         dx: Math.cos(shootAngle) * bulletSpeed,
                         dy: Math.sin(shootAngle) * bulletSpeed,
                         color: player.traitColor,
-                        size: 2,
+                        size: modules.smallMode ? 1 : 2,
                         time: Date.now(),
-                        shooter: player
+                        shooter: player,
+                        bounces: 0
                     });
                 });
                 player.lastShot = Date.now();
                 playSound(800, 0.1, 'sine', 0.15);
             }
         } else {
+            // Enhanced Bot AI
             const difficultySettings = {
-                'novice': { turnSpeed: 0.05, aimError: 0.2, reactionTime: 400, awarenessRange: 300 },
-                'standard': { turnSpeed: 0.1, aimError: 0.1, reactionTime: 250, awarenessRange: 350 },
-                'elite': { turnSpeed: 0.15, aimError: 0.05, reactionTime: 150, awarenessRange: 400 },
-                'ace': { turnSpeed: 0.2, aimError: 0.02, reactionTime: 80, awarenessRange: 450 }
+                'novice': { turnSpeed: 0.05, aimError: 0.2, reactionTime: 400, awarenessRange: 300, dashFreq: 0.1, shootFreq: 200 },
+                'standard': { turnSpeed: 0.1, aimError: 0.1, reactionTime: 250, awarenessRange: 350, dashFreq: 0.2, shootFreq: 180 },
+                'elite': { turnSpeed: 0.15, aimError: 0.05, reactionTime: 150, awarenessRange: 400, dashFreq: 0.3, shootFreq: 150 },
+                'Deity': { turnSpeed: 0.3, aimError: 0.005, reactionTime: 30, awarenessRange: 600, dashFreq: 0.6, shootFreq: 80 }
             };
             const settings = difficultySettings[player.difficulty] || difficultySettings['standard'];
             const styleParams = {
-                aggressive: { chaseRange: 450, retreatThreshold: 0.25, shootFreq: 150 }, // Increased chaseRange, reduced shootFreq
-                defensive: { chaseRange: 350, retreatThreshold: 0.45, shootFreq: 200 },
-                dashy: { chaseRange: 500, retreatThreshold: 0.3, shootFreq: 180 },
-                formation: { chaseRange: 400, retreatThreshold: 0.35, shootFreq: 175 }
+                aggressive: { chaseRange: 450, retreatThreshold: 0.25, speedBoost: 1.8 },
+                defensive: { chaseRange: 350, retreatThreshold: 0.45, speedBoost: 1.4 },
+                dashy: { chaseRange: 500, retreatThreshold: 0.3, speedBoost: 2.0 },
+                formation: { chaseRange: 400, retreatThreshold: 0.35, speedBoost: 1.6 }
             };
             const style = styleParams[player.style];
 
             if (Date.now() - player.lastDecision > settings.reactionTime) {
-                const { player: nearestEnemy, distance } = findNearestEnemy(player);
+                const { player: nearestEnemy, distance: enemyDist } = findNearestEnemy(player);
+                const { powerUp: nearestPowerUp, distance: powerUpDist } = findNearestPowerUp(player);
                 const isThreatened = players.some(p => p !== player && p.bullets.some(b => Math.hypot(b.x - leadShip.x, b.y - leadShip.y) < 60));
                 const lowHealth = isLowHealth(player);
+                const highHealth = getTotalHP(player) / (player.ships.length * (modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000))) > 0.75;
 
                 if (lowHealth) {
                     player.botState = 'retreating';
@@ -679,28 +803,30 @@
                 } else if (isThreatened) {
                     player.botState = 'evading';
                     showBotMessage(player, 'retreating');
-                } else if (nearestEnemy && distance < style.chaseRange) {
-                    player.botState = 'chasing';
+                } else if (nearestPowerUp && powerUpDist < settings.awarenessRange && player.ships.length < MAX_SHIPS_PER_PLAYER / 2) {
+                    player.botState = 'powerUpChase';
+                    player.target = nearestPowerUp;
+                    showBotMessage(player, 'powerUp');
+                } else if (nearestEnemy && enemyDist < style.chaseRange) {
+                    player.botState = highHealth && player.difficulty === 'Deity' ? 'aggressiveChase' : 'chasing';
                     player.target = nearestEnemy;
                     showBotMessage(player, 'chasing');
                 } else {
                     player.botState = 'patrolling';
                     player.target = null;
-                    if (Math.random() < 0.3) showBotMessage(player, 'formation'); // Increased from 0.2 to 0.3
+                    if (Math.random() < 0.3) showBotMessage(player, 'formation');
                 }
                 player.lastDecision = Date.now();
             }
 
-            if (player.target && (!player.target.alive || !player.target.ships || player.target.ships.length === 0)) {
-                player.target = null;
-                player.botState = 'patrolling';
-            }
-
             let targetX, targetY;
-            if (player.botState === 'chasing' && player.target && player.target.ships && player.target.ships.length > 0) {
+            if ((player.botState === 'chasing' || player.botState === 'aggressiveChase') && player.target && player.target.ships && player.target.ships.length > 0) {
                 const predicted = predictPosition(player.target, 2.5);
                 targetX = predicted.x;
                 targetY = predicted.y;
+            } else if (player.botState === 'powerUpChase' && player.target) {
+                targetX = player.target.x;
+                targetY = player.target.y;
             } else if (player.botState === 'retreating') {
                 targetX = canvas.width / 2 + (Math.random() - 0.5) * 400;
                 targetY = canvas.height / 2 + (Math.random() - 0.5) * 400;
@@ -717,14 +843,23 @@
                 }
             } else { // patrolling
                 if (!player.target || Math.hypot(leadShip.x - player.target.x, leadShip.y - player.target.y) < 30) {
-                    player.target = { x: Math.random() * canvas.width, y: Math.random() * canvas.height };
+                    targetX = Math.random() * (canvas.width - 100) + 50;
+                    targetY = Math.random() * (canvas.height - 100) + 50;
+                } else {
+                    targetX = player.target.x;
+                    targetY = player.target.y;
                 }
-                targetX = player.target.x + (Math.random() - 0.5) * 20;
-                targetY = player.target.y + (Math.random() - 0.5) * 20;
             }
 
-            // Asteroid avoidance
+            // Avoidance logic
             let avoidX = 0, avoidY = 0;
+            const borderMargin = 50;
+            const borderForce = 100;
+            if (leadShip.x < borderMargin) avoidX += borderForce * (borderMargin - leadShip.x);
+            if (leadShip.x > canvas.width - borderMargin) avoidX -= borderForce * (leadShip.x - (canvas.width - borderMargin));
+            if (leadShip.y < borderMargin) avoidY += borderForce * (borderMargin - leadShip.y);
+            if (leadShip.y > canvas.height - borderMargin) avoidY -= borderForce * (leadShip.y - (canvas.height - borderMargin));
+
             asteroids.forEach(a => {
                 const dist = Math.hypot(leadShip.x - a.x, leadShip.y - a.y);
                 if (dist < a.size + 50) {
@@ -735,22 +870,45 @@
                     avoidY += dy * force * 0.1;
                 }
             });
+
+            players.forEach(p => {
+                if (p !== player && p.alive && p.ships.length > 0) {
+                    const dist = Math.hypot(leadShip.x - p.ships[0].x, leadShip.y - p.ships[0].y);
+                    if (dist < 50 && player.style !== 'formation') {
+                        const dx = leadShip.x - p.ships[0].x;
+                        const dy = leadShip.y - p.ships[0].y;
+                        avoidX += dx * 0.05;
+                        avoidY += dy * 0.05;
+                    }
+                }
+            });
+
             targetX += avoidX;
             targetY += avoidY;
+            targetX = Math.max(50, Math.min(canvas.width - 50, targetX)); // Prevent invalid targets
+            targetY = Math.max(50, Math.min(canvas.height - 50, targetY));
 
             const desiredAngle = Math.atan2(targetY - leadShip.y, targetX - leadShip.x);
             const angleDiff = (desiredAngle - leadShip.angle + Math.PI) % (2 * Math.PI) - Math.PI;
             leadShip.angle += Math.max(-settings.turnSpeed, Math.min(settings.turnSpeed, angleDiff)) * deltaTime * 60;
-            leadShip.speed = Math.min(leadShip.speed + PLAYER_SPEED.acceleration, PLAYER_SPEED.max * (player.botState === 'chasing' ? 1.8 : (player.botState === 'evading' || player.botState === 'retreating' ? 1.6 : 1.4)));
+            leadShip.speed = Math.min(leadShip.speed + PLAYER_SPEED.acceleration, PLAYER_SPEED.max * style.speedBoost);
 
-            if (Date.now() - player.lastShot > style.shootFreq) {
-                const distToTarget = player.target && player.target.ships && player.target.ships.length > 0 ? Math.hypot(targetX - leadShip.x, targetY - leadShip.y) : Infinity;
+            if (player.style === 'dashy' && Math.random() < settings.dashFreq && Date.now() - player.lastDash > 1800) {
+                player.dashSpeed = leadShip.speed + 4.5;
+                player.dashEnd = Date.now() + 250;
+                player.lastDash = Date.now();
+                playSound(1200, 0.25, 'triangle', 0.25);
+            }
+
+            if (Date.now() - player.lastShot > settings.shootFreq) {
+                const distToTarget = player.target && (player.botState === 'chasing' || player.botState === 'aggressiveChase' ? player.target.ships.length > 0 : true) ? Math.hypot(targetX - leadShip.x, targetY - leadShip.y) : Infinity;
                 if ((player.botState === 'chasing' && distToTarget < settings.awarenessRange) || 
-                    (player.botState === 'evading' && distToTarget < 150) || // Increased from 120
-                    (player.botState === 'retreating' && Math.random() < 0.5) || // Increased from 0.4
-                    (player.botState === 'patrolling' && Math.random() < 0.2)) { // Increased from 0.1
-                    if (Math.abs(angleDiff) < 0.7) { // Widened from 0.5 to 0.7
-                        const bulletSpeed = 2.5;
+                    (player.botState === 'aggressiveChase' && distToTarget < settings.awarenessRange * 1.5) ||
+                    (player.botState === 'evading' && distToTarget < 150) ||
+                    (player.botState === 'retreating' && Math.random() < 0.5) ||
+                    (player.botState === 'patrolling' && Math.random() < 0.2)) {
+                    if (Math.abs(angleDiff) < (player.difficulty === 'Deity' ? 0.3 : 0.7)) {
+                        const bulletSpeed = player.difficulty === 'Deity' ? 3.5 : 2.5;
                         const shootAngle = leadShip.angle + (Math.random() - 0.5) * settings.aimError;
                         player.ships.forEach(ship => {
                             player.bullets.push({
@@ -759,14 +917,15 @@
                                 dx: Math.cos(shootAngle) * bulletSpeed,
                                 dy: Math.sin(shootAngle) * bulletSpeed,
                                 color: player.traitColor,
-                                size: 2,
+                                size: modules.smallMode ? 1 : 2,
                                 time: Date.now(),
-                                shooter: player
+                                shooter: player,
+                                bounces: 0
                             });
                         });
                         player.lastShot = Date.now();
                         playSound(800, 0.1, 'sine', 0.15);
-                        if (Math.random() < 0.5) showBotMessage(player, 'chasing'); // Increased from 0.3 to 0.5
+                        if (Math.random() < 0.5) showBotMessage(player, 'chasing');
                     }
                 }
             }
@@ -777,7 +936,7 @@
             particles.push({
                 x: leadShip.x - Math.cos(leadShip.angle) * 3,
                 y: leadShip.y - Math.sin(leadShip.angle) * 3,
-                size: 1,
+                size: modules.smallMode ? 0.5 : 1,
                 life: 25,
                 color: '#ffcc00',
                 dx: -Math.cos(leadShip.angle) * 0.6,
@@ -799,9 +958,17 @@
                     'diamond': () => { offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 3; offsetY = i * 3; },
                     'compact': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 4; offsetY = Math.sin(angle) * 4; },
                     'swarm': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 9; offsetY = Math.sin(angle) * 9; },
-                    'line-h': () => { offsetX = i * 6; offsetY = 0; },
-                    'line-v': () => { offsetX = 0; offsetY = i * 6; },
-                    'circle': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 6; offsetY = Math.sin(angle) * 6; },
+                    'line-h': () => { const half = Math.floor(player.ships.length / 2); offsetX = (i - half) * 6; offsetY = 0; },
+                    'line-v': () => { const half = Math.floor(player.ships.length / 2); offsetX = 0; offsetY = (i - half) * 6; },
+                    'Roman': () => {
+                        const width = Math.ceil(Math.sqrt(player.ships.length));
+                        const height = Math.ceil(player.ships.length / width);
+                        const row = Math.floor(i / width);
+                        const col = i % width;
+                        offsetX = (col - (width - 1) / 2) * 6;
+                        offsetY = (row - (height - 1) / 2) * 6;
+                        ship.angle = Math.atan2(offsetY, offsetX) + (offsetX >= 0 ? 0 : Math.PI);
+                    },
                     'spiral': () => { const radius = Math.min(12, i * 1.2); const angle = i * 0.9; offsetX = Math.cos(angle) * radius; offsetY = Math.sin(angle) * radius; }
                 };
                 formations[player.formation]();
@@ -811,7 +978,7 @@
                 targetY = leadShip.y - Math.sin(leadShip.angle) * (offsetY + noiseY) + Math.cos(leadShip.angle) * (offsetX + noiseX);
                 ship.dx = (targetX - ship.x) * 0.25 * 1.8 * deltaTime * 60;
                 ship.dy = (targetY - ship.y) * 0.25 * 1.8 * deltaTime * 60;
-                ship.angle = leadShip.angle;
+                if (player.formation !== 'Roman') ship.angle = leadShip.angle;
             }
             ship.dx *= Math.pow(0.97, deltaTime * 60);
             ship.dy *= Math.pow(0.97, deltaTime * 60);
@@ -819,27 +986,34 @@
             ship.y += ship.dy;
             ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x));
             ship.y = Math.max(2, Math.min(canvas.height - 2, ship.y));
-            particles.push({ x: ship.x - Math.cos(ship.angle) * 1.5, y: ship.y - Math.sin(ship.angle) * 1.5, size: 0.2, life: 10, color: player.traitColor });
+            if (!modules.chromebookMode || Math.random() < 0.5) {
+                particles.push({ x: ship.x - Math.cos(ship.angle) * 1.5, y: ship.y - Math.sin(ship.angle) * 1.5, size: modules.smallMode ? 0.1 : 0.2, life: 10, color: player.traitColor });
+            }
         });
 
         player.bullets.forEach(b => {
             b.x += b.dx * 1.8 * deltaTime * 60;
             b.y += b.dy * 1.8 * deltaTime * 60;
-            particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: 0.2, life: 6, color: b.color });
+            if (!modules.chromebookMode || Math.random() < 0.5) {
+                particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: modules.smallMode ? 0.1 : 0.2, life: 6, color: b.color });
+            }
         });
         player.bullets = player.bullets.filter(b => {
             const outOfBounds = b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height;
             const expired = Date.now() - b.time > 1800;
-            return !outOfBounds && !expired;
+            return !outOfBounds && !expired && b.bounces < 2;
         });
     }
 
     function getNextFormation(current) {
-        const formations = ['diamond', 'compact', 'swarm', 'line-h', 'line-v', 'circle', 'spiral'];
+        const formations = ['diamond', 'compact', 'swarm', 'line-h', 'line-v', 'Roman', 'spiral'];
         const index = formations.indexOf(current);
         return formations[(index + 1) % formations.length];
     }
+</script>
 
+<script>
+    // Game object spawning and updating
     function spawnAsteroids() {
         while (asteroids.length < MAX_ASTEROIDS) {
             let x, y;
@@ -851,7 +1025,7 @@
             } while (tooClose);
             asteroids.push({
                 x, y,
-                size: 8 + Math.random() * 12,
+                size: modules.smallMode ? 4 + Math.random() * 6 : 8 + Math.random() * 12,
                 dx: (Math.random() - 0.5) * 1.2,
                 dy: (Math.random() - 0.5) * 1.2,
                 angle: 0,
@@ -871,7 +1045,6 @@
                 if (a.x - a.size < 0 || a.x + a.size > canvas.width) a.dx *= -1;
                 if (a.y - a.size < 0 || a.y + a.size > canvas.height) a.dy *= -1;
 
-                // Asteroid-obstacle collision
                 obstacles.forEach(o => {
                     if (a.x + a.size > o.x && a.x - a.size < o.x + o.w &&
                         a.y + a.size > o.y && a.y - a.size < o.y + o.h) {
@@ -907,8 +1080,8 @@
             } while (players.some(p => p.ships.some(s => Math.hypot(s.x - x, s.y - y) < 30)));
             obstacles.push({
                 x, y,
-                w: 15 + Math.random() * 15,
-                h: 15 + Math.random() * 15,
+                w: modules.smallMode ? 7.5 + Math.random() * 7.5 : 15 + Math.random() * 15,
+                h: modules.smallMode ? 7.5 + Math.random() * 7.5 : 15 + Math.random() * 15,
                 hp: 1500
             });
         }
@@ -925,11 +1098,11 @@
     }
 
     function spawnStars() {
-        for (let i = 0; i < 500; i++) {
+        for (let i = 0; i < (modules.chromebookMode ? 250 : 500); i++) {
             stars.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                size: Math.random() * 0.5 + 0.1,
+                size: modules.smallMode ? Math.random() * 0.25 + 0.05 : Math.random() * 0.5 + 0.1,
                 brightness: Math.random()
             });
         }
@@ -946,11 +1119,11 @@
 
     const nebula = [];
     function spawnNebula() {
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < (modules.chromebookMode ? 12 : 25); i++) {
             nebula.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                size: 20 + Math.random() * 40,
+                size: modules.smallMode ? 10 + Math.random() * 20 : 20 + Math.random() * 40,
                 color: `rgba(${Math.random() * 100 + 50}, ${Math.random() * 100 + 50}, ${Math.random() * 200 + 50}, 0.15)`
             });
         }
@@ -988,7 +1161,7 @@
 
     function spawnPowerUps() {
         const totalPlayers = players.filter(p => p.alive).length;
-        const baseProbability = 0.012;
+        const baseProbability = modules.doublePowerUps ? 0.024 : 0.012;
         const spawnProbability = baseProbability * (1 + (totalPlayers - 1) * 0.15);
         if (Math.random() < spawnProbability) {
             const roll = Math.random();
@@ -1008,7 +1181,7 @@
             pu.pulse += pu.pulseDirection * 0.12;
             if (pu.pulse >= 1) pu.pulseDirection = -1;
             if (pu.pulse <= 0) pu.pulseDirection = 1;
-            const radius = 12 + pu.pulse * 4;
+            const radius = (modules.smallMode ? 6 : 12) + pu.pulse * 4;
 
             ctx.fillStyle = 'rgba(0, 255, 204, 0.3)';
             ctx.beginPath();
@@ -1023,11 +1196,11 @@
             ctx.arc(pu.x, pu.y, radius, 0, Math.PI * 2);
             ctx.fill();
 
-            if (Math.random() < 0.4) {
+            if ((!modules.chromebookMode || Math.random() < 0.5) && Math.random() < 0.4) {
                 particles.push({
                     x: pu.x + (Math.random() - 0.5) * radius * 2,
                     y: pu.y + (Math.random() - 0.5) * radius * 2,
-                    size: 1.2,
+                    size: modules.smallMode ? 0.6 : 1.2,
                     life: 25,
                     color: '#00ffcc',
                     dx: (Math.random() - 0.5) * 1.2,
@@ -1036,7 +1209,7 @@
             }
 
             ctx.fillStyle = '#ffffff';
-            ctx.font = '10px Orbitron';
+            ctx.font = modules.smallMode ? '8px Orbitron' : '10px Orbitron';
             ctx.textAlign = 'center';
             ctx.fillText(pu.type, pu.x, pu.y + 3);
 
@@ -1045,7 +1218,7 @@
                     if (Math.hypot(s.x - pu.x, s.y - pu.y) < radius + 6 && p.ships.length < MAX_SHIPS_PER_PLAYER) {
                         const count = Math.min(parseInt(pu.type.slice(1)), MAX_SHIPS_PER_PLAYER - p.ships.length);
                         for (let j = 0; j < count; j++) {
-                            p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: 300, dx: 0, dy: 0 });
+                            p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 600 : 300), dx: 0, dy: 0 });
                         }
                         showPowerUp(pu.x, pu.y, count, '#00ffcc');
                         if (p.isBot) showBotMessage(p, 'powerUp');
@@ -1061,7 +1234,7 @@
         const colors = ['#ffffff', '#ffffcc', '#ffcc00'];
         for (let i = 0; i < Math.min(count * 1.5, MAX_PARTICLES - particles.length); i++) {
             const color = colors[Math.floor(Math.random() * colors.length)];
-            const particleSize = size + Math.random() * 0.5;
+            const particleSize = (modules.smallMode ? size / 2 : size) + Math.random() * 0.5;
             particles.push({
                 x, y,
                 size: particleSize,
@@ -1076,7 +1249,7 @@
                 const color = colors[Math.floor(Math.random() * colors.length)];
                 particles.push({
                     x, y,
-                    size: 1 + Math.random() * 0.5,
+                    size: (modules.smallMode ? 0.5 : 1) + Math.random() * 0.5,
                     life: 25,
                     color,
                     dx: (Math.random() - 0.5) * 12,
@@ -1087,6 +1260,7 @@
         playSound(100, 0.6, 'sine', 0.25);
     }
 
+    // Collision detection with bullet bounce and 3 lives
     function checkCollisions() {
         players.forEach(p => {
             if (!p.ships.length) {
@@ -1147,6 +1321,25 @@
                         }
                     });
                 }
+
+                if (p.bullets[bi]) {
+                    obstacles.forEach(o => {
+                        if (b.x + b.size > o.x && b.x - b.size < o.x + o.w &&
+                            b.y + b.size > o.y && b.y - b.size < o.y + o.h && b.bounces < 2) {
+                            const overlapX = Math.min(b.x + b.size - o.x, o.x + o.w - (b.x - b.size));
+                            const overlapY = Math.min(b.y + b.size - o.y, o.y + o.h - (b.y - b.size));
+                            if (overlapX < overlapY) {
+                                b.dx *= -1;
+                                b.x += b.dx > 0 ? overlapX : -overlapX; // Adjust position to avoid sticking
+                            } else {
+                                b.dy *= -1;
+                                b.y += b.dy > 0 ? overlapY : -overlapY;
+                            }
+                            b.bounces++;
+                            playSound(300, 0.1, 'square', 0.2);
+                        }
+                    });
+                }
             }
         });
 
@@ -1164,7 +1357,7 @@
                     for (let osi = op.ships.length - 1; osi >= 0; osi--) {
                         const os = op.ships[osi];
                         const dist = Math.hypot(s.x - os.x, s.y - os.y);
-                        const shipSize = Math.max(2, 12 - p.ships.length * 0.02);
+                        const shipSize = modules.smallMode ? Math.max(1, 6 - p.ships.length * 0.01) : Math.max(2, 12 - p.ships.length * 0.02);
                         if (dist < shipSize) {
                             const damage = Math.max(12, Math.floor((Math.sqrt(s.dx * s.dx + s.dy * s.dy) + Math.sqrt(os.dx * os.dx + os.dy * os.dy)) * 5));
                             s.hp -= damage;
@@ -1204,7 +1397,8 @@
                 for (let si = p.ships.length - 1; si >= 0; si--) {
                     const s = p.ships[si];
                     const dist = Math.hypot(a.x - s.x, a.y - s.y);
-                    if (dist < a.size + Math.max(2, 12 - p.ships.length * 0.02)) {
+                    const shipSize = modules.smallMode ? Math.max(1, 6 - p.ships.length * 0.01) : Math.max(2, 12 - p.ships.length * 0.02);
+                    if (dist < a.size + shipSize) {
                         const damage = 12;
                         s.hp -= damage;
                         a.hp -= damage;
@@ -1253,16 +1447,36 @@
                 if (!p.ships.length || !p.alive) return;
                 for (let si = p.ships.length - 1; si >= 0; si--) {
                     const s = p.ships[si];
-                    const shipSize = Math.max(2, 12 - p.ships.length * 0.02);
-                    if (s.x + shipSize > o.x && s.x - shipSize < o.x + o.w &&
-                        s.y + shipSize > o.y && s.y - shipSize < o.y + o.h) {
-                        // Collision without damage
-                        const dx = s.x - (o.x + o.w / 2);
-                        const dy = s.y - (o.y + o.h / 2);
-                        const dist = Math.hypot(dx, dy) || 1;
-                        const pushForce = 0.15;
-                        s.dx += (dx / dist) * pushForce;
-                        s.dy += (dy / dist) * pushForce;
+                    const shipSize = modules.smallMode ? Math.max(1, 6 - p.ships.length * 0.01) : Math.max(2, 12 - p.ships.length * 0.02);
+                    const shipLeft = s.x - shipSize;
+                    const shipRight = s.x + shipSize;
+                    const shipTop = s.y - shipSize;
+                    const shipBottom = s.y + shipSize;
+                    const obsLeft = o.x;
+                    const obsRight = o.x + o.w;
+                    const obsTop = o.y;
+                    const obsBottom = o.y + o.h;
+
+                    if (shipRight > obsLeft && shipLeft < obsRight && shipBottom > obsTop && shipTop < obsBottom) {
+                        const overlapX = Math.min(shipRight - obsLeft, obsRight - shipLeft);
+                        const overlapY = Math.min(shipBottom - obsTop, obsBottom - shipTop);
+                        if (overlapX < overlapY) {
+                            if (s.x < o.x + o.w / 2) {
+                                s.x -= overlapX;
+                                s.dx = 0;
+                            } else {
+                                s.x += overlapX;
+                                s.dx = 0;
+                            }
+                        } else {
+                            if (s.y < o.y + o.h / 2) {
+                                s.y -= overlapY;
+                                s.dy = 0;
+                            } else {
+                                s.y += overlapY;
+                                s.dy = 0;
+                            }
+                        }
                         playSound(120, 0.6, 'sine', 0.3);
                     }
                 }
@@ -1271,14 +1485,21 @@
 
         players.forEach(p => {
             if (!p.ships.length && p.alive) {
-                p.alive = false;
-                p.bullets = [];
-                eliminations.push({ name: p.isBot ? `AI ${players.indexOf(p) + 1}` : `Pilot ${players.indexOf(p) + 1}`, time: Date.now() });
-                explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 200, p.traitColor, 1.5, true);
+                p.lives--;
+                if (p.lives > 0 && modules.threeLives) {
+                    const pos = { x: Math.random() * (canvas.width - 25) + 12.5, y: Math.random() * (canvas.height - 25) + 12.5 };
+                    p.ships.push({ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 });
+                } else {
+                    p.alive = false;
+                    p.bullets = [];
+                    eliminations.push({ name: p.isBot ? `AI ${players.indexOf(p) + 1}` : `Pilot ${players.indexOf(p) + 1}`, time: Date.now() });
+                    explosion(p.ships[0]?.x || canvas.width / 2, p.ships[0]?.y || canvas.height / 2, 200, p.traitColor, 1.5, true);
+                }
             }
         });
     }
 
+    // Main game loop
     function gameLoop(currentTime) {
         const deltaTime = Math.min(0.1, (currentTime - lastTime) / 1000);
         lastTime = currentTime;
@@ -1296,12 +1517,17 @@
             menuBots.forEach((bot, i) => {
                 if (!bot.ships.length) {
                     const pos = { x: Math.random() * (canvas.width - 25) + 12.5, y: Math.random() * (canvas.height - 25) + 12.5 };
-                    bot.ships.push({ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: 1000, dx: 0, dy: 0 });
+                    bot.ships.push({ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 });
                     bot.alive = true;
                 }
                 bot.ships.forEach((s, si) => drawShip(s, bot.ships.length, si === 0, false, bot));
                 drawBullets(bot);
             });
+            // Main screen animation: Pulsing ships
+            ctx.fillStyle = `rgba(0, 204, 255, ${Math.sin(frameCount * 0.05) * 0.2 + 0.3})`;
+            ctx.font = '24px Orbitron';
+            ctx.textAlign = 'center';
+            ctx.fillText('TopDownSpace', canvas.width / 2, canvas.height / 2 - 50);
         } else if (gameState === 'countdown' || gameState === 'playing') {
             if (gameState === 'countdown') {
                 const elapsed = Date.now() - countdownStart;
@@ -1347,11 +1573,11 @@
             players.forEach((p, i) => {
                 if (p.alive && p.ships.length > 0) {
                     const totalHP = getTotalHP(p);
-                    const maxHP = p.ships.length * 1000;
+                    const maxHP = p.ships.length * (modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000));
                     const hpPercent = (totalHP / maxHP * 100).toFixed(1);
                     const div = document.createElement('div');
                     div.style.color = p.traitColor;
-                    div.textContent = `${p.isBot ? 'AI' : 'Pilot'} ${i + 1}: ${p.ships.length} ships, HP ${hpPercent}%`;
+                    div.textContent = `${p.isBot ? 'AI' : 'Pilot'} ${i + 1}: ${p.ships.length} ships, HP ${hpPercent}%${modules.threeLives ? `, Lives: ${p.lives}` : ''}`;
                     uiPanel.appendChild(div);
                 }
             });
@@ -1377,6 +1603,7 @@
         menu = document.getElementById('menu');
         botMenu = document.getElementById('botMenu');
         difficultyMenu = document.getElementById('difficultyMenu');
+        moduleMenu = document.getElementById('moduleMenu');
         victoryScreen = document.getElementById('victoryScreen');
         winnerText = document.getElementById('winnerText');
         uiPanel = document.getElementById('uiPanel');
@@ -1423,14 +1650,23 @@
         <button onclick="showDifficultyMenu(6)">6 Bots</button>
         <button onclick="showDifficultyMenu(7)">7 Bots</button>
         <button onclick="showDifficultyMenu(8)">8 Bots</button>
+        <button onclick="showDifficultyMenu(50)">50 Bots</button>
+        <button onclick="showDifficultyMenu(100)">100 Bots</button>
         <button onclick="goBack()">Back</button>
     </div>
     <div id="difficultyMenu" style="display: none;">
         <h1>Select Bot Difficulty</h1>
-        <button onclick="startGame(botCount, 'novice')">Novice</button>
-        <button onclick="startGame(botCount, 'standard')">Standard</button>
-        <button onclick="startGame(botCount, 'elite')">Elite</button>
-        <button onclick="startGame(botCount, 'ace')">Ace</button>
+        <button onclick="showModuleMenu('novice')">Novice</button>
+        <button onclick="showModuleMenu('standard')">Standard</button>
+        <button onclick="showModuleMenu('elite')">Elite</button>
+        <button onclick="showModuleMenu('Deity')">Deity</button>
+        <button onclick="goBack()">Back</button>
+    </div>
+    <div id="moduleMenu" style="display: none;">
+        <h1>What Modules?</h1>
+        <div id="moduleChecklist"></div>
+        <button onclick="startGame(botCount, true)">Start with Modules</button>
+        <button onclick="startGame(botCount, false)">Start without Modules</button>
         <button onclick="goBack()">Back</button>
     </div>
     <div id="victoryScreen">
