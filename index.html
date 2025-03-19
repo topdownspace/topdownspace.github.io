@@ -72,6 +72,7 @@
             100% { text-shadow: 0 0 20px #00ffcc; }
         }
         button {
+            position: relative;
             font-family: 'Orbitron', sans-serif;
             font-size: 14px;
             padding: 10px 20px;
@@ -84,10 +85,26 @@
             transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
             width: 200px;
+            overflow: hidden;
         }
         button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 20px rgba(0, 204, 255, 0.8);
+        }
+        button.clicked::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 2px;
+            background: #ffcc00;
+            transform: translate(-50%, -50%);
+            animation: bulletHit 0.3s forwards;
+        }
+        @keyframes bulletHit {
+            0% { width: 10px; opacity: 1; }
+            100% { width: 0; opacity: 0; }
         }
         #uiPanel {
             width: 150px;
@@ -164,18 +181,91 @@
             font-size: 14px;
             display: flex;
             align-items: center;
+            position: relative;
         }
         #moduleChecklist input[type="checkbox"] {
             margin-right: 10px;
             transform: scale(1.2);
         }
+        #moduleChecklist .tooltip {
+            visibility: hidden;
+            width: 200px;
+            background: rgba(0, 0, 50, 0.9);
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            top: -5px;
+            left: 110%;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+        }
+        #moduleChecklist label:hover .tooltip {
+            visibility: visible;
+        }
     </style>
 </head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="uiPanel"></div>
+    </div>
+    <div id="menu">
+        <h1>TopDownSpace .github.io</h1>
+        <button onclick="showBotMenu(1)">1 Player</button>
+        <button onclick="showBotMenu(2)">2 Players</button>
+        <button onclick="showBotMenu(3)">3 Players</button>
+        <button onclick="window.location.href='https://topdownspace.github.io/how-to-play.html'">How to Play</button>
+        <button id="toggleNewTabButton" onclick="toggleNewTab()">Toggle New Tab On</button>
+        <div id="faviconOptions">
+            <button onclick="setFavicon('light')">Light Favicon</button>
+            <button onclick="setFavicon('dark')">Dark Favicon</button>
+        </div>
+    </div>
+    <div id="botMenu" style="display: none;">
+        <h1>Select Bot Count</h1>
+        <button onclick="showDifficultyMenu(0)">0 Bots</button>
+        <button onclick="showDifficultyMenu(1)">1 Bot</button>
+        <button onclick="showDifficultyMenu(2)">2 Bots</button>
+        <button onclick="showDifficultyMenu(3)">3 Bots</button>
+        <button onclick="showDifficultyMenu(4)">4 Bots</button>
+        <button onclick="showDifficultyMenu(5)">5 Bots</button>
+        <button onclick="showDifficultyMenu(6)">6 Bots</button>
+        <button onclick="showDifficultyMenu(7)">7 Bots</button>
+        <button onclick="showDifficultyMenu(8)">8 Bots</button>
+        <button onclick="showDifficultyMenu(50)">50 Bots</button>
+        <button onclick="showDifficultyMenu(100)">100 Bots</button>
+        <button onclick="goBack()">Back</button>
+    </div>
+    <div id="difficultyMenu" style="display: none;">
+        <h1>Select Bot Difficulty</h1>
+        <button onclick="showModuleMenu('novice')">Novice</button>
+        <button onclick="showModuleMenu('standard')">Standard</button>
+        <button onclick="showModuleMenu('elite')">Elite</button>
+        <button onclick="showModuleMenu('Deity')">Deity</button>
+        <button onclick="goBack()">Back</button>
+    </div>
+    <div id="moduleMenu" style="display: none;">
+        <h1>What Modules?</h1>
+        <div id="moduleChecklist"></div>
+        <button onclick="startGame(botCount, true)">Start with Modules</button>
+        <button onclick="startGame(botCount, false)">Start without Modules</button>
+        <button onclick="goBack()">Back</button>
+    </div>
+    <div id="victoryScreen">
+        <h1 id="winnerText"></h1>
+        <p>Press any key to return to menu</p>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+
 <script>
     // DOM elements
     let gameContainer, canvas, ctx, menu, botMenu, difficultyMenu, moduleMenu, victoryScreen, winnerText, uiPanel;
 
     // Game state and constants
+    let victoryDisplayTime = 0;
     let playerCount = 0;
     let lastTime = performance.now();
     let botCount = 0;
@@ -184,6 +274,7 @@
     let frameCount = 0;
     let countdownStart = 0;
     let countdownValue = 3;
+    let chaosTimer = 0;
     const MAX_PARTICLES = 2000;
     let MAX_SHIPS_PER_PLAYER = 100;
     const PLAYER_SPEED = { max: 1.5, min: -0.9, acceleration: 0.08, deceleration: 0.94 };
@@ -199,6 +290,7 @@
     const particles = [];
     const powerUps = [];
     const stars = [];
+    const gravityWells = [];
     const keys = {};
     const damageDisplays = [];
     let formationDisplays = [];
@@ -218,7 +310,13 @@
         chromebookMode: false,
         pixelMode: false,
         smallMode: false,
-        threeLives: false
+        threeLives: false,
+        romansExpansion: false,
+        gravityWells: false,
+        stealthMode: false,
+        chaosMode: false,
+        infiniteArena: false,
+        separation: false
     };
 
     // Load modules from localStorage
@@ -303,15 +401,46 @@
         }
     };
 
-    function adjustBrightness(hex, brightness) {
-        const r = Math.min(255, parseInt(hex.slice(1, 3), 16) * brightness);
-        const g = Math.min(255, parseInt(hex.slice(3, 5), 16) * brightness);
-        const b = Math.min(255, parseInt(hex.slice(5, 7), 16) * brightness);
-        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-    }
-</script>
+    // Button click animation
+    function animateButtonClick(button) {
+        const ship = {
+            x: -20,
+            y: button.offsetTop + button.offsetHeight / 2,
+            angle: 0,
+            speed: 5,
+            color: '#ffcc00'
+        };
+        const targetX = button.offsetLeft + button.offsetWidth / 2;
 
-<script>
+        function animate() {
+            ctx.save();
+            ctx.translate(ship.x, ship.y);
+            ctx.rotate(ship.angle);
+            ctx.beginPath();
+            ctx.moveTo(10, 0);
+            ctx.lineTo(-6, 6);
+            ctx.lineTo(-4, 0);
+            ctx.lineTo(-6, -6);
+            ctx.closePath();
+            ctx.fillStyle = ship.color;
+            ctx.fill();
+            ctx.restore();
+
+            ship.x += ship.speed;
+            if (ship.x >= targetX) {
+                button.classList.add('clicked');
+                setTimeout(() => button.classList.remove('clicked'), 300);
+                return;
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    document.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') animateButtonClick(e.target);
+    });
+
     // Menu navigation
     function showBotMenu(players) {
         playerCount = players;
@@ -332,16 +461,22 @@
         const checklist = document.getElementById('moduleChecklist');
         checklist.innerHTML = '';
         const moduleOptions = [
-            { id: 'noAsteroids', label: 'No Asteroids' },
-            { id: 'doubleAsteroids', label: 'Double Asteroids' },
-            { id: 'doubleHealth', label: 'Double Health' },
-            { id: 'oneShot', label: 'One Shot' },
-            { id: 'doublePowerUps', label: 'Double Power-Ups' },
-            { id: 'maxShips1000', label: 'Max Ships 1000' },
-            { id: 'chromebookMode', label: 'Chromebook Mode' },
-            { id: 'pixelMode', label: 'Pixel Mode' },
-            { id: 'smallMode', label: 'Small Mode' },
-            { id: 'threeLives', label: '3 Lives' }
+            { id: 'noAsteroids', label: 'No Asteroids', desc: 'Removes all asteroids from the game.' },
+            { id: 'doubleAsteroids', label: 'Double Asteroids', desc: 'Doubles the number of asteroids.' },
+            { id: 'doubleHealth', label: 'Double Health', desc: 'Doubles each ship’s health.' },
+            { id: 'oneShot', label: 'One Shot', desc: 'All ships have 1 HP.' },
+            { id: 'doublePowerUps', label: 'Double Power-Ups', desc: 'Doubles power-up spawn rate.' },
+            { id: 'maxShips1000', label: 'Max Ships 1000', desc: 'Sets max ships per player to 1000.' },
+            { id: 'chromebookMode', label: 'Chromebook Mode', desc: 'Optimizes for slower devices.' },
+            { id: 'pixelMode', label: 'Pixel Mode', desc: 'Pixelates the game for a retro look.' },
+            { id: 'smallMode', label: 'Small Mode', desc: 'Shrinks everything for longer games.' },
+            { id: 'threeLives', label: '3 Lives', desc: 'Players respawn up to 3 times.' },
+            { id: 'romansExpansion', label: 'Roman\'s Expansion', desc: 'Replaces formations with powerful Roman shapes: Rectangle, Circle, Disguise, Trap, Trinity H/V.' },
+            { id: 'gravityWells', label: 'Gravity Wells', desc: 'Adds 3 gravity wells pulling ships and bullets.' },
+            { id: 'stealthMode', label: 'Stealth Mode', desc: 'Ships are invisible unless firing.' },
+            { id: 'chaosMode', label: 'Chaos Mode', desc: 'Triggers random events every 30 seconds.' },
+            { id: 'infiniteArena', label: 'Infinite Arena', desc: 'Wraps ships and bullets around screen edges.' },
+            { id: 'separation', label: 'Separation', desc: 'Divides map into quarters; barriers fall as players are eliminated.' }
         ];
         moduleOptions.forEach(opt => {
             const label = document.createElement('label');
@@ -351,6 +486,10 @@
             checkbox.checked = modules[opt.id];
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(opt.label));
+            const tooltip = document.createElement('span');
+            tooltip.className = 'tooltip';
+            tooltip.textContent = opt.desc;
+            label.appendChild(tooltip);
             checklist.appendChild(label);
         });
     }
@@ -381,19 +520,11 @@
             return { x, y };
         };
 
-        const botStyles = {
-            'aggressive': { style: 'aggressive', baseColor: '#ff3333' },
-            'defensive': { style: 'defensive', baseColor: '#33ccff' },
-            'dashy': { style: 'dashy', baseColor: '#33ff33' },
-            'formation': { style: 'formation', baseColor: '#ffcc00' }
-        };
+        const botStyles = ['aggressive', 'defensive', 'dashy', 'formation'];
         for (let i = 0; i < 8; i++) {
             const pos = getSafePosition();
-            const styleKeys = Object.keys(botStyles);
-            const randomStyle = styleKeys[Math.floor(Math.random() * styleKeys.length)];
-            const { style, baseColor } = botStyles[randomStyle];
-            const brightness = Math.random() * 0.3 + 0.7; // Varied colors for all difficulties
-            const traitColor = adjustBrightness(baseColor, brightness);
+            const style = botStyles[Math.floor(Math.random() * botStyles.length)];
+            const traitColor = `#${Math.floor(Math.random() * 256).toString(16).padStart(2, '0')}${Math.floor(Math.random() * 256).toString(16).padStart(2, '0')}${Math.floor(Math.random() * 256).toString(16).padStart(2, '0')}`;
             menuBots.push({
                 ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 }],
                 keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
@@ -419,16 +550,10 @@
     function startGame(bots, withModules) {
         botCount = bots;
         if (withModules) {
-            modules.noAsteroids = document.getElementById('noAsteroids').checked;
-            modules.doubleAsteroids = document.getElementById('doubleAsteroids').checked;
-            modules.doubleHealth = document.getElementById('doubleHealth').checked;
-            modules.oneShot = document.getElementById('oneShot').checked;
-            modules.doublePowerUps = document.getElementById('doublePowerUps').checked;
-            modules.maxShips1000 = document.getElementById('maxShips1000').checked;
-            modules.chromebookMode = document.getElementById('chromebookMode').checked;
-            modules.pixelMode = document.getElementById('pixelMode').checked;
-            modules.smallMode = document.getElementById('smallMode').checked;
-            modules.threeLives = document.getElementById('threeLives').checked;
+            Object.keys(modules).forEach(key => {
+                const checkbox = document.getElementById(key);
+                if (checkbox) modules[key] = checkbox.checked;
+            });
             localStorage.setItem('gameModules', JSON.stringify(modules));
         }
 
@@ -441,36 +566,44 @@
         obstacles.length = 0;
         particles.length = 0;
         powerUps.length = 0;
+        gravityWells.length = 0;
         damageDisplays.length = 0;
         formationDisplays.length = 0;
         powerUpDisplays.length = 0;
         botMessages.length = 0;
 
         const positions = [];
-        const getSafePosition = () => {
+        const getSafePosition = (quarter) => {
             let x, y;
             do {
-                x = Math.random() * (canvas.width - 25) + 12.5;
-                y = Math.random() * (canvas.height - 25) + 12.5;
+                if (modules.separation) {
+                    if (quarter === 0) { x = Math.random() * canvas.width / 2; y = Math.random() * canvas.height / 2; }
+                    else if (quarter === 1) { x = canvas.width / 2 + Math.random() * canvas.width / 2; y = Math.random() * canvas.height / 2; }
+                    else if (quarter === 2) { x = Math.random() * canvas.width / 2; y = canvas.height / 2 + Math.random() * canvas.height / 2; }
+                    else { x = canvas.width / 2 + Math.random() * canvas.width / 2; y = canvas.height / 2 + Math.random() * canvas.height / 2; }
+                } else {
+                    x = Math.random() * (canvas.width - 25) + 12.5;
+                    y = Math.random() * (canvas.height - 25) + 12.5;
+                }
             } while (positions.some(pos => Math.hypot(pos.x - x, pos.y - y) < MIN_DISTANCE));
             positions.push({ x, y });
             return { x, y };
         };
 
-        const humanConfigs = [
-            { keys: { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' }, color: '#ff3333' },
-            { keys: { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' }, color: '#33ff33' },
-            { keys: { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }, color: '#33ccff' }
+        const defaultControls = [
+            { up: 'w', down: 's', left: 'a', right: 'd', form: 'e', dash: 'q' },
+            { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', form: 'Shift', dash: '/' },
+            { up: 'i', down: 'k', left: 'j', right: 'l', form: 'o', dash: 'u' }
         ];
         for (let i = 0; i < playerCount; i++) {
-            const pos = getSafePosition();
-            const traitColor = humanConfigs[i].color;
+            const pos = getSafePosition(i % 4);
+            const traitColor = ['#ff3333', '#33ccff', '#33ff33'][i % 3];
             players.push({
                 ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 }],
-                keys: humanConfigs[i].keys,
+                keys: defaultControls[i % 3],
                 bullets: [],
                 alive: true,
-                formation: 'spiral',
+                formation: modules.romansExpansion ? 'romansRectangle' : 'spiral',
                 lastShot: 0,
                 lastDash: 0,
                 dashEnd: 0,
@@ -479,43 +612,22 @@
                 difficulty: 'player',
                 traitColor: traitColor,
                 lastMessageTime: 0,
-                lives: modules.threeLives ? 3 : 1
+                lives: modules.threeLives ? 3 : 1,
+                quarter: modules.separation ? i % 4 : null
             });
         }
 
-        const botStyles = {
-            'aggressive': { style: 'aggressive', baseColor: '#ff3333' },
-            'defensive': { style: 'defensive', baseColor: '#33ccff' },
-            'dashy': { style: 'dashy', baseColor: '#33ff33' },
-            'formation': { style: 'formation', baseColor: '#ffcc00' }
-        };
-        const styleKeys = Object.keys(botStyles);
-        const botTraits = [];
-
-        const baseCount = Math.floor(botCount / styleKeys.length);
-        const extraBots = botCount % styleKeys.length;
-        const shuffledStyles = [...styleKeys].sort(() => Math.random() - 0.5);
-        shuffledStyles.forEach(style => {
-            for (let i = 0; i < baseCount; i++) botTraits.push(style);
-        });
-        for (let i = 0; i < extraBots; i++) botTraits.push(shuffledStyles[i]);
-        for (let i = botTraits.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [botTraits[i], botTraits[j]] = [botTraits[j], botTraits[i]];
-        }
-
+        const botStyles = ['aggressive', 'defensive', 'dashy', 'formation'];
         for (let i = 0; i < botCount; i++) {
-            const pos = getSafePosition();
-            const style = botTraits[i];
-            const { baseColor } = botStyles[style];
-            const brightness = Math.random() * 0.3 + 0.7; // Varied colors for all difficulties
-            const traitColor = adjustBrightness(baseColor, brightness);
+            const pos = getSafePosition(i % 4);
+            const style = botStyles[Math.floor(Math.random() * botStyles.length)];
+            const traitColor = `#${Math.floor(Math.random() * 256).toString(16).padStart(2, '0')}${Math.floor(Math.random() * 256).toString(16).padStart(2, '0')}${Math.floor(Math.random() * 256).toString(16).padStart(2, '0')}`;
             players.push({
                 ships: [{ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 }],
                 keys: { up: '', down: '', left: '', right: '', form: '', dash: '' },
                 bullets: [],
                 alive: true,
-                formation: 'spiral',
+                formation: modules.romansExpansion ? 'romansRectangle' : 'spiral',
                 lastShot: 0,
                 lastDash: 0,
                 dashEnd: 0,
@@ -528,7 +640,8 @@
                 botState: 'patrolling',
                 target: null,
                 lastDecision: 0,
-                lives: modules.threeLives ? 3 : 1
+                lives: modules.threeLives ? 3 : 1,
+                quarter: modules.separation ? i % 4 : null
             });
         }
 
@@ -544,10 +657,12 @@
         spawnObstacles();
         spawnStars();
         spawnNebula();
+        if (modules.gravityWells) spawnGravityWells();
         spawnAsteroids();
         frameCount = 0;
+        chaosTimer = 0;
         if (modules.pixelMode) canvas.style.imageRendering = 'pixelated';
-        if (modules.chromebookMode) MAX_PARTICLES = 500; // Reduce particle load
+        else canvas.style.imageRendering = 'optimizeSpeed';
     }
 
     function restartGame() {
@@ -561,6 +676,7 @@
         obstacles.length = 0;
         particles.length = 0;
         powerUps.length = 0;
+        gravityWells.length = 0;
         botMessages.length = 0;
         initMenuBots();
         frameCount = 0;
@@ -568,6 +684,7 @@
 
     // Drawing and utility functions
     function drawShip(ship, totalEntities, isLead, isPlayer, player) {
+        if (modules.stealthMode && Date.now() - player.lastShot > 2000) return;
         ctx.save();
         ctx.translate(ship.x, ship.y);
         ctx.rotate(ship.angle);
@@ -774,7 +891,6 @@
                 playSound(800, 0.1, 'sine', 0.15);
             }
         } else {
-            // Enhanced Bot AI
             const difficultySettings = {
                 'novice': { turnSpeed: 0.05, aimError: 0.2, reactionTime: 400, awarenessRange: 300, dashFreq: 0.1, shootFreq: 200 },
                 'standard': { turnSpeed: 0.1, aimError: 0.1, reactionTime: 250, awarenessRange: 350, dashFreq: 0.2, shootFreq: 180 },
@@ -855,10 +971,12 @@
             let avoidX = 0, avoidY = 0;
             const borderMargin = 50;
             const borderForce = 100;
-            if (leadShip.x < borderMargin) avoidX += borderForce * (borderMargin - leadShip.x);
-            if (leadShip.x > canvas.width - borderMargin) avoidX -= borderForce * (leadShip.x - (canvas.width - borderMargin));
-            if (leadShip.y < borderMargin) avoidY += borderForce * (borderMargin - leadShip.y);
-            if (leadShip.y > canvas.height - borderMargin) avoidY -= borderForce * (leadShip.y - (canvas.height - borderMargin));
+            if (!modules.infiniteArena) {
+                if (leadShip.x < borderMargin) avoidX += borderForce * (borderMargin - leadShip.x);
+                if (leadShip.x > canvas.width - borderMargin) avoidX -= borderForce * (leadShip.x - (canvas.width - borderMargin));
+                if (leadShip.y < borderMargin) avoidY += borderForce * (borderMargin - leadShip.y);
+                if (leadShip.y > canvas.height - borderMargin) avoidY -= borderForce * (leadShip.y - (canvas.height - borderMargin));
+            }
 
             asteroids.forEach(a => {
                 const dist = Math.hypot(leadShip.x - a.x, leadShip.y - a.y);
@@ -885,7 +1003,7 @@
 
             targetX += avoidX;
             targetY += avoidY;
-            targetX = Math.max(50, Math.min(canvas.width - 50, targetX)); // Prevent invalid targets
+            targetX = Math.max(50, Math.min(canvas.width - 50, targetX));
             targetY = Math.max(50, Math.min(canvas.height - 50, targetY));
 
             const desiredAngle = Math.atan2(targetY - leadShip.y, targetX - leadShip.x);
@@ -954,21 +1072,51 @@
                 ship.dx = Math.cos(ship.angle) * ship.speed * 1.8 * deltaTime * 60;
                 ship.dy = Math.sin(ship.angle) * ship.speed * 1.8 * deltaTime * 60;
             } else {
-                const formations = {
+                const formations = modules.romansExpansion ? {
+                    'romansRectangle': () => {
+                        const perimeter = player.ships.length * 6;
+                        const width = Math.ceil(Math.sqrt(perimeter / 2));
+                        const height = Math.ceil(perimeter / (2 * width));
+                        const side = Math.floor(i / (player.ships.length / 4));
+                        const pos = i % (player.ships.length / 4);
+                        if (side === 0) { offsetX = pos * 6 - width * 3; offsetY = -height * 3; ship.angle = Math.PI / 2; }
+                        else if (side === 1) { offsetX = width * 3; offsetY = pos * 6 - height * 3; ship.angle = 0; }
+                        else if (side === 2) { offsetX = pos * 6 - width * 3; offsetY = height * 3; ship.angle = -Math.PI / 2; }
+                        else { offsetX = -width * 3; offsetY = pos * 6 - height * 3; ship.angle = Math.PI; }
+                    },
+                    'romansCircle': () => {
+                        const angle = (i / player.ships.length) * Math.PI * 2;
+                        offsetX = Math.cos(angle) * 12;
+                        offsetY = Math.sin(angle) * 12;
+                        ship.angle = angle + Math.PI / 2;
+                    },
+                    'romansDisguise': () => { offsetX = 0; offsetY = 0; ship.angle = leadShip.angle; },
+                    'romansTrap': () => {
+                        const angle = (i / player.ships.length) * Math.PI * 2;
+                        offsetX = Math.cos(angle) * 12;
+                        offsetY = Math.sin(angle) * 12;
+                        ship.angle = angle - Math.PI / 2;
+                    },
+                    'romansTrinityH': () => {
+                        const third = Math.floor(player.ships.length / 3);
+                        const line = Math.floor(i / third);
+                        offsetX = (i % third - third / 2) * 6;
+                        offsetY = (line - 1) * 12;
+                        ship.angle = -Math.PI / 2;
+                    },
+                    'romansTrinityV': () => {
+                        const third = Math.floor(player.ships.length / 3);
+                        const line = Math.floor(i / third);
+                        offsetX = (line - 1) * 12;
+                        offsetY = (i % third - third / 2) * 6;
+                        ship.angle = -Math.PI / 2;
+                    }
+                } : {
                     'diamond': () => { offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 3; offsetY = i * 3; },
                     'compact': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 4; offsetY = Math.sin(angle) * 4; },
                     'swarm': () => { const angle = (i / Math.min(player.ships.length, MAX_SHIPS_PER_PLAYER)) * Math.PI * 2; offsetX = Math.cos(angle) * 9; offsetY = Math.sin(angle) * 9; },
                     'line-h': () => { const half = Math.floor(player.ships.length / 2); offsetX = (i - half) * 6; offsetY = 0; },
                     'line-v': () => { const half = Math.floor(player.ships.length / 2); offsetX = 0; offsetY = (i - half) * 6; },
-                    'Roman': () => {
-                        const width = Math.ceil(Math.sqrt(player.ships.length));
-                        const height = Math.ceil(player.ships.length / width);
-                        const row = Math.floor(i / width);
-                        const col = i % width;
-                        offsetX = (col - (width - 1) / 2) * 6;
-                        offsetY = (row - (height - 1) / 2) * 6;
-                        ship.angle = Math.atan2(offsetY, offsetX) + (offsetX >= 0 ? 0 : Math.PI);
-                    },
                     'spiral': () => { const radius = Math.min(12, i * 1.2); const angle = i * 0.9; offsetX = Math.cos(angle) * radius; offsetY = Math.sin(angle) * radius; }
                 };
                 formations[player.formation]();
@@ -978,41 +1126,91 @@
                 targetY = leadShip.y - Math.sin(leadShip.angle) * (offsetY + noiseY) + Math.cos(leadShip.angle) * (offsetX + noiseX);
                 ship.dx = (targetX - ship.x) * 0.25 * 1.8 * deltaTime * 60;
                 ship.dy = (targetY - ship.y) * 0.25 * 1.8 * deltaTime * 60;
-                if (player.formation !== 'Roman') ship.angle = leadShip.angle;
+                if (!modules.romansExpansion || player.formation === 'romansDisguise') ship.angle = leadShip.angle;
             }
+
+            if (modules.gravityWells) {
+                gravityWells.forEach(w => {
+                    const dist = Math.hypot(ship.x - w.x, ship.y - w.y);
+                    if (dist > 20) {
+                        const force = 100 / (dist * dist);
+                        ship.dx += (w.x - ship.x) * force * deltaTime * 60;
+                        ship.dy += (w.y - ship.y) * force * deltaTime * 60;
+                    }
+                });
+            }
+
             ship.dx *= Math.pow(0.97, deltaTime * 60);
             ship.dy *= Math.pow(0.97, deltaTime * 60);
             ship.x += ship.dx;
             ship.y += ship.dy;
-            ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x));
-            ship.y = Math.max(2, Math.min(canvas.height - 2, ship.y));
+
+            if (modules.infiniteArena) {
+                ship.x = (ship.x + canvas.width) % canvas.width;
+                ship.y = (ship.y + canvas.height) % canvas.height;
+            } else {
+                ship.x = Math.max(2, Math.min(canvas.width - 2, ship.x));
+                ship.y = Math.max(2, Math.min(canvas.height - 2, ship.y));
+            }
+
+            if (modules.separation) {
+                const aliveInQuarter = players.filter(p => p.alive && p.ships.length > 0 && p.quarter === player.quarter).length;
+                const midX = canvas.width / 2;
+                const midY = canvas.height / 2;
+                if (aliveInQuarter > 1) {
+                    if (player.quarter === 0) { ship.x = Math.min(midX, ship.x); ship.y = Math.min(midY, ship.y); }
+                    else if (player.quarter === 1) { ship.x = Math.max(midX, ship.x); ship.y = Math.min(midY, ship.y); }
+                    else if (player.quarter === 2) { ship.x = Math.min(midX, ship.x); ship.y = Math.max(midY, ship.y); }
+                    else { ship.x = Math.max(midX, ship.x); ship.y = Math.max(midY, ship.y); }
+                } else if (aliveInQuarter === 1) {
+                    if (player.quarter % 2 === 0) ship.x = Math.min(midX, ship.x);
+                    else ship.x = Math.max(midX, ship.x);
+                }
+            }
+
             if (!modules.chromebookMode || Math.random() < 0.5) {
                 particles.push({ x: ship.x - Math.cos(ship.angle) * 1.5, y: ship.y - Math.sin(ship.angle) * 1.5, size: modules.smallMode ? 0.1 : 0.2, life: 10, color: player.traitColor });
             }
         });
 
         player.bullets.forEach(b => {
+            if (modules.gravityWells) {
+                gravityWells.forEach(w => {
+                    const dist = Math.hypot(b.x - w.x, b.y - w.y);
+                    if (dist > 10) {
+                        const force = 50 / (dist * dist);
+                        b.dx += (w.x - b.x) * force * deltaTime * 60;
+                        b.dy += (w.y - b.y) * force * deltaTime * 60;
+                    }
+                });
+            }
             b.x += b.dx * 1.8 * deltaTime * 60;
             b.y += b.dy * 1.8 * deltaTime * 60;
+
+            if (modules.infiniteArena) {
+                b.x = (b.x + canvas.width) % canvas.width;
+                b.y = (b.y + canvas.height) % canvas.height;
+            }
+
             if (!modules.chromebookMode || Math.random() < 0.5) {
                 particles.push({ x: b.x - b.dx, y: b.y - b.dy, size: modules.smallMode ? 0.1 : 0.2, life: 6, color: b.color });
             }
         });
         player.bullets = player.bullets.filter(b => {
-            const outOfBounds = b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height;
+            const outOfBounds = !modules.infiniteArena && (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height);
             const expired = Date.now() - b.time > 1800;
             return !outOfBounds && !expired && b.bounces < 2;
         });
     }
 
     function getNextFormation(current) {
-        const formations = ['diamond', 'compact', 'swarm', 'line-h', 'line-v', 'Roman', 'spiral'];
+        const standardFormations = ['diamond', 'compact', 'swarm', 'line-h', 'line-v', 'spiral'];
+        const romanFormations = ['romansRectangle', 'romansCircle', 'romansDisguise', 'romansTrap', 'romansTrinityH', 'romansTrinityV'];
+        const formations = modules.romansExpansion ? romanFormations : standardFormations;
         const index = formations.indexOf(current);
         return formations[(index + 1) % formations.length];
     }
-</script>
 
-<script>
     // Game object spawning and updating
     function spawnAsteroids() {
         while (asteroids.length < MAX_ASTEROIDS) {
@@ -1042,8 +1240,13 @@
                 a.y += a.dy * deltaTime * 60;
                 a.dx = Math.max(-1.8, Math.min(1.8, a.dx));
                 a.dy = Math.max(-1.8, Math.min(1.8, a.dy));
-                if (a.x - a.size < 0 || a.x + a.size > canvas.width) a.dx *= -1;
-                if (a.y - a.size < 0 || a.y + a.size > canvas.height) a.dy *= -1;
+                if (modules.infiniteArena) {
+                    a.x = (a.x + canvas.width) % canvas.width;
+                    a.y = (a.y + canvas.height) % canvas.height;
+                } else {
+                    if (a.x - a.size < 0 || a.x + a.size > canvas.width) a.dx *= -1;
+                    if (a.y - a.size < 0 || a.y + a.size > canvas.height) a.dy *= -1;
+                }
 
                 obstacles.forEach(o => {
                     if (a.x + a.size > o.x && a.x - a.size < o.x + o.w &&
@@ -1141,6 +1344,28 @@
         });
     }
 
+    function spawnGravityWells() {
+        for (let i = 0; i < 3; i++) {
+            gravityWells.push({
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: Math.random() * (canvas.height - 100) + 50,
+                strength: 100
+            });
+        }
+    }
+
+    function drawGravityWells() {
+        gravityWells.forEach(w => {
+            const gradient = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, 50);
+            gradient.addColorStop(0, 'rgba(255, 0, 255, 0.5)');
+            gradient.addColorStop(1, 'rgba(255, 0, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(w.x, w.y, 50, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
     function updateParticles(deltaTime) {
         if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
         particles.forEach((p, i) => {
@@ -1149,6 +1374,10 @@
             if (p.dy) p.y += p.dy * deltaTime * 60;
             p.dx = p.dx ? p.dx * Math.pow(0.94, deltaTime * 60) : 0;
             p.dy = p.dy ? p.dy * Math.pow(0.94, deltaTime * 60) : 0;
+            if (modules.infiniteArena) {
+                p.x = (p.x + canvas.width) % canvas.width;
+                p.y = (p.y + canvas.height) % canvas.height;
+            }
             if (p.life <= 0) particles.splice(i, 1);
             else {
                 ctx.fillStyle = `rgba(${parseInt(p.color.slice(1, 3), 16)}, ${parseInt(p.color.slice(3, 5), 16)}, ${parseInt(p.color.slice(5, 7), 16)}, ${p.life / 50})`;
@@ -1213,20 +1442,20 @@
             ctx.textAlign = 'center';
             ctx.fillText(pu.type, pu.x, pu.y + 3);
 
-            players.forEach(p => {
-                p.ships.forEach(s => {
-                    if (Math.hypot(s.x - pu.x, s.y - pu.y) < radius + 6 && p.ships.length < MAX_SHIPS_PER_PLAYER) {
-                        const count = Math.min(parseInt(pu.type.slice(1)), MAX_SHIPS_PER_PLAYER - p.ships.length);
-                        for (let j = 0; j < count; j++) {
-                            p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 600 : 300), dx: 0, dy: 0 });
-                        }
-                        showPowerUp(pu.x, pu.y, count, '#00ffcc');
-                        if (p.isBot) showBotMessage(p, 'powerUp');
-                        powerUps.splice(i, 1);
-                        playSound(700, 0.35, 'sine', 0.25);
-                    }
-                });
-            });
+players.forEach(p => {
+    p.ships.forEach(s => {
+        if (Math.hypot(s.x - pu.x, s.y - pu.y) < radius + 6 && p.ships.length < MAX_SHIPS_PER_PLAYER) {
+            const count = Math.min(parseInt(pu.type.slice(1)), MAX_SHIPS_PER_PLAYER - p.ships.length);
+            for (let j = 0; j < count; j++) {
+                p.ships.push({ x: s.x, y: s.y, angle: s.angle, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 600 : 300), dx: 0, dy: 0 });
+            }
+            showPowerUp(pu.x, pu.y, count, '#00ffcc');
+            if (p.isBot) showBotMessage(p, 'powerUp');
+            powerUps.splice(i, 1);
+            playSound(700 + count * 50, 0.35, 'triangle', 0.25); // Higher pitch for more ships
+        }
+    });
+});
         });
     }
 
@@ -1256,8 +1485,52 @@
                     dy: (Math.random() - 0.5) * 12
                 });
             }
+            playSound(80, 0.8, 'sawtooth', 0.3); // Deep, resonant boom
+            playSound(200, 0.6, 'sine', 0.2); // Secondary high-pitched burst
+        } else {
+            playSound(100 + count * 5, 0.5, 'square', 0.25); // Varied pitch based on size
         }
-        playSound(100, 0.6, 'sine', 0.25);
+    }
+
+    function triggerChaosEvent() {
+        const events = [
+            () => { // Asteroid Shower
+                for (let i = 0; i < 10; i++) {
+                    asteroids.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        size: modules.smallMode ? 4 + Math.random() * 4 : 8 + Math.random() * 8,
+                        dx: (Math.random() - 0.5) * 2,
+                        dy: (Math.random() - 0.5) * 2,
+                        angle: 0,
+                        spin: (Math.random() - 0.5) * 0.03,
+                        hp: 800
+                    });
+                }
+                playSound(150, 1.0, 'sawtooth', 0.3); // Rumbling sound
+            },
+            () => { // Power-Up Storm
+                for (let i = 0; i < 5; i++) {
+                    powerUps.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        type: `+${Math.floor(Math.random() * 5) * 2 + 2}`,
+                        pulse: 0,
+                        pulseDirection: 1
+                    });
+                }
+                playSound(600, 0.5, 'triangle', 0.25); // Sparkling chime
+            },
+            () => { // Gravity Shift
+                gravityWells.forEach(w => {
+                    w.x = Math.random() * (canvas.width - 100) + 50;
+                    w.y = Math.random() * (canvas.height - 100) + 50;
+                });
+                playSound(300, 0.7, 'sine', 0.2); // Warping sound
+            }
+        ];
+        const event = events[Math.floor(Math.random() * events.length)];
+        event();
     }
 
     // Collision detection with bullet bounce and 3 lives
@@ -1285,6 +1558,7 @@
                                     explosion(s.x, s.y, 50, targetPlayer.traitColor);
                                 }
                                 p.bullets.splice(bi, 1);
+                                playSound(500, 0.15, 'square', 0.2); // Sharp hit sound
                                 return;
                             }
                         }
@@ -1317,6 +1591,7 @@
                                 }
                             }
                             p.bullets.splice(bi, 1);
+                            playSound(400, 0.2, 'sawtooth', 0.25); // Rock-breaking crunch
                             return;
                         }
                     });
@@ -1330,13 +1605,13 @@
                             const overlapY = Math.min(b.y + b.size - o.y, o.y + o.h - (b.y - b.size));
                             if (overlapX < overlapY) {
                                 b.dx *= -1;
-                                b.x += b.dx > 0 ? overlapX : -overlapX; // Adjust position to avoid sticking
+                                b.x += b.dx > 0 ? overlapX : -overlapX;
                             } else {
                                 b.dy *= -1;
                                 b.y += b.dy > 0 ? overlapY : -overlapY;
                             }
                             b.bounces++;
-                            playSound(300, 0.1, 'square', 0.2);
+                            playSound(300 + Math.random() * 100, 0.1, 'square', 0.2); // Randomized ricochet
                         }
                     });
                 }
@@ -1383,7 +1658,7 @@
                                 op.ships.splice(osi, 1);
                                 explosion(os.x, os.y, 50, op.traitColor);
                             }
-                            playSound(120, 0.6, 'sine', 0.3);
+                            playSound(120 + Math.random() * 60, 0.6, 'sine', 0.3); // Varied collision thud
                             break;
                         }
                     }
@@ -1435,7 +1710,7 @@
                                 }
                             }
                         }
-                        playSound(140, 0.6, 'sine', 0.3);
+                        playSound(140 + Math.random() * 50, 0.6, 'sawtooth', 0.3); // Crunchy asteroid hit
                         break;
                     }
                 }
@@ -1477,7 +1752,7 @@
                                 s.dy = 0;
                             }
                         }
-                        playSound(120, 0.6, 'sine', 0.3);
+                        playSound(200 + Math.random() * 80, 0.3, 'square', 0.25); // Solid impact sound
                     }
                 }
             });
@@ -1489,6 +1764,7 @@
                 if (p.lives > 0 && modules.threeLives) {
                     const pos = { x: Math.random() * (canvas.width - 25) + 12.5, y: Math.random() * (canvas.height - 25) + 12.5 };
                     p.ships.push({ x: pos.x, y: pos.y, angle: 0, speed: 0, hp: modules.oneShot ? 1 : (modules.doubleHealth ? 2000 : 1000), dx: 0, dy: 0 });
+                    playSound(1000, 0.4, 'triangle', 0.2); // Respawn chime
                 } else {
                     p.alive = false;
                     p.bullets = [];
@@ -1510,6 +1786,7 @@
         drawNebula();
         drawStars();
         drawObstacles();
+        if (modules.gravityWells) drawGravityWells();
 
         if (gameState === 'menu') {
             menuBots.forEach((bot, i) => updatePlayer(bot, i, true, deltaTime));
@@ -1523,7 +1800,6 @@
                 bot.ships.forEach((s, si) => drawShip(s, bot.ships.length, si === 0, false, bot));
                 drawBullets(bot);
             });
-            // Main screen animation: Pulsing ships
             ctx.fillStyle = `rgba(0, 204, 255, ${Math.sin(frameCount * 0.05) * 0.2 + 0.3})`;
             ctx.font = '24px Orbitron';
             ctx.textAlign = 'center';
@@ -1548,25 +1824,57 @@
                 }
             });
 
+            if (modules.chaosMode) {
+                chaosTimer += deltaTime;
+                if (chaosTimer >= 30) {
+                    triggerChaosEvent();
+                    chaosTimer = 0;
+                }
+            }
+
             updateParticles(deltaTime);
             drawDamageFormationPowerUp();
+
+            if (modules.separation) {
+                const midX = canvas.width / 2;
+                const midY = canvas.height / 2;
+                const quarters = [0, 1, 2, 3].map(q => players.filter(p => p.alive && p.ships.length > 0 && p.quarter === q).length);
+                ctx.strokeStyle = '#ff3333';
+                ctx.lineWidth = 2;
+                if (quarters.some(q => q > 1)) {
+                    ctx.beginPath();
+                    ctx.moveTo(midX, 0);
+                    ctx.lineTo(midX, canvas.height);
+                    ctx.moveTo(0, midY);
+                    ctx.lineTo(canvas.width, midY);
+                    ctx.stroke();
+                } else if (quarters.filter(q => q === 1).length > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(midX, 0);
+                    ctx.lineTo(midX, canvas.height);
+                    ctx.stroke();
+                }
+            }
 
             if (gameState === 'countdown') {
                 ctx.fillStyle = '#ffffff';
                 ctx.font = '48px Orbitron';
                 ctx.textAlign = 'center';
                 ctx.fillText(countdownValue > 0 ? countdownValue : 'GO!', canvas.width / 2, canvas.height / 2);
+                if (countdownValue === 0) playSound(800, 0.3, 'sine', 0.3); // Start beep
             }
 
             const alivePlayers = players.filter(p => p.alive && p.ships.length > 0);
             if (alivePlayers.length <= 1 && gameState === 'playing') {
                 gameState = 'victory';
                 victoryScreen.style.display = 'flex';
+                victoryDisplayTime = Date.now(); // Set the time when victory screen appears
                 if (alivePlayers.length === 1) {
                     winnerText.textContent = `${alivePlayers[0].isBot ? 'AI' : 'Pilot'} ${players.indexOf(alivePlayers[0]) + 1} Wins!`;
                 } else {
                     winnerText.textContent = 'No Winner!';
                 }
+                playSound(1200, 1.0, 'triangle', 0.3); // Victory fanfare
             }
 
             uiPanel.innerHTML = '';
@@ -1614,7 +1922,9 @@
 
         document.addEventListener('keydown', e => {
             keys[e.key] = true;
-            if (gameState === 'victory') restartGame();
+            if (gameState === 'victory' && Date.now() - victoryDisplayTime >= 3000) {
+                restartGame(); // Only restart after 3 seconds
+            }
         });
         document.addEventListener('keyup', e => keys[e.key] = false);
 
@@ -1622,57 +1932,5 @@
         requestAnimationFrame(gameLoop);
     };
 </script>
-<body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <div id="uiPanel"></div>
-    </div>
-    <div id="menu">
-        <h1>TopDownSpace .github.io</h1>
-        <button onclick="showBotMenu(1)">1 Player</button>
-        <button onclick="showBotMenu(2)">2 Players</button>
-        <button onclick="showBotMenu(3)">3 Players</button>
-        <button onclick="window.location.href='https://topdownspace.github.io/how-to-play.html'">How to Play</button>
-        <button id="toggleNewTabButton" onclick="toggleNewTab()">Toggle New Tab On</button>
-        <div id="faviconOptions">
-            <button onclick="setFavicon('light')">Light Favicon</button>
-            <button onclick="setFavicon('dark')">Dark Favicon</button>
-        </div>
-    </div>
-    <div id="botMenu" style="display: none;">
-        <h1>Select Bot Count</h1>
-        <button onclick="showDifficultyMenu(0)">0 Bots</button>
-        <button onclick="showDifficultyMenu(1)">1 Bot</button>
-        <button onclick="showDifficultyMenu(2)">2 Bots</button>
-        <button onclick="showDifficultyMenu(3)">3 Bots</button>
-        <button onclick="showDifficultyMenu(4)">4 Bots</button>
-        <button onclick="showDifficultyMenu(5)">5 Bots</button>
-        <button onclick="showDifficultyMenu(6)">6 Bots</button>
-        <button onclick="showDifficultyMenu(7)">7 Bots</button>
-        <button onclick="showDifficultyMenu(8)">8 Bots</button>
-        <button onclick="showDifficultyMenu(50)">50 Bots</button>
-        <button onclick="showDifficultyMenu(100)">100 Bots</button>
-        <button onclick="goBack()">Back</button>
-    </div>
-    <div id="difficultyMenu" style="display: none;">
-        <h1>Select Bot Difficulty</h1>
-        <button onclick="showModuleMenu('novice')">Novice</button>
-        <button onclick="showModuleMenu('standard')">Standard</button>
-        <button onclick="showModuleMenu('elite')">Elite</button>
-        <button onclick="showModuleMenu('Deity')">Deity</button>
-        <button onclick="goBack()">Back</button>
-    </div>
-    <div id="moduleMenu" style="display: none;">
-        <h1>What Modules?</h1>
-        <div id="moduleChecklist"></div>
-        <button onclick="startGame(botCount, true)">Start with Modules</button>
-        <button onclick="startGame(botCount, false)">Start without Modules</button>
-        <button onclick="goBack()">Back</button>
-    </div>
-    <div id="victoryScreen">
-        <h1 id="winnerText"></h1>
-        <p>Press any key to return to menu</p>
-        <button onclick="restartGame()">Restart</button>
-    </div>
 </body>
 </html>
