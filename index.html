@@ -212,33 +212,40 @@
         <canvas id="gameCanvas"></canvas>
         <div id="uiPanel"></div>
     </div>
-    <div id="menu">
-        <h1>TopDownSpace .github.io</h1>
-        <button onclick="showBotMenu(1)">1 Player</button>
-        <button onclick="showBotMenu(2)">2 Players</button>
-        <button onclick="showBotMenu(3)">3 Players</button>
-        <button onclick="window.location.href='https://topdownspace.github.io/how-to-play.html'">How to Play</button>
-        <button id="toggleNewTabButton" onclick="toggleNewTab()">Toggle New Tab On</button>
-        <div id="faviconOptions">
-            <button onclick="setFavicon('light')">Light Favicon</button>
-            <button onclick="setFavicon('dark')">Dark Favicon</button>
-        </div>
+<div id="menu">
+    <h1>TopDownSpace .github.io</h1>
+    <button onclick="showBotMenu(1)">1 Player</button>
+    <button onclick="showBotMenu(2)">2 Players</button>
+    <button onclick="showBotMenu(3)">3 Players</button>
+    <button onclick="window.location.href='https://topdownspace.github.io/how-to-play.html'">How to Play</button>
+    <button id="toggleNewTabButton" onclick="toggleNewTab()">Toggle New Tab On</button>
+    <div id="faviconOptions">
+        <button onclick="setFavicon('light')">Light Favicon</button>
+        <button onclick="setFavicon('dark')">Dark Favicon</button>
     </div>
-    <div id="botMenu" style="display: none;">
-        <h1>Select Bot Count</h1>
-        <button onclick="showDifficultyMenu(0)">0 Bots</button>
-        <button onclick="showDifficultyMenu(1)">1 Bot</button>
-        <button onclick="showDifficultyMenu(2)">2 Bots</button>
-        <button onclick="showDifficultyMenu(3)">3 Bots</button>
-        <button onclick="showDifficultyMenu(4)">4 Bots</button>
-        <button onclick="showDifficultyMenu(5)">5 Bots</button>
-        <button onclick="showDifficultyMenu(6)">6 Bots</button>
-        <button onclick="showDifficultyMenu(7)">7 Bots</button>
-        <button onclick="showDifficultyMenu(8)">8 Bots</button>
-        <button onclick="showDifficultyMenu(50)">50 Bots</button>
-        <button onclick="showDifficultyMenu(100)">100 Bots</button>
-        <button onclick="goBack()">Back</button>
-    </div>
+</div>
+<div id="botMenu" style="display: none;">
+    <h1>Select Bot Count</h1>
+    <button onclick="showDifficultyMenu(0)">0 Bot</button>
+    <button onclick="showDifficultyMenu(1)">1 Bot</button>
+    <button onclick="showDifficultyMenu(2)">2 Bots</button>
+    <button onclick="showDifficultyMenu(3)">3 Bots</button>
+    <button onclick="showDifficultyMenu(5)">5 Bots</button>
+    <button onclick="showDifficultyMenu(10)">10 Bots</button>
+    <button onclick="showDifficultyMenu(20)">20 Bots</button>
+    <button onclick="showDifficultyMenu(30)">30 Bots</button>
+    <button onclick="showDifficultyMenu(50)">50 Bots</button>
+    <button onclick="showDifficultyMenu(100)">100 Bots</button>
+    <button onclick="goBack()">Back</button>
+</div>
+<div id="difficultyMenu" style="display: none;">
+    <h1>Select Bot Difficulty</h1>
+    <button onclick="showModuleMenu('novice')">Novice</button>
+    <button onclick="showModuleMenu('standard')">Standard</button>
+    <button onclick="showModuleMenu('elite')">Elite</button>
+    <button onclick="showModuleMenu('Deity')">Deity</button>
+    <button onclick="goBack()">Back</button>
+</div>
     <div id="difficultyMenu" style="display: none;">
         <h1>Select Bot Difficulty</h1>
         <button onclick="showModuleMenu('novice')">Novice</button>
